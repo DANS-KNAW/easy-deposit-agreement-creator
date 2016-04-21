@@ -1,5 +1,5 @@
-easy-test-module
-===========
+easy-license-creator
+====================
 [![Build Status](https://travis-ci.org/DANS-KNAW/easy-license-creator.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-license-creator)
 
 <Remove this comment and extend the descriptions below>
