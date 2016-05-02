@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license;
+package nl.knaw.dans.easy.license
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._

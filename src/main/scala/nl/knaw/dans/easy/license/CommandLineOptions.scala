@@ -21,8 +21,8 @@ import java.net.URL
 import org.rogach.scallop.ScallopConf
 
 class CommandLineOptions (args: Array[String]) extends ScallopConf(args) {
-  printedName = "easy-license-creator";
-  val __________ = " " * printedName.size
+  printedName = "easy-license-creator"
+  val __________ = " " * printedName.length
 
   version(s"$printedName v${Version()}")
   banner(s"""
