@@ -70,14 +70,14 @@ package object license {
     }
   }
 
-  case class Dataset(emd: EasyMetadata, easyUser: EasyUser)
+  case class Dataset(datasetID: String, emd: EasyMetadata, easyUser: EasyUser)
 
   object Dataset {
     def getDatasetByID(datasetID: String, userID: String)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
       val emd = queryEMD("easy-dataset:1").single
       val user = EasyUser.getByID(userID).single
 
-      emd.combineLatestWith(user)(Dataset(_, _))
+      emd.combineLatestWith(user)(Dataset(datasetID, _, _))
     }
 
     private def queryEMD(datasetID: String)(implicit client: FedoraClient): Observable[EasyMetadata] = {
