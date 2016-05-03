@@ -15,12 +15,18 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{File, PrintWriter}
-import java.net.URL
+import javax.naming.Context
+import javax.naming.ldap.InitialLdapContext
 
+import com.yourmediashelf.fedora.client.FedoraCredentials
+import org.apache.commons.configuration.PropertiesConfiguration
 import org.rogach.scallop.ScallopConf
+import org.slf4j.LoggerFactory
 
-class CommandLineOptions (args: Array[String]) extends ScallopConf(args) {
+class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
+
+  import CommandLineOptions.log
+
   printedName = "easy-license-creator"
   val __________ = " " * printedName.length
 
@@ -41,9 +47,42 @@ class CommandLineOptions (args: Array[String]) extends ScallopConf(args) {
 
 object CommandLineOptions {
 
+  val log = LoggerFactory.getLogger(getClass)
+
   def parse(args: Array[String]): Parameters = {
+    log.debug("Loading application properties ...")
+    val props = {
+      val ps = new PropertiesConfiguration()
+      ps.setDelimiterParsingDisabled(true)
+      ps.load(System.getProperty("config.file"))
+
+      ps
+    }
+
+    log.debug("Parsing command line ...")
     val opts = new CommandLineOptions(args)
-    // Fill Parameters with values from command line
-    Parameters()
+
+    val params = Parameters(
+      fedora = new FedoraCredentials(
+        props.getString("fcrepo.url"),
+        props.getString("fcrepo.user"),
+        props.getString("fcrepo.password")),
+      ldap = {
+        import java.{util => ju}
+
+        val env = new ju.Hashtable[String, String]
+        env.put(Context.PROVIDER_URL, props.getString("auth.ldap.url"))
+        env.put(Context.SECURITY_AUTHENTICATION, "simple")
+        env.put(Context.SECURITY_PRINCIPAL, props.getString("auth.ldap.user"))
+        env.put(Context.SECURITY_CREDENTIALS, props.getString("auth.ldap.password"))
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
+
+        new InitialLdapContext(env, null)
+      }
+    )
+
+    log.debug(s"Using the following settings: $params")
+
+    params
   }
 }

@@ -21,5 +21,6 @@ APPHOME=home
 . apphome.sh
 
 mvn exec:java -Dapp.home=$APPHOME \
+              -Dconfig.file=$APPHOME/cfg/application.properties \
               -Dlogback.configurationFile=$APPHOME/cfg/logback.xml \
               -Dexec.args="$ARGS"

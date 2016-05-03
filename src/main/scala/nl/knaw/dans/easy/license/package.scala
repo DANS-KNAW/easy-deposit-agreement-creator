@@ -16,11 +16,12 @@
 package nl.knaw.dans.easy
 
 import java.io.InputStream
-import javax.naming.NamingEnumeration
+import java.util.Properties
+import javax.naming.{Context, NamingEnumeration}
 import javax.naming.directory.{Attributes, SearchControls}
 import javax.naming.ldap.LdapContext
 
-import com.yourmediashelf.fedora.client.FedoraClient
+import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl}
 import rx.lang.scala.Observable
@@ -29,15 +30,17 @@ import scala.language.postfixOps
 
 package object license {
 
-  case class Parameters(/* Insert parameters */) {
-    override def toString: String =
-      s"<Replace with nicely formatted string with name-value style output of parameters>"
+  case class Parameters(fedora: FedoraCredentials, ldap: LdapContext) {
+    override def toString: String = {
+      s"Parameters(fedoraCredentials:{url=${fedora.getBaseUrl}, user=${fedora.getUsername}}," +
+        s"ldap:{url=${ldap.getEnvironment.get(Context.PROVIDER_URL)}, user=${ldap.getEnvironment.get(Context.SECURITY_PRINCIPAL)}})"
+    }
   }
 
   object Version {
     def apply(): String = {
-      val props = new java.util.Properties()
-      props.load(Version.getClass.getResourceAsStream("/Version.properties"))
+      val props = new Properties()
+      props.load(getClass.getResourceAsStream("/Version.properties"))
       props.getProperty("application.version")
     }
   }
