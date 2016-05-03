@@ -34,6 +34,8 @@ package object license {
   type DatasetID = String
   type UserID = String
 
+  val homeDir = new File(System.getProperty("app.home"))
+
   case class Parameters(fedora: FedoraCredentials, ldap: LdapContext, input: ConsoleInput) {
     override def toString: String = {
 

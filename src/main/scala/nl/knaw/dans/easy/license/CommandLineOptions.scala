@@ -59,7 +59,7 @@ object CommandLineOptions {
     val props = {
       val ps = new PropertiesConfiguration()
       ps.setDelimiterParsingDisabled(true)
-      ps.load(System.getProperty("config.file"))
+      ps.load(new File(homeDir, "cfg/application.properties"))
 
       ps
     }
