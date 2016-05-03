@@ -26,5 +26,7 @@ object Command {
     implicit val ps = cmd.parse(args)
 
     // Here, pass the parameters to the main application logic (possibly to an Akka actor).
+
+    ps.ldap.close()
   }
 }
