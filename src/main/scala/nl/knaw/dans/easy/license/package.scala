@@ -15,7 +15,7 @@
   */
 package nl.knaw.dans.easy
 
-import java.io.InputStream
+import java.io.{File, InputStream}
 import java.util.Properties
 import javax.naming.{Context, NamingEnumeration}
 import javax.naming.directory.{Attributes, SearchControls}
@@ -31,13 +31,25 @@ import scala.xml.XML
 
 package object license {
 
-  case class Parameters(fedora: FedoraCredentials, ldap: LdapContext) {
   type DatasetID = String
   type UserID = String
 
+  case class Parameters(fedora: FedoraCredentials, ldap: LdapContext, input: ConsoleInput) {
     override def toString: String = {
-      s"Parameters(fedoraCredentials:{url=${fedora.getBaseUrl}, user=${fedora.getUsername}}," +
-        s"ldap:{url=${ldap.getEnvironment.get(Context.PROVIDER_URL)}, user=${ldap.getEnvironment.get(Context.SECURITY_PRINCIPAL)}})"
+
+      s"""
+        |Parameters {
+        |  fedoraCredentials {
+        |    url = ${fedora.getBaseUrl}
+        |    user = ${fedora.getUsername}
+        |  }
+        |  ldap {
+        |    url = ${ldap.getEnvironment.get(Context.PROVIDER_URL)}
+        |    user = ${ldap.getEnvironment.get(Context.SECURITY_PRINCIPAL)}
+        |  }
+        |  ${input.toString.replaceAll("\n", "\n  ")}
+        |}
+      """.stripMargin
     }
   }
 
@@ -46,6 +58,16 @@ package object license {
       val props = new Properties()
       props.load(getClass.getResourceAsStream("/Version.properties"))
       props.getProperty("application.version")
+    }
+  }
+
+  case class ConsoleInput(userID: Option[UserID], datasetID: DatasetID, resultFile: File) {
+    override def toString: String = {
+      s"""input {
+        |  userID = ${userID.getOrElse("<no userID entered>")}
+        |  datasetID = $datasetID
+        |  resultFile = ${resultFile.getAbsolutePath}
+        |}""".stripMargin
     }
   }
 
