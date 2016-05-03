@@ -15,6 +15,9 @@
  */
 package nl.knaw.dans.easy.license
 
+import java.io.OutputStream
+
+import com.yourmediashelf.fedora.client.FedoraClient
 import org.slf4j.LoggerFactory
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 
@@ -24,9 +27,16 @@ object Command {
   def main(args: Array[String]): Unit = {
     log.debug("Starting command line interface")
     implicit val ps = cmd.parse(args)
+    implicit val ldap = ps.ldap
+    implicit val fedora = new FedoraClient(ps.fedora)
 
-    // Here, pass the parameters to the main application logic (possibly to an Akka actor).
+    val did = ps.input.datasetID
+    val userID = ps.input.userID
 
+    userID.map(Dataset.getDatasetByID(did, _))
+      .getOrElse(Dataset.getDatasetByID(did))
+
+    // close LDAP at the end of the main
     ps.ldap.close()
   }
 }
