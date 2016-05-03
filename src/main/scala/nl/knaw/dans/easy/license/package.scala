@@ -27,6 +27,7 @@ import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl}
 import rx.lang.scala.Observable
 
 import scala.language.postfixOps
+import scala.xml.XML
 
 package object license {
 
@@ -84,8 +85,18 @@ package object license {
       emd.combineLatestWith(user)(Dataset(datasetID, _, _))
     }
 
+    def getDatasetByID(datasetID: DatasetID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
+      queryAMDForDepositorID(datasetID)
+        .single
+        .flatMap(getDatasetByID(datasetID, _))
+    }
+
     private def queryEMD(datasetID: DatasetID)(implicit client: FedoraClient): Observable[EasyMetadata] = {
       queryFedora(datasetID, "EMD")(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
+    }
+
+    private def queryAMDForDepositorID(datasetID: DatasetID)(implicit client: FedoraClient): Observable[UserID] = {
+      queryFedora(datasetID, "AMD")(stream => XML.load(stream) \\ "depositorID" text)
     }
   }
 
