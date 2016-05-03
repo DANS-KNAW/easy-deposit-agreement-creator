@@ -31,6 +31,9 @@ import scala.language.postfixOps
 package object license {
 
   case class Parameters(fedora: FedoraCredentials, ldap: LdapContext) {
+  type DatasetID = String
+  type UserID = String
+
     override def toString: String = {
       s"Parameters(fedoraCredentials:{url=${fedora.getBaseUrl}, user=${fedora.getUsername}}," +
         s"ldap:{url=${ldap.getEnvironment.get(Context.PROVIDER_URL)}, user=${ldap.getEnvironment.get(Context.SECURITY_PRINCIPAL)}})"
@@ -45,13 +48,12 @@ package object license {
     }
   }
 
-  case class EasyUser(userID: String, name: String, organization: String, address: String,
+  case class EasyUser(userID: UserID, name: String, organization: String, address: String,
                       postalCode: String, city: String, country: String, telephone: String,
                       email: String)
-
   object EasyUser {
 
-    def getByID(userID: String)(implicit ctx: LdapContext): Observable[EasyUser] = {
+    def getByID(userID: UserID)(implicit ctx: LdapContext): Observable[EasyUser] = {
       queryLDAP(userID)(attrs => {
         def get(attrID: String): Option[String] = {
           Option(attrs get attrID) map (_ get) map (_ toString)
@@ -73,17 +75,16 @@ package object license {
     }
   }
 
-  case class Dataset(datasetID: String, emd: EasyMetadata, easyUser: EasyUser)
-
+  case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
   object Dataset {
-    def getDatasetByID(datasetID: String, userID: String)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
-      val emd = queryEMD("easy-dataset:1").single
+    def getDatasetByID(datasetID: DatasetID, userID: UserID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
+      val emd = queryEMD(datasetID).single
       val user = EasyUser.getByID(userID).single
 
       emd.combineLatestWith(user)(Dataset(datasetID, _, _))
     }
 
-    private def queryEMD(datasetID: String)(implicit client: FedoraClient): Observable[EasyMetadata] = {
+    private def queryEMD(datasetID: DatasetID)(implicit client: FedoraClient): Observable[EasyMetadata] = {
       queryFedora(datasetID, "EMD")(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
     }
   }
@@ -98,12 +99,12 @@ package object license {
     })
   }
 
-  def queryFedora[T](datasetID: String, datastreamID: String)(f: InputStream => T)(implicit client: FedoraClient): Observable[T] = {
+  def queryFedora[T](datasetID: DatasetID, datastreamID: String)(f: InputStream => T)(implicit client: FedoraClient): Observable[T] = {
     Observable.just(FedoraClient.getDatastreamDissemination(datasetID, datastreamID).execute(client))
       .map(response => f(response.getEntityInputStream))
   }
 
-  def queryLDAP[T](userID: String)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
+  def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
     Observable.defer {
       val searchFilter = s"(&(objectClass=easyUser)(uid=$userID))"
       val searchControls = {
