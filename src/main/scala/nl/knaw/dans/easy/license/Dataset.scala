@@ -8,7 +8,6 @@ import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import rx.lang.scala.Observable
 
 import scala.language.postfixOps
-import scala.xml.XML
 
 case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
 
@@ -32,6 +31,6 @@ object Dataset {
   }
 
   private def queryAMDForDepositorID(datasetID: DatasetID)(implicit client: FedoraClient): Observable[UserID] = {
-    queryFedora(datasetID, "AMD")(stream => XML.load(stream) \\ "depositorID" text)
+    queryFedora(datasetID, "AMD")(_.loadXML \\ "depositorId" text)
   }
 }

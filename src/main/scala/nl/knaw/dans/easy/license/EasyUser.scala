@@ -32,6 +32,6 @@ object EasyUser {
     Option(attrs get attrID).map(_.get.toString)
   }
 
-  private def getOrEmpty(attrID: String)(implicit attrs: Attributes): String = get(attrID) getOrElse ""
+  private def getOrEmpty(attrID: String)(implicit attrs: Attributes) = get(attrID) getOrElse ""
 }
 

@@ -15,16 +15,18 @@
   */
 package nl.knaw.dans.easy
 
-import java.io.{File, InputStream}
+import java.io.{Closeable, File, InputStream}
 import java.util.Properties
-import javax.naming.{Context, NamingEnumeration}
+import javax.naming.NamingEnumeration
 import javax.naming.directory.{Attributes, SearchControls}
 import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
+import org.apache.commons.io.IOUtils
 import rx.lang.scala.Observable
 
 import scala.language.postfixOps
+import scala.xml.XML
 
 package object license {
 
@@ -34,31 +36,12 @@ package object license {
   val homeDir = new File(System.getProperty("app.home"))
 
   case class Parameters(fedora: FedoraCredentials, ldap: LdapContext, input: ConsoleInput) {
-    override def toString: String = {
-
-      s"""
-        |Parameters {
-        |  fedoraCredentials {
-        |    url = ${fedora.getBaseUrl}
-        |    user = ${fedora.getUsername}
-        |  }
-        |  ldap {
-        |    url = ${ldap.getEnvironment.get(Context.PROVIDER_URL)}
-        |    user = ${ldap.getEnvironment.get(Context.SECURITY_PRINCIPAL)}
-        |  }
-        |  ${input.toString.replaceAll("\n", "\n  ")}
-        |}
-      """.stripMargin
-    }
+    override def toString: String = s"Parameters($input)"
   }
 
   case class ConsoleInput(userID: Option[UserID], datasetID: DatasetID, resultFile: File) {
     override def toString: String = {
-      s"""input {
-        |  userID = ${userID.getOrElse("<no userID entered>")}
-        |  datasetID = $datasetID
-        |  resultFile = ${resultFile.getAbsolutePath}
-        |}""".stripMargin
+      s"ConsoleInput(${userID.getOrElse("<no userID>")}, $datasetID, $resultFile)"
     }
   }
 
@@ -80,9 +63,23 @@ package object license {
     })
   }
 
+  implicit class CloseableResourceExtensions[T <: Closeable](val resource: T) extends AnyVal {
+    def using[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
+      Observable.using(resource)(observableFactory, t => { dispose(t); t.closeQuietly() }, disposeEagerly)
+    }
+
+    def closeQuietly() = IOUtils closeQuietly resource
+  }
+
+  implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
+    def loadXML = XML load stream
+  }
+
   def queryFedora[T](datasetID: DatasetID, datastreamID: String)(f: InputStream => T)(implicit client: FedoraClient): Observable[T] = {
-    Observable.just(FedoraClient.getDatastreamDissemination(datasetID, datastreamID).execute(client))
-      .map(f compose (_.getEntityInputStream))
+    FedoraClient.getDatastreamDissemination(datasetID, datastreamID)
+      .execute(client)
+      .getEntityInputStream
+      .using(f.andThen(Observable.just(_)))
   }
 
   def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {

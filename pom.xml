@@ -64,6 +64,10 @@
 			<artifactId>commons-configuration</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>nl.knaw.dans.easy</groupId>
 			<artifactId>emd</artifactId>
 			<version>2.14-beta-5</version>
