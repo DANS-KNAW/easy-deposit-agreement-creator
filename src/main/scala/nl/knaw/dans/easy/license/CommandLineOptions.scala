@@ -42,11 +42,11 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |Options:
            |""".stripMargin)
 
-  lazy val userID = opt[UserID](name = "userID", short = 'u',
+  val userID = opt[UserID](name = "userID", short = 'u',
     descr = "The userID of the depositor of this dataset")
-  lazy val datasetID = trailArg[DatasetID](name = "datasetID",
+  val datasetID = trailArg[DatasetID](name = "datasetID",
     descr = "The ID of the dataset of which a license has to be created")
-  lazy val outputFile = trailArg[File](name = "license-file",
+  val outputFile = trailArg[File](name = "license-file",
     descr = "The file location where the license needs to be stored")(fileMayNotExist)
 }
 
