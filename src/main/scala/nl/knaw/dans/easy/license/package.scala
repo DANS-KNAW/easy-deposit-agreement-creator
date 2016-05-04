@@ -64,7 +64,7 @@ package object license {
   }
 
   implicit class CloseableResourceExtensions[T <: Closeable](val resource: T) extends AnyVal {
-    def using[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
+    def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
       Observable.using(resource)(observableFactory, t => { dispose(t); t.closeQuietly() }, disposeEagerly)
     }
 
@@ -79,7 +79,7 @@ package object license {
     FedoraClient.getDatastreamDissemination(datasetID, datastreamID)
       .execute(client)
       .getEntityInputStream
-      .using(f.andThen(Observable.just(_)))
+      .usedIn(f.andThen(Observable.just(_)))
   }
 
   def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {

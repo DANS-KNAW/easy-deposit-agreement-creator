@@ -15,11 +15,12 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.OutputStream
+import java.io.{FileOutputStream, OutputStream}
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
+import rx.lang.scala.Observable
 import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
@@ -36,16 +37,24 @@ object Command {
     val did = ps.input.datasetID
     val userID = ps.input.userID
 
-    userID.map(Dataset.getDatasetByID(did, _))
+    val dataset = userID.map(Dataset.getDatasetByID(did, _))
       .getOrElse(Dataset.getDatasetByID(did))
-      .map(_.toString)
-      .toBlocking
-      .foreach(log.info)
 
-    // close LDAP at the end of the main
-    log.debug("closing ldap")
-    ps.ldap.close()
+    new FileOutputStream(ps.input.resultFile)
+      .usedIn(stream => dataset.flatMap(ds => run(ds, stream)))
+      .doOnTerminate {
+        // close LDAP at the end of the main
+        log.debug("closing ldap")
+        ps.ldap.close()
+      }
+      .toBlocking
+      .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.info("completed"))
 
     Schedulers.shutdown()
+  }
+
+  def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
+    Observable.empty.doOnCompleted(println("foobar"))
+//    ???
   }
 }
