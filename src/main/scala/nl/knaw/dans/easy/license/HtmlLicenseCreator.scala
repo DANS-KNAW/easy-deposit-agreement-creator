@@ -11,7 +11,7 @@ import org.apache.velocity.exception.MethodInvocationException
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-class TemplateCreator(propertiesFile: File) {
+class HtmlLicenseCreator(propertiesFile: File) {
 
   val properties = {
     val properties = new Properties
