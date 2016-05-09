@@ -25,8 +25,21 @@ import org.rogach.scallop._
 import org.slf4j.LoggerFactory
 
 class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
+  import CommandLineOptions.log
 
   val fileMayNotExist = singleArgConverter(new File(_))
+  val fileShouldExist = singleArgConverter(filename => {
+    val file = new File(filename)
+    if (!file.exists) {
+      log.error(s"The directory '$filename' does not exist")
+      throw new IllegalArgumentException(s"The directory '$filename' does not exist")
+    }
+    if (!file.isDirectory) {
+      log.error(s"'$filename' is not a directory")
+      throw new IllegalArgumentException(s"'$filename' is not a directory")
+    }
+    else file
+  })
 
   printedName = "easy-license-creator"
 
@@ -37,15 +50,30 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |
            |Usage:
            |
-           |$printedName -u <userID> <datasetID> <license-file>
+           |$printedName -u <userID> <datasetID> <template-dir> <license-file>
            |
            |Options:
            |""".stripMargin)
 
-  val userID = opt[UserID](name = "userID", short = 'u',
+  val userID = opt[UserID](name = "user-id", short = 'u',
     descr = "The userID of the depositor of this dataset")
-  val datasetID = trailArg[DatasetID](name = "datasetID",
+
+  val datasetID = trailArg[DatasetID](name = "dataset-id",
     descr = "The ID of the dataset of which a license has to be created")
+
+  val templateDir = trailArg[File](name = "template-dir", required = true,
+    descr = "Directory containing the template components for the license.")(fileShouldExist)
+  validateOpt(templateDir)(_.map(file =>
+    if (!file.isDirectory)
+      Left(s"Not a directory '$file'")
+    else if (file.directoryContains(new File("license")) && new File(file, "license").isDirectory)
+      Left(s"No subdirectory 'license' found in ${file.getAbsolutePath}")
+    else if (file.directoryContains(new File("velocity-engine.properties")))
+      Left(s"No properties file found in $file")
+    else
+      Right(()))
+    .getOrElse(Left("Could not parse parameter template-dir")))
+
   val outputFile = trailArg[File](name = "license-file",
     descr = "The file location where the license needs to be stored")(fileMayNotExist)
 }
@@ -70,6 +98,10 @@ object CommandLineOptions {
 
     val params = Parameters(
       appHomeDir = homeDir,
+      templateDir = opts.templateDir(),
+      outputFile = opts.outputFile(),
+      userID = opts.userID.get,
+      datasetID = opts.datasetID(),
       fedora = new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),
@@ -85,9 +117,7 @@ object CommandLineOptions {
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
 
         new InitialLdapContext(env, null)
-      },
-      input = ConsoleInput(opts.userID.get, opts.datasetID(), opts.outputFile())
-    )
+      })
 
     log.debug(s"Using the following settings: $params")
 

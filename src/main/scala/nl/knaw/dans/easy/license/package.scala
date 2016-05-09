@@ -34,15 +34,17 @@ package object license {
   type DatasetID = String
   type UserID = String
 
-  case class Parameters(appHomeDir: File, fedora: FedoraCredentials, ldap: LdapContext,
-                        input: ConsoleInput) {
-    override def toString: String = s"Parameters($appHomeDir, $input)"
   }
 
-  case class ConsoleInput(userID: Option[UserID], datasetID: DatasetID, resultFile: File) {
-    override def toString: String = {
-      s"ConsoleInput(${userID.getOrElse("<no userID>")}, $datasetID, $resultFile)"
-    }
+  case class Parameters(appHomeDir: File,
+                        templateDir: File,
+                        outputFile: File,
+                        userID: Option[UserID],
+                        datasetID: DatasetID,
+                        fedora: FedoraCredentials,
+                        ldap: LdapContext) {
+    override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, " +
+      s"${userID.getOrElse("<no userID>")}, $datasetID)"
   }
 
   object Version {

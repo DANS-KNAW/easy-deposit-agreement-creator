@@ -35,13 +35,13 @@ object Command {
     implicit val ldap = ps.ldap
     implicit val fedora = new FedoraClient(ps.fedora)
 
-    val did = ps.input.datasetID
-    val userID = ps.input.userID
+    val did = ps.datasetID
+    val userID = ps.userID
 
     val dataset = userID.map(Dataset.getDatasetByID(did, _))
       .getOrElse(Dataset.getDatasetByID(did))
 
-    new FileOutputStream(ps.input.resultFile)
+    new FileOutputStream(ps.outputFile)
       .usedIn(stream => dataset.observeOn(ComputationScheduler()).flatMap(ds => run(ds, stream)))
       .doOnTerminate {
         // close LDAP at the end of the main
