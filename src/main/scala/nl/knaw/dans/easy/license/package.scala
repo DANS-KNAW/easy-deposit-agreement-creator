@@ -24,6 +24,7 @@ import javax.naming.ldap.LdapContext
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import org.apache.commons.io.IOUtils
 import rx.lang.scala.Observable
+import rx.lang.scala.schedulers.IOScheduler
 
 import scala.language.postfixOps
 import scala.xml.XML
@@ -74,11 +75,17 @@ package object license {
     def loadXML = XML load stream
   }
 
+  implicit class ObservableExtensions[T](val observable: Observable[T]) extends AnyVal {
+    def debugThreadName(s: String = "") = observable.materialize.doOnEach(_ => println(s"$s: ${Thread.currentThread().getName}")).dematerialize
+    def debug(s: String = "") = observable.materialize.doOnEach(x => println(s"$s: $x")).dematerialize
+  }
+
   def queryFedora[T](datasetID: DatasetID, datastreamID: String)(f: InputStream => T)(implicit client: FedoraClient): Observable[T] = {
     FedoraClient.getDatastreamDissemination(datasetID, datastreamID)
       .execute(client)
       .getEntityInputStream
       .usedIn(f.andThen(Observable.just(_)))
+      .subscribeOn(IOScheduler())
   }
 
   def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
@@ -93,6 +100,7 @@ package object license {
       ctx.search("dc=dans,dc=knaw,dc=nl", searchFilter, searchControls)
         .toObservable
         .map(f compose (_.getAttributes))
+        .subscribeOn(IOScheduler())
     }
   }
 }

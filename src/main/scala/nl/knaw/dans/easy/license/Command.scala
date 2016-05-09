@@ -21,6 +21,7 @@ import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
+import rx.lang.scala.schedulers.ComputationScheduler
 import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
@@ -41,7 +42,7 @@ object Command {
       .getOrElse(Dataset.getDatasetByID(did))
 
     new FileOutputStream(ps.input.resultFile)
-      .usedIn(stream => dataset.flatMap(ds => run(ds, stream)))
+      .usedIn(stream => dataset.observeOn(ComputationScheduler()).flatMap(ds => run(ds, stream)))
       .doOnTerminate {
         // close LDAP at the end of the main
         log.debug("closing ldap")

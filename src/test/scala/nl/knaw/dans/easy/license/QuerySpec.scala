@@ -37,6 +37,7 @@ class QuerySpec extends FlatSpec with MockFactory {
     val testSubscriber = TestSubscriber[Attributes]
     queryLDAP(testUserID)(identity)(ctx).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValues(attrs1, attrs2)
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
@@ -58,6 +59,7 @@ class QuerySpec extends FlatSpec with MockFactory {
     val testSubscriber = TestSubscriber[Attributes]
     queryLDAP(testUserID)(identity)(ctx).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertNoValues()
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
