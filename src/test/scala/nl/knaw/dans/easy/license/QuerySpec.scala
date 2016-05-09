@@ -8,7 +8,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.FlatSpec
 import rx.lang.scala.observers.TestSubscriber
 
-class QuerySpec extends FlatSpec with MockFactory {
+class QuerySpec extends UnitSpec with MockFactory {
 
   "queryLDAP" should "return the results of sending a query to LDAP" in {
     val testUserID = "foobar"
