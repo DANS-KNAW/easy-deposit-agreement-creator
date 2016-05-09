@@ -33,10 +33,9 @@ package object license {
   type DatasetID = String
   type UserID = String
 
-  val homeDir = new File(System.getProperty("app.home"))
-
-  case class Parameters(fedora: FedoraCredentials, ldap: LdapContext, input: ConsoleInput) {
-    override def toString: String = s"Parameters($input)"
+  case class Parameters(appHomeDir: File, fedora: FedoraCredentials, ldap: LdapContext,
+                        input: ConsoleInput) {
+    override def toString: String = s"Parameters($appHomeDir, $input)"
   }
 
   case class ConsoleInput(userID: Option[UserID], datasetID: DatasetID, resultFile: File) {

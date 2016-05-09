@@ -56,6 +56,7 @@ object CommandLineOptions {
 
   def parse(args: Array[String]): Parameters = {
     log.debug("Loading application properties ...")
+    val homeDir = new File(System.getProperty("app.home"))
     val props = {
       val ps = new PropertiesConfiguration()
       ps.setDelimiterParsingDisabled(true)
@@ -68,6 +69,7 @@ object CommandLineOptions {
     val opts = new CommandLineOptions(args)
 
     val params = Parameters(
+      appHomeDir = homeDir,
       fedora = new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),
