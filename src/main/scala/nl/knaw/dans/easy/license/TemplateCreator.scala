@@ -32,7 +32,7 @@ class TemplateCreator(propertiesFile: File) {
 
   /**
     * Create the template on location `templateFile` after filling in the placeholders with `map`.
-    * If a `MethodInvocationException` occurs, `templateFile` is not created/deleted.
+    * If an `Exception` occurs, `templateFile` is not created/deleted.
     *
     * @param templateFile The location where to store the template
     * @param map The mapping between placeholders and actual values
@@ -47,8 +47,6 @@ class TemplateCreator(propertiesFile: File) {
       engine.getTemplate(doc.getName, encoding.displayName()).merge(context, writer)
       writer.flush()
       writer.close()
-    }.doOnError {
-      case _: MethodInvocationException => templateFile.delete()
-    }
+    }.doOnError(_ => templateFile.delete())
   }
 }

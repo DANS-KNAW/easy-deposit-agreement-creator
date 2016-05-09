@@ -48,4 +48,14 @@ class TemplateCreatorSpec extends UnitSpec with MockFactory with BeforeAndAfter 
 
     resFile shouldNot exist
   }
+
+  it should "fail when the template does not exist" in {
+    try {
+      new TemplateCreator(new File(parameters.templateDir, "velocity-test-engine-fail.properties"))
+      fail("an error should have been thrown, but this was not the case.")
+    }
+    catch {
+      case _: Throwable => new File(testDir, "template/result.html") shouldNot exist
+    }
+  }
 }
