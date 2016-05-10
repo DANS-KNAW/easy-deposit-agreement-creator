@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{FileOutputStream, OutputStream}
+import java.io.{File, FileOutputStream, OutputStream}
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
@@ -49,13 +49,19 @@ object Command {
         ps.ldap.close()
       }
       .toBlocking
-      .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.info("completed"))
+      .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.debug("completed"))
 
     Schedulers.shutdown()
   }
 
-  def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
-    Observable.empty.doOnCompleted(println("foobar"))
-//    ???
+  def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
+    Observable(subscriber => {
+      val htmlLicenseCreator = new HtmlLicenseCreator
+      val placeholderMap = htmlLicenseCreator.datasetToPlaceholderMap(dataset)
+      val velocityTemplateResolver = new VelocityTemplateResolver(velocityProperties)
+      val result = velocityTemplateResolver.createTemplate(templateFile, placeholderMap)
+
+      result.doOnSuccess(_ => subscriber.onCompleted()).doOnError(subscriber.onError)
+    })
   }
 }

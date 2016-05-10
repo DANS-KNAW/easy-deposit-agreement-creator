@@ -1,17 +1,59 @@
 package nl.knaw.dans.easy.license
 
 import java.io.{File, FileInputStream, FileWriter}
+import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.util.Properties
 
+import nl.knaw.dans.pf.language.emd.EasyMetadata
+import nl.knaw.dans.pf.language.emd.types.IsoDate
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
-import org.apache.velocity.exception.MethodInvocationException
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-class HtmlLicenseCreator(propertiesFile: File) {
+class HtmlLicenseCreator {
+
+  def datasetToPlaceholderMap(dataset: Dataset): PlaceholderMap = {
+    val emd = dataset.emd
+    val user = dataset.easyUser
+    Map(
+      DansManagedDoi -> getDansManagedDoi(emd).getOrElse(""),
+      DansManagedEncodedDoi -> getDansManagedEncodedDoi(emd).getOrElse(""),
+      DateSubmitted -> getDateSubmitted(emd),
+      Title -> emd.getPreferredTitle,
+      UserName -> user.name,
+      UserOrganisation -> user.organization,
+      UserAddress -> user.address,
+      UserPostalCode -> user.postalCode,
+      UserCity -> user.city,
+      UserCountry -> user.country,
+      UserTelephone -> user.telephone,
+      UserEmail -> user.email
+    )
+  }
+
+  private def getDansManagedDoi(emd: EasyMetadata): Option[String] = {
+    Option(emd.getEmdIdentifier.getDansManagedDoi)
+  }
+
+  // this may throw an UnsupportedEncodingException, although this is not expected!
+  private def getDansManagedEncodedDoi(emd: EasyMetadata): Option[String] = {
+    getDansManagedDoi(emd).map(doi => URLEncoder.encode(doi, encoding.displayName()))
+  }
+
+  private def getDateSubmitted(emd: EasyMetadata): String = {
+    emd.getEmdDate
+      .getEasDateSubmitted
+      .asScala
+      .headOption
+      .getOrElse(new IsoDate())
+      .toString
+  }
+}
+
+class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) {
 
   val properties = {
     val properties = new Properties
@@ -20,8 +62,8 @@ class HtmlLicenseCreator(propertiesFile: File) {
   }
   val velocityResources = new File(properties.getProperty("file.resource.loader.path"))
   val templateFileName = properties.getProperty("template.file.name")
-  val doc = new File(velocityResources, templateFileName)
 
+  val doc = new File(velocityResources, templateFileName)
   assert(doc.exists(), s"file does not exist - $doc")
 
   val engine = {
@@ -39,12 +81,12 @@ class HtmlLicenseCreator(propertiesFile: File) {
     * @param encoding the encoding to be used in writing to `templateFile`
     * @return `Success` if creating a template succeeded, `Failure` otherwise
     */
-  def createTemplate(templateFile: File, map: Map[KeywordMapping, Object], encoding: Charset = encoding) = {
+  def createTemplate(templateFile: File, map: PlaceholderMap, encoding: Charset = encoding) = {
     Try {
       val context = new VelocityContext(map.map { case (kw, o) => (kw.keyword, o) }.asJava)
       val writer = new FileWriter(templateFile)
 
-      engine.getTemplate(doc.getName, encoding.displayName()).merge(context, writer)
+      engine.getTemplate(templateFileName, encoding.displayName()).merge(context, writer)
       writer.flush()
       writer.close()
     }.doOnError(_ => templateFile.delete())

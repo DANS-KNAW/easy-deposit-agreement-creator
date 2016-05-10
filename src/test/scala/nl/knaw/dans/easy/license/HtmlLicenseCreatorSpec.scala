@@ -8,7 +8,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
 import scala.util.{Failure, Success}
 
-class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
+class VelocityTemplateResolverSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
 
   implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null)
 
@@ -23,10 +23,10 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
 
   override def afterAll = testDir.getParentFile.deleteDirectory()
 
-  val keyword = new KeywordMapping { val keyword = "name" }
+  val keyword = new KeywordMapping { val keyword: String = "name" }
 
   "createTemplate" should """map the "name" keyword to "world" in the template and put the result in a file""" in {
-    val templateCreator = new HtmlLicenseCreator(new File(parameters.templateDir, "velocity-test-engine.properties"))
+    val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
 
     val map: Map[KeywordMapping, Object] = Map(keyword -> "world")
     val resFile = new File(testDir, "template/result.html")
@@ -38,7 +38,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
   }
 
   it should "fail if not all placeholders are filled in" in {
-    val templateCreator = new HtmlLicenseCreator(new File(parameters.templateDir, "velocity-test-engine.properties"))
+    val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
 
     val map: Map[KeywordMapping, Object] = Map.empty
     val resFile = new File(testDir, "template/result.html")
@@ -51,7 +51,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
 
   it should "fail when the template does not exist" in {
     try {
-      new HtmlLicenseCreator(new File(parameters.templateDir, "velocity-test-engine-fail.properties"))
+      new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine-fail.properties"))
       fail("an error should have been thrown, but this was not the case.")
     }
     catch {

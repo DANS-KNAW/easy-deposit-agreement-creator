@@ -28,20 +28,21 @@ import rx.lang.scala.Observable
 import rx.lang.scala.schedulers.IOScheduler
 
 import scala.language.postfixOps
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 
 package object license {
 
   type DatasetID = String
   type UserID = String
+  type PlaceholderMap = Map[KeywordMapping, Object]
 
   val encoding = Charsets.UTF_8
   def velocityProperties(implicit parameters: Parameters) = {
-    new File(parameters.appHomeDir, "res/velocity-engine.properties")
+    new File(parameters.templateDir, "/velocity-engine.properties")
   }
   def templateFile(implicit parameters: Parameters) = {
-    new File(parameters.appHomeDir, s"res/License-template.html")
+    new File(parameters.templateDir, "/License-template.html")
   }
 
   case class Parameters(appHomeDir: File,
@@ -153,6 +154,13 @@ package object license {
       t match {
         case Failure(e) => Try { f(e); throw e }
         case x => x
+      }
+    }
+
+    def doOnSuccess(f: T => Unit): Try[T] = {
+      t match {
+        case Success(x) => Try { f(x); x }
+        case e => e
       }
     }
   }
