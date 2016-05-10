@@ -28,4 +28,6 @@ case object RestrictRequest              extends KeywordMapping { val keyword = 
 // embargo
 case object UnderEmbargo                 extends KeywordMapping { val keyword = "UnderEmbargo" }
 case object DateAvailable                extends KeywordMapping { val keyword = "DateAvailable" }
+
+case object CurrentDateAndTime           extends KeywordMapping { val keyword = "CurrentDateAndTime" }
 // @formatter:on

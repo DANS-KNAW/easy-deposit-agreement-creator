@@ -25,7 +25,8 @@ object HtmlLicenseCreator {
     header(emd) ++
       users(dataset.easyUser) ++
       accessRights(emd) ++
-      embargo(emd)
+      embargo(emd) +
+      currentDateAndTime
   }
 
   def header(emd: EasyMetadata): PlaceholderMap = {
@@ -82,6 +83,8 @@ object HtmlLicenseCreator {
       DateAvailable -> dateAvailable.map(_.toString("YYYY-MM-dd")).getOrElse("")
     )
   }
+
+  def currentDateAndTime = CurrentDateAndTime -> new DateTime().toString("YYYY-MM-dd HH:mm:ss")
 }
 
 class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) {
