@@ -11,6 +11,7 @@ import nl.knaw.dans.pf.language.emd.EasyMetadata
 import nl.knaw.dans.pf.language.emd.types.IsoDate
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
+import org.joda.time.DateTime
 
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
@@ -23,7 +24,8 @@ object HtmlLicenseCreator {
 
     header(emd) ++
       users(dataset.easyUser) ++
-      accessRights(emd)
+      accessRights(emd) ++
+      embargo(emd)
   }
 
   def header(emd: EasyMetadata): PlaceholderMap = {
@@ -76,6 +78,22 @@ object HtmlLicenseCreator {
       RestrictGroup -> List(REQUEST_PERMISSION),
       RestrictRequest -> List(ACCESS_ELSEWHERE, NO_ACCESS)
     ).mapValues(lst => boolean2Boolean(lst.contains(ac)))
+  }
+
+  def embargo(emd: EasyMetadata): PlaceholderMap = {
+    val dateAvailable = getDateAvailable(emd)
+    Map(
+      UnderEmbargo -> boolean2Boolean(dateAvailable.exists(new DateTime().plusMinutes(1).isBefore)),
+      DateAvailable -> dateAvailable.map(_.toString("YYYY-MM-dd")).getOrElse("")
+    )
+  }
+
+  private def getDateAvailable(emd: EasyMetadata): Option[DateTime] = {
+    emd.getEmdDate
+      .getEasAvailable
+      .asScala
+      .headOption
+      .map(_.getValue)
   }
 }
 

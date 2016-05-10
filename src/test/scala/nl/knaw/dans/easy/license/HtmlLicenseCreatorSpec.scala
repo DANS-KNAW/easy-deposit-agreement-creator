@@ -9,6 +9,7 @@ import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.IsoDate
 import org.apache.velocity.exception.MethodInvocationException
+import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
@@ -216,6 +217,47 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     res should contain (RestrictRequest, false)
 
     res should have size 5
+  }
+
+  "embargo" should "give the embargo keyword mappings with UnderEmbargo=true when there is an embargo" in {
+    val nextYear = new DateTime().plusYears(1)
+    val dates = util.Arrays.asList(new IsoDate(nextYear), new IsoDate("1992-07-30"))
+
+    emd.getEmdDate _ expects () returning date
+    date.getEasAvailable _ expects () returning dates
+
+    val res = HtmlLicenseCreator.embargo(emd)
+
+    res should contain (UnderEmbargo, true)
+    res should contain (DateAvailable, nextYear.toString("YYYY-MM-dd"))
+
+    res should have size 2
+  }
+
+  it should "give the embargo keyword mappings with UnderEmbargo=false when there is no embargo" in {
+    val dates = util.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
+
+    emd.getEmdDate _ expects () returning date
+    date.getEasAvailable _ expects () returning dates
+
+    val res = HtmlLicenseCreator.embargo(emd)
+
+    res should contain (UnderEmbargo, false)
+    res should contain (DateAvailable, "1992-07-30")
+
+    res should have size 2
+  }
+
+  it should "give the embargo keyword mappings with UnderEmbargo=false when no DateAvailable is available" in {
+    emd.getEmdDate _ expects () returning date
+    date.getEasAvailable _ expects () returning Collections.emptyList()
+
+    val res = HtmlLicenseCreator.embargo(emd)
+
+    res should contain (UnderEmbargo, false)
+    res should contain (DateAvailable, "")
+
+    res should have size 2
   }
 }
 

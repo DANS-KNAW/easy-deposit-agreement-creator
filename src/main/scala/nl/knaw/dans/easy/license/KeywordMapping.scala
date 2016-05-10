@@ -24,4 +24,8 @@ case object OpenAccessForRegisteredUsers extends KeywordMapping { val keyword = 
 case object OtherAccess                  extends KeywordMapping { val keyword = "OtherAccess" }
 case object RestrictGroup                extends KeywordMapping { val keyword = "RestrictGroup" }
 case object RestrictRequest              extends KeywordMapping { val keyword = "RestrictRequest" }
+
+// embargo
+case object UnderEmbargo                 extends KeywordMapping { val keyword = "UnderEmbargo" }
+case object DateAvailable                extends KeywordMapping { val keyword = "DateAvailable" }
 // @formatter:on
