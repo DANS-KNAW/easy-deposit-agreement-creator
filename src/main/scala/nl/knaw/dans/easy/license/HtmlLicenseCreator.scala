@@ -5,32 +5,33 @@ import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.util.Properties
 
+import nl.knaw.dans.common.lang.dataset.AccessCategory
+import nl.knaw.dans.common.lang.dataset.AccessCategory._
 import nl.knaw.dans.pf.language.emd.EasyMetadata
 import nl.knaw.dans.pf.language.emd.types.IsoDate
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 
 import scala.collection.JavaConverters._
+import scala.language.implicitConversions
 import scala.util.Try
 
 class HtmlLicenseCreator {
 
   def datasetToPlaceholderMap(dataset: Dataset): PlaceholderMap = {
     val emd = dataset.emd
-    val user = dataset.easyUser
+
+    header(emd) ++
+      users(dataset.easyUser) ++
+      accessRights(emd)
+  }
+
+  def header(emd: EasyMetadata): PlaceholderMap = {
     Map(
       DansManagedDoi -> getDansManagedDoi(emd).getOrElse(""),
       DansManagedEncodedDoi -> getDansManagedEncodedDoi(emd).getOrElse(""),
       DateSubmitted -> getDateSubmitted(emd),
-      Title -> emd.getPreferredTitle,
-      UserName -> user.name,
-      UserOrganisation -> user.organization,
-      UserAddress -> user.address,
-      UserPostalCode -> user.postalCode,
-      UserCity -> user.city,
-      UserCountry -> user.country,
-      UserTelephone -> user.telephone,
-      UserEmail -> user.email
+      Title -> emd.getPreferredTitle
     )
   }
 
@@ -50,6 +51,31 @@ class HtmlLicenseCreator {
       .headOption
       .getOrElse(new IsoDate())
       .toString
+  }
+
+  def users(user: EasyUser): PlaceholderMap = {
+    Map(
+      UserName -> user.name,
+      UserOrganisation -> user.organization,
+      UserAddress -> user.address,
+      UserPostalCode -> user.postalCode,
+      UserCity -> user.city,
+      UserCountry -> user.country,
+      UserTelephone -> user.telephone,
+      UserEmail -> user.email
+    )
+  }
+
+  def accessRights(emd: EasyMetadata): PlaceholderMap = {
+    val ac = Option(emd.getEmdRights.getAccessCategory).getOrElse(OPEN_ACCESS)
+
+    Map[KeywordMapping, List[AccessCategory]](
+      OpenAccess -> List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE),
+      OpenAccessForRegisteredUsers -> List(OPEN_ACCESS_FOR_REGISTERED_USERS),
+      OtherAccess -> List(GROUP_ACCESS),
+      RestrictGroup -> List(REQUEST_PERMISSION),
+      RestrictRequest -> List(ACCESS_ELSEWHERE, NO_ACCESS)
+    ).mapValues(lst => boolean2Boolean(lst.contains(ac)))
   }
 }
 
