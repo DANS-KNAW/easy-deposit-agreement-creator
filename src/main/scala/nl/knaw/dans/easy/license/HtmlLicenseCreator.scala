@@ -3,12 +3,12 @@ package nl.knaw.dans.easy.license
 import java.io.{File, FileInputStream, FileWriter}
 import java.net.URLEncoder
 import java.nio.charset.Charset
-import java.util.Properties
+import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
-import nl.knaw.dans.pf.language.emd.EasyMetadata
 import nl.knaw.dans.pf.language.emd.types.IsoDate
+import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate}
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.joda.time.DateTime
@@ -32,7 +32,7 @@ object HtmlLicenseCreator {
     Map(
       DansManagedDoi -> getDansManagedDoi(emd).getOrElse(""),
       DansManagedEncodedDoi -> getDansManagedEncodedDoi(emd).getOrElse(""),
-      DateSubmitted -> getDateSubmitted(emd),
+      DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
       Title -> emd.getPreferredTitle
     )
   }
@@ -46,13 +46,8 @@ object HtmlLicenseCreator {
     getDansManagedDoi(emd).map(doi => URLEncoder.encode(doi, encoding.displayName()))
   }
 
-  private def getDateSubmitted(emd: EasyMetadata): String = {
-    emd.getEmdDate
-      .getEasDateSubmitted
-      .asScala
-      .headOption
-      .getOrElse(new IsoDate())
-      .toString
+  private def getDate(emd: EasyMetadata)(f: EmdDate => ju.List[IsoDate]) = {
+    f(emd.getEmdDate).asScala.headOption
   }
 
   def users(user: EasyUser): PlaceholderMap = {
@@ -81,26 +76,18 @@ object HtmlLicenseCreator {
   }
 
   def embargo(emd: EasyMetadata): PlaceholderMap = {
-    val dateAvailable = getDateAvailable(emd)
+    val dateAvailable = getDate(emd)(_.getEasAvailable).map(_.getValue)
     Map(
       UnderEmbargo -> boolean2Boolean(dateAvailable.exists(new DateTime().plusMinutes(1).isBefore)),
       DateAvailable -> dateAvailable.map(_.toString("YYYY-MM-dd")).getOrElse("")
     )
-  }
-
-  private def getDateAvailable(emd: EasyMetadata): Option[DateTime] = {
-    emd.getEmdDate
-      .getEasAvailable
-      .asScala
-      .headOption
-      .map(_.getValue)
   }
 }
 
 class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) {
 
   val properties = {
-    val properties = new Properties
+    val properties = new ju.Properties
     properties.load(new FileInputStream(propertiesFile))
     properties
   }
