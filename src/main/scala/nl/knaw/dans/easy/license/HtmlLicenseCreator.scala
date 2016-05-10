@@ -16,7 +16,7 @@ import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 import scala.util.Try
 
-class HtmlLicenseCreator {
+object HtmlLicenseCreator {
 
   def datasetToPlaceholderMap(dataset: Dataset): PlaceholderMap = {
     val emd = dataset.emd

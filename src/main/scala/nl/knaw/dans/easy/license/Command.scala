@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{File, FileOutputStream, OutputStream}
+import java.io.{FileOutputStream, OutputStream}
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
@@ -56,8 +56,7 @@ object Command {
 
   def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
     Observable(subscriber => {
-      val htmlLicenseCreator = new HtmlLicenseCreator
-      val placeholderMap = htmlLicenseCreator.datasetToPlaceholderMap(dataset)
+      val placeholderMap = HtmlLicenseCreator.datasetToPlaceholderMap(dataset)
       val velocityTemplateResolver = new VelocityTemplateResolver(velocityProperties)
       val result = velocityTemplateResolver.createTemplate(templateFile, placeholderMap)
 
