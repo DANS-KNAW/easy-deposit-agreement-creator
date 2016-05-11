@@ -42,7 +42,7 @@ object Command {
       .getOrElse(Dataset.getDatasetByID(did))
 
     new FileOutputStream(ps.outputFile)
-      .usedIn(stream => dataset.observeOn(ComputationScheduler()).flatMap(ds => run(ds, stream)))
+      .usedIn(stream => dataset.flatMap(ds => run(ds, stream)))
       .doOnTerminate {
         // close LDAP at the end of the main
         log.debug("closing ldap")

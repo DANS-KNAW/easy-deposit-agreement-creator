@@ -25,7 +25,6 @@ import javax.naming.ldap.LdapContext
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
 import rx.lang.scala.Observable
-import rx.lang.scala.schedulers.IOScheduler
 
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -215,7 +214,6 @@ package object license {
       .execute(client)
       .getEntityInputStream
       .usedIn(f.andThen(Observable.just(_)))
-      .subscribeOn(IOScheduler())
   }
 
   def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
@@ -230,7 +228,6 @@ package object license {
       ctx.search("dc=dans,dc=knaw,dc=nl", searchFilter, searchControls)
         .toObservable
         .map(f compose (_.getAttributes))
-        .subscribeOn(IOScheduler())
     }
   }
 
