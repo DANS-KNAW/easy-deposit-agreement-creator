@@ -30,4 +30,9 @@ case object UnderEmbargo                 extends KeywordMapping { val keyword = 
 case object DateAvailable                extends KeywordMapping { val keyword = "DateAvailable" }
 
 case object CurrentDateAndTime           extends KeywordMapping { val keyword = "CurrentDateAndTime" }
+
+// table
+case object MetadataTable                extends KeywordMapping { val keyword = "MetadataTable" }
+case object MetadataKey                  extends KeywordMapping { val keyword = "MetadataKey" }
+case object MetadataValue                extends KeywordMapping { val keyword = "MetadataValue" }
 // @formatter:on

@@ -1,32 +1,45 @@
 package nl.knaw.dans.easy.license
 
-import java.io.{File, FileInputStream, FileWriter}
+import java.io.{File, FileWriter}
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.{util => ju}
 
+import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
-import nl.knaw.dans.pf.language.emd.types.IsoDate
-import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate}
+import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
+import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
+import rx.lang.scala.{Observable, ObservableExtensions}
 
 import scala.collection.JavaConverters._
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, postfixOps}
 import scala.util.Try
 
-object HtmlLicenseCreator {
+class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameters) {
 
-  def datasetToPlaceholderMap(dataset: Dataset): PlaceholderMap = {
+  val log = LoggerFactory.getLogger(getClass)
+
+  val metadataNames = loadProperties(metadataTermsFile)
+    .doOnError(e => log.error(s"could not read the metadata terms in $metadataTermsFile", e))
+    .getOrElse(new ju.Properties())
+
+  def datasetToPlaceholderMap(dataset: Dataset)(implicit client: FedoraClient): Observable[PlaceholderMap] = {
     val emd = dataset.emd
 
-    header(emd) ++
+    val placeholders = header(emd) ++
       users(dataset.easyUser) ++
       accessRights(emd) ++
       embargo(emd) +
-      currentDateAndTime
+      (CurrentDateAndTime -> currentDateAndTime)
+
+    metadataTable(emd)
+      .map(MetadataTable -> _)
+      .map(placeholders + _)
   }
 
   def header(emd: EasyMetadata): PlaceholderMap = {
@@ -84,16 +97,61 @@ object HtmlLicenseCreator {
     )
   }
 
-  def currentDateAndTime = CurrentDateAndTime -> new DateTime().toString("YYYY-MM-dd HH:mm:ss")
+  def currentDateAndTime = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
+
+  def metadataTable(emd: EasyMetadata)(implicit client: FedoraClient): Observable[ju.List[ju.Map[String, String]]] = {
+    emd.getTerms
+      .asScala
+      .toObservable
+      .map(term => (term, emd.getTerm(term).asScala))
+      .filter { case (_, items) => items.nonEmpty }
+      .flatMap { case (term, items) =>
+        val name = metadataNames.getProperty(term.getQualifiedName)
+        val valueObs = if (term.getName == Term.Name.AUDIENCE) formatAudience(emd)
+        else if (term.getName == Term.Name.ACCESSRIGHTS) Observable.just(formatAccessRights(items.head))
+        else Observable.just(items.mkString(", "))
+
+        valueObs.map(value => Map[KeywordMapping, String](MetadataKey -> name, MetadataValue -> value)
+          .map { case (k, v) => (k.keyword, v) }
+          .asJava)
+      }
+      .foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
+  }
+
+  private def formatAudience(emd: EasyMetadata)(implicit client: FedoraClient): Observable[String] = {
+    // TODO I need a DisciplineCollectionService or something???
+
+    emd.getEmdAudience.getValues.asScala.toObservable
+      .flatMap(sid => queryFedora(sid, "DC")(_.loadXML \\ "title" text))
+      .reduce(_ + "; " + _)
+  }
+
+  private def formatAccessRights(item: MetadataItem): String = {
+    Try(AccessCategory.valueOf(item.toString)) // may throw an IllegalArgumentException
+      .map {
+        // @formatter:off
+        case ANONYMOUS_ACCESS                 => "Anonymous"
+        case OPEN_ACCESS                      => "Open Access"
+        case OPEN_ACCESS_FOR_REGISTERED_USERS => "Open access for registered users"
+        case GROUP_ACCESS                     => "Restricted -'archaeology' group"
+        case REQUEST_PERMISSION               => "Restricted -request permission"
+        case ACCESS_ELSEWHERE                 => "Elsewhere"
+        case NO_ACCESS                        => "Other"
+        case FREELY_AVAILABLE                 => "Open Access"
+        // @formatter:on
+      }.doOnError(e => log.warn("No available mapping; using acces category value directly"))
+        .getOrElse(item.toString)
+  }
 }
 
 class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) {
 
-  val properties = {
-    val properties = new ju.Properties
-    properties.load(new FileInputStream(propertiesFile))
-    properties
-  }
+  val log = LoggerFactory.getLogger(getClass)
+
+  val properties = loadProperties(propertiesFile)
+    .doOnError(e => log.error(s"could not read the velocity properties in $propertiesFile", e))
+    .getOrElse(new ju.Properties())
+
   val velocityResources = new File(properties.getProperty("file.resource.loader.path"))
   val templateFileName = properties.getProperty("template.file.name")
 
@@ -117,7 +175,8 @@ class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parame
     */
   def createTemplate(templateFile: File, map: PlaceholderMap, encoding: Charset = encoding) = {
     Try {
-      val context = new VelocityContext(map.map { case (kw, o) => (kw.keyword, o) }.asJava)
+      val context = new VelocityContext
+      map.foreach { case (kw, o) => context.put(kw.keyword, o) }
       val writer = new FileWriter(templateFile)
 
       engine.getTemplate(templateFileName, encoding.displayName()).merge(context, writer)

@@ -54,13 +54,14 @@ object Command {
     Schedulers.shutdown()
   }
 
-  def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
+  def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters, client: FedoraClient): Observable[Nothing] = {
     Observable(subscriber => {
-      val placeholderMap = HtmlLicenseCreator.datasetToPlaceholderMap(dataset)
+      val htmlLicenseCreator = new HtmlLicenseCreator(metadataTermsProperties)
       val velocityTemplateResolver = new VelocityTemplateResolver(velocityProperties)
-      val result = velocityTemplateResolver.createTemplate(templateFile, placeholderMap)
 
-      result.doOnSuccess(_ => subscriber.onCompleted()).doOnError(subscriber.onError)
+      htmlLicenseCreator.datasetToPlaceholderMap(dataset)
+        .flatMap(velocityTemplateResolver.createTemplate(templateFile, _).toObservable)
+        .subscribe(_ => {}, subscriber.onError, subscriber.onCompleted)
     })
   }
 }

@@ -1,36 +1,45 @@
 package nl.knaw.dans.easy.license
 
 import java.io.File
-import java.util
-import java.util.Collections
+import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.IsoDate
-import org.apache.velocity.exception.MethodInvocationException
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
-import scala.util.{Failure, Success}
+class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
 
-class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
-
-  trait ScalaEasyMetadata extends EasyMetadata {
+  trait MockEasyMetadata extends EasyMetadata {
     def toString(x: String, y: Name): String = ""
     def toString(x: String, y: Term): String = ""
     def toString(x: String, y: MDContainer): String = ""
     def toString(x: String): String = ""
   }
 
-  val emd = mock[ScalaEasyMetadata]
+  val emd = mock[MockEasyMetadata]
   val ident = mock[EmdIdentifier]
   val date = mock[EmdDate]
   val rights = mock[EmdRights]
 
+  implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null)
+
+  before {
+    new File(getClass.getResource("/velocity/").toURI)
+      .copyDir(parameters.templateDir)
+  }
+
+  after {
+    parameters.templateDir.deleteDirectory()
+  }
+
+  override def afterAll = testDir.getParentFile.deleteDirectory()
+
   "header" should "yield a map of the DOI, date and title" in {
-    val dates = util.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
+    val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects () returning ident twice()
     ident.getDansManagedDoi _ expects () returning "12.3456/dans-ab7-cdef" twice()
@@ -38,7 +47,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     date.getEasDateSubmitted _ expects () returning dates
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = HtmlLicenseCreator.header(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).header(emd)
 
     res should contain (DansManagedDoi, "12.3456/dans-ab7-cdef")
     res should contain (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef")
@@ -49,15 +58,15 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
   }
 
   it should "yield a map with default values if the actual values are null" in {
-    val dates = util.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
+    val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects () returning ident twice()
     ident.getDansManagedDoi _ expects () returning null twice()
     emd.getEmdDate _ expects () returning date
-    date.getEasDateSubmitted _ expects () returning Collections.emptyList()
+    date.getEasDateSubmitted _ expects () returning ju.Collections.emptyList()
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = HtmlLicenseCreator.header(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).header(emd)
 
     res should contain (DansManagedDoi, "")
     res should contain (DansManagedEncodedDoi, "")
@@ -70,7 +79,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
   "users" should "yield a map with user data" in {
     val user = new EasyUser("uid", "name", "org", "addr", "postal", "city", "country", "tel", "mail")
 
-    val res = HtmlLicenseCreator.users(user)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).users(user)
 
     res should contain (UserName -> "name")
     res should contain (UserOrganisation -> "org")
@@ -88,7 +97,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -103,7 +112,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ANONYMOUS_ACCESS
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -118,7 +127,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.FREELY_AVAILABLE
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -133,7 +142,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, true)
@@ -148,7 +157,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.GROUP_ACCESS
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -163,7 +172,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -178,7 +187,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -193,7 +202,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.NO_ACCESS
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -208,7 +217,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = HtmlLicenseCreator.accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -221,12 +230,12 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
 
   "embargo" should "give the embargo keyword mappings with UnderEmbargo=true when there is an embargo" in {
     val nextYear = new DateTime().plusYears(1)
-    val dates = util.Arrays.asList(new IsoDate(nextYear), new IsoDate("1992-07-30"))
+    val dates = ju.Arrays.asList(new IsoDate(nextYear), new IsoDate("1992-07-30"))
 
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning dates
 
-    val res = HtmlLicenseCreator.embargo(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
 
     res should contain (UnderEmbargo, true)
     res should contain (DateAvailable, nextYear.toString("YYYY-MM-dd"))
@@ -235,12 +244,12 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
   }
 
   it should "give the embargo keyword mappings with UnderEmbargo=false when there is no embargo" in {
-    val dates = util.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
+    val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning dates
 
-    val res = HtmlLicenseCreator.embargo(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
 
     res should contain (UnderEmbargo, false)
     res should contain (DateAvailable, "1992-07-30")
@@ -250,66 +259,13 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory {
 
   it should "give the embargo keyword mappings with UnderEmbargo=false when no DateAvailable is available" in {
     emd.getEmdDate _ expects () returning date
-    date.getEasAvailable _ expects () returning Collections.emptyList()
+    date.getEasAvailable _ expects () returning ju.Collections.emptyList()
 
-    val res = HtmlLicenseCreator.embargo(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
 
     res should contain (UnderEmbargo, false)
     res should contain (DateAvailable, "")
 
     res should have size 2
-  }
-}
-
-class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with BeforeAndAfterAll {
-
-  implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null)
-
-  before {
-    new File(getClass.getResource("/velocity/").toURI)
-      .copyDir(parameters.templateDir)
-  }
-
-  after {
-    parameters.templateDir.deleteDirectory()
-  }
-
-  override def afterAll = testDir.getParentFile.deleteDirectory()
-
-  val keyword: KeywordMapping = new KeywordMapping { val keyword: String = "name" }
-
-  "createTemplate" should """map the "name" keyword to "world" in the template and put the result in a file""" in {
-    val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
-
-    val map: Map[KeywordMapping, Object] = Map(keyword -> "world")
-    val resFile = new File(testDir, "template/result.html")
-
-    templateCreator.createTemplate(resFile, map) shouldBe a[Success[_]]
-
-    resFile should exist
-    resFile.read() should include ("<p>hello world</p>")
-  }
-
-  it should "fail if not all placeholders are filled in" in {
-    val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
-
-    val map: Map[KeywordMapping, Object] = Map.empty
-    val resFile = new File(testDir, "template/result.html")
-
-    val res = templateCreator.createTemplate(resFile, map)
-    res shouldBe a[Failure[_]]
-    (the [MethodInvocationException] thrownBy res.get).getMessage should include ("$name")
-
-    resFile shouldNot exist
-  }
-
-  it should "fail when the template does not exist" in {
-    try {
-      new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine-fail.properties"))
-      fail("an error should have been thrown, but this was not the case.")
-    }
-    catch {
-      case _: Throwable => new File(testDir, "template/result.html") shouldNot exist
-    }
   }
 }

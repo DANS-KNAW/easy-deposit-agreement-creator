@@ -15,7 +15,7 @@
   */
 package nl.knaw.dans.easy
 
-import java.io.{Closeable, File, IOException, InputStream}
+import java.io._
 import java.nio.charset.Charset
 import java.util.Properties
 import javax.naming.NamingEnumeration
@@ -43,6 +43,9 @@ package object license {
   }
   def templateFile(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/License-template.html")
+  }
+  def metadataTermsProperties(implicit parameters: Parameters) = {
+    new File(parameters.templateDir, "/MetadataTerms.properties")
   }
 
   case class Parameters(appHomeDir: File,
@@ -163,6 +166,17 @@ package object license {
         case e => e
       }
     }
+
+    def eventually[Ignore](effect: () => Ignore): Try[T] = {
+      t.doOnSuccess(_ => effect()).doOnError(_ => effect())
+    }
+
+    def toObservable: Observable[T] = {
+      t match {
+        case Success(x) => Observable.just(x)
+        case Failure(e) => Observable.error(e)
+      }
+    }
   }
 
   implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {
@@ -180,6 +194,10 @@ package object license {
       Observable.using(resource)(observableFactory, t => { dispose(t); t.closeQuietly() }, disposeEagerly)
     }
 
+    def use[S](f: T => S, dispose: T => Unit = _ => {}): Try[S] = {
+      Try(f(resource)).eventually(() => { dispose(resource); resource.closeQuietly() })
+    }
+
     def closeQuietly() = IOUtils closeQuietly resource
   }
 
@@ -187,7 +205,7 @@ package object license {
     def loadXML = XML load stream
   }
 
-  implicit class ObservableExtensions[T](val observable: Observable[T]) extends AnyVal {
+  implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
     def debugThreadName(s: String = "") = observable.materialize.doOnEach(_ => println(s"$s: ${Thread.currentThread().getName}")).dematerialize
     def debug(s: String = "") = observable.materialize.doOnEach(x => println(s"$s: $x")).dematerialize
   }
@@ -214,5 +232,14 @@ package object license {
         .map(f compose (_.getAttributes))
         .subscribeOn(IOScheduler())
     }
+  }
+
+  def loadProperties(file: File): Try[Properties] = {
+    new FileInputStream(file)
+      .use(fis => {
+        val props = new Properties
+        props.load(fis)
+        props
+      })
   }
 }
