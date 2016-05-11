@@ -22,10 +22,13 @@ import javax.naming.NamingEnumeration
 import javax.naming.directory.{Attributes, SearchControls}
 import javax.naming.ldap.LdapContext
 
+import com.yourmediashelf.fedora.client.request.RiSearch
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
+import org.apache.commons.lang.StringUtils
 import rx.lang.scala.Observable
 
+import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
@@ -178,6 +181,16 @@ package object license {
     }
   }
 
+  implicit class StringExtensions(val s: String) extends AnyVal {
+    /**
+      * Checks whether the `String` is blank
+      * (according to [[org.apache.commons.lang.StringUtils.isBlank]])
+      *
+      * @return
+      */
+    def isBlank = StringUtils.isBlank(s)
+  }
+
   implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {
     def toObservable = Observable.from(new Iterable[T] {
       def iterator = new Iterator[T] {
@@ -214,6 +227,15 @@ package object license {
       .execute(client)
       .getEntityInputStream
       .usedIn(f.andThen(Observable.just(_)))
+  }
+
+  def queryRiSearch[T](query: => String)(implicit client: FedoraClient) = {
+    Observable.defer {
+      new RiSearch(query).lang("sparql").format("csv").execute(client)
+        .getEntityInputStream
+        .usedIn(is => Observable.from(Source.fromInputStream(is)
+          .getLines().toIterable).drop(1).map(_.split("/").last))
+    }
   }
 
   def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {

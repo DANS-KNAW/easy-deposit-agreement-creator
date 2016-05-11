@@ -46,8 +46,15 @@ case object DateAvailable                extends KeywordMapping { val keyword = 
 
 case object CurrentDateAndTime           extends KeywordMapping { val keyword = "CurrentDateAndTime" }
 
-// table
+// metadata table
 case object MetadataTable                extends KeywordMapping { val keyword = "MetadataTable" }
 case object MetadataKey                  extends KeywordMapping { val keyword = "MetadataKey" }
 case object MetadataValue                extends KeywordMapping { val keyword = "MetadataValue" }
+
+// file table
+case object HasFiles                     extends KeywordMapping { val keyword = "HasFiles" }
+case object FileTable                    extends KeywordMapping { val keyword = "FileTable" }
+case object FileKey                      extends KeywordMapping { val keyword = "FileKey" }
+case object FileValue                    extends KeywordMapping { val keyword = "FileValue" }
+
 // @formatter:on

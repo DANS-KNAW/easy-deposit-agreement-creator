@@ -52,9 +52,12 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
       embargo(emd) +
       (CurrentDateAndTime -> currentDateAndTime)
 
-    metadataTable(emd)
-      .map(MetadataTable -> _)
-      .map(placeholders + _)
+    // TODO that boolean2Boolean(true) is probably not correct!
+    val metadata = metadataTable(emd).map(MetadataTable -> _)
+    val files = filesTable(dataset.datasetID).map(FileTable -> _)
+    metadata.zipWith(files)((meta, file) =>
+      (map: Map[KeywordMapping, Object]) => map + meta + file + (HasFiles -> boolean2Boolean(!file._2.isEmpty)))
+      .map(_(placeholders))
   }
 
   def header(emd: EasyMetadata): PlaceholderMap = {
@@ -156,6 +159,23 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
         // @formatter:on
       }.doOnError(e => log.warn("No available mapping; using acces category value directly"))
         .getOrElse(item.toString)
+  }
+
+  def filesTable(datasetID: DatasetID)(implicit client: FedoraClient): Observable[ju.List[ju.Map[String, String]]] = {
+    lazy val query = "PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> " +
+      "PREFIX fmodel: <info:fedora/fedora-system:def/model#> " +
+      s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
+      "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
+
+    val xs = for {
+      filePid <- queryRiSearch(query)
+      path <- queryFedora(filePid, "EASY_FILE_METADATA")(_.loadXML \\ "path" text)
+      h = FedoraClient.getDatastream(filePid, "EASY_FILE").execute(client).getDatastreamProfile.getDsChecksum
+      hash = if (h.isBlank || h == "none") "-------------not-calculated-------------" else h
+      map = Map[KeywordMapping, String](FileKey -> path, FileValue -> hash).map { case (k, v) => (k.keyword, v) }.asJava
+    } yield map
+
+    xs.foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
   }
 }
 
