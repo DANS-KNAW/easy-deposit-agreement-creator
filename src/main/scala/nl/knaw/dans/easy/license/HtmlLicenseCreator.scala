@@ -47,7 +47,7 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
     val emd = dataset.emd
 
     val placeholders = header(emd) ++
-      users(dataset.easyUser) ++
+      depositor(dataset.easyUser) ++
       accessRights(emd) ++
       embargo(emd) +
       (CurrentDateAndTime -> currentDateAndTime)
@@ -82,16 +82,16 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
     f(emd.getEmdDate).asScala.headOption
   }
 
-  def users(user: EasyUser): PlaceholderMap = {
+  def depositor(depositor: EasyUser): PlaceholderMap = {
     Map(
-      UserName -> user.name,
-      UserOrganisation -> user.organization,
-      UserAddress -> user.address,
-      UserPostalCode -> user.postalCode,
-      UserCity -> user.city,
-      UserCountry -> user.country,
-      UserTelephone -> user.telephone,
-      UserEmail -> user.email
+      DepositorName -> depositor.name,
+      DepositorOrganisation -> depositor.organization,
+      DepositorAddress -> depositor.address,
+      DepositorPostalCode -> depositor.postalCode,
+      DepositorCity -> depositor.city,
+      DepositorCountry -> depositor.country,
+      DepositorTelephone -> depositor.telephone,
+      DepositorEmail -> depositor.email
     )
   }
 

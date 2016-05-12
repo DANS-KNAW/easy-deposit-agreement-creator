@@ -26,14 +26,14 @@ import rx.lang.scala.observers.TestSubscriber
 class QuerySpec extends UnitSpec with MockFactory {
 
   "queryLDAP" should "return the results of sending a query to LDAP" in {
-    val testUserID = "foobar"
+    val testDepositorID = "foobar"
 
     val ctx = mock[LdapContext]
     val result = mock[NamingEnumeration[SearchResult]]
     val attrs1 = mock[Attributes]
     val attrs2 = mock[Attributes]
 
-    val f = where { (_: String, filter: String, _: SearchControls) => filter.contains(s"uid=$testUserID") }
+    val f = where { (_: String, filter: String, _: SearchControls) => filter.contains(s"uid=$testDepositorID") }
 
     (ctx.search(_: String, _: String, _: SearchControls)) expects f returning result
 
@@ -50,7 +50,7 @@ class QuerySpec extends UnitSpec with MockFactory {
     }
 
     val testSubscriber = TestSubscriber[Attributes]
-    queryLDAP(testUserID)(identity)(ctx).subscribe(testSubscriber)
+    queryLDAP(testDepositorID)(identity)(ctx).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValues(attrs1, attrs2)
@@ -60,19 +60,19 @@ class QuerySpec extends UnitSpec with MockFactory {
   }
 
   it should "return an Observable with no onNext calls when the query has no results" in {
-    val testUserID = "foobar"
+    val testDepositorID = "foobar"
 
     val ctx = mock[LdapContext]
     val result = mock[NamingEnumeration[SearchResult]]
 
-    val f = where { (_: String, filter: String, _: SearchControls) => filter.contains(s"uid=$testUserID") }
+    val f = where { (_: String, filter: String, _: SearchControls) => filter.contains(s"uid=$testDepositorID") }
 
     (ctx.search(_: String, _: String, _: SearchControls)) expects f returning result
 
     result.hasMore _ expects () returns false once()
 
     val testSubscriber = TestSubscriber[Attributes]
-    queryLDAP(testUserID)(identity)(ctx).subscribe(testSubscriber)
+    queryLDAP(testDepositorID)(identity)(ctx).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertNoValues()

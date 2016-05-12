@@ -36,7 +36,7 @@ import scala.xml.XML
 package object license {
 
   type DatasetID = String
-  type UserID = String
+  type DepositorID = String
   type PlaceholderMap = Map[KeywordMapping, Object]
 
   val encoding = Charsets.UTF_8
@@ -53,12 +53,12 @@ package object license {
   case class Parameters(appHomeDir: File,
                         templateDir: File,
                         outputFile: File,
-                        userID: Option[UserID],
+                        depositorID: Option[DepositorID],
                         datasetID: DatasetID,
                         fedora: FedoraCredentials,
                         ldap: LdapContext) {
     override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, " +
-      s"${userID.getOrElse("<no userID>")}, $datasetID)"
+      s"${depositorID.getOrElse("<no depositorID>")}, $datasetID)"
   }
 
   object Version {
@@ -238,9 +238,9 @@ package object license {
     }
   }
 
-  def queryLDAP[T](userID: UserID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
+  def queryLDAP[T](depositorID: DepositorID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
     Observable.defer {
-      val searchFilter = s"(&(objectClass=easyUser)(uid=$userID))"
+      val searchFilter = s"(&(objectClass=easyUser)(uid=$depositorID))"
       val searchControls = {
         val sc = new SearchControls()
         sc.setSearchScope(SearchControls.SUBTREE_SCOPE)

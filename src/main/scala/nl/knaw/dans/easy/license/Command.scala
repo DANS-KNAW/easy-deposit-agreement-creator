@@ -36,9 +36,9 @@ object Command {
     implicit val fedora = new FedoraClient(ps.fedora)
 
     val did = ps.datasetID
-    val userID = ps.userID
+    val depositorID = ps.depositorID
 
-    val dataset = userID.map(Dataset.getDatasetByID(did, _))
+    val dataset = depositorID.map(Dataset.getDatasetByID(did, _))
       .getOrElse(Dataset.getDatasetByID(did))
 
     new FileOutputStream(ps.outputFile)

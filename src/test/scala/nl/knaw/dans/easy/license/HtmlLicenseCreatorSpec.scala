@@ -91,19 +91,19 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     res should have size 4
   }
 
-  "users" should "yield a map with user data" in {
-    val user = new EasyUser("uid", "name", "org", "addr", "postal", "city", "country", "tel", "mail")
+  "depositor" should "yield a map with depositor data" in {
+    val depositor = new EasyUser("uid", "name", "org", "addr", "postal", "city", "country", "tel", "mail")
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).users(user)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).depositor(depositor)
 
-    res should contain (UserName -> "name")
-    res should contain (UserOrganisation -> "org")
-    res should contain (UserAddress -> "addr")
-    res should contain (UserPostalCode -> "postal")
-    res should contain (UserCity -> "city")
-    res should contain (UserCountry -> "country")
-    res should contain (UserTelephone -> "tel")
-    res should contain (UserEmail -> "mail")
+    res should contain (DepositorName -> "name")
+    res should contain (DepositorOrganisation -> "org")
+    res should contain (DepositorAddress -> "addr")
+    res should contain (DepositorPostalCode -> "postal")
+    res should contain (DepositorCity -> "city")
+    res should contain (DepositorCountry -> "country")
+    res should contain (DepositorTelephone -> "tel")
+    res should contain (DepositorEmail -> "mail")
 
     res should have size 8
   }

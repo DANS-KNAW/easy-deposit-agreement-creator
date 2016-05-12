@@ -24,14 +24,14 @@ case object DateSubmitted                extends KeywordMapping { val keyword = 
 case object Title                        extends KeywordMapping { val keyword = "Title" }
 
 // depositor data
-case object UserName                     extends KeywordMapping { val keyword = "Name" }
-case object UserOrganisation             extends KeywordMapping { val keyword = "Organisation" }
-case object UserAddress                  extends KeywordMapping { val keyword = "Address" }
-case object UserPostalCode               extends KeywordMapping { val keyword = "PostalCode" }
-case object UserCity                     extends KeywordMapping { val keyword = "City" }
-case object UserCountry                  extends KeywordMapping { val keyword = "Country" }
-case object UserTelephone                extends KeywordMapping { val keyword = "Telephone" }
-case object UserEmail                    extends KeywordMapping { val keyword = "Email" }
+case object DepositorName                extends KeywordMapping { val keyword = "Name" }
+case object DepositorOrganisation        extends KeywordMapping { val keyword = "Organisation" }
+case object DepositorAddress             extends KeywordMapping { val keyword = "Address" }
+case object DepositorPostalCode          extends KeywordMapping { val keyword = "PostalCode" }
+case object DepositorCity                extends KeywordMapping { val keyword = "City" }
+case object DepositorCountry             extends KeywordMapping { val keyword = "Country" }
+case object DepositorTelephone           extends KeywordMapping { val keyword = "Telephone" }
+case object DepositorEmail               extends KeywordMapping { val keyword = "Email" }
 
 // access rights
 case object OpenAccess                   extends KeywordMapping { val keyword = "OpenAccess" }

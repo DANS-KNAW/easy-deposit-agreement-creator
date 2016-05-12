@@ -22,14 +22,14 @@ import rx.lang.scala.Observable
 
 import scala.language.postfixOps
 
-case class EasyUser(userID: UserID, name: String, organization: String, address: String,
+case class EasyUser(userID: DepositorID, name: String, organization: String, address: String,
                     postalCode: String, city: String, country: String, telephone: String,
                     email: String)
 
 object EasyUser {
 
-  def getByID(userID: UserID)(implicit ctx: LdapContext): Observable[EasyUser] = {
-    queryLDAP(userID)(implicit attrs => {
+  def getByID(depositor: DepositorID)(implicit ctx: LdapContext): Observable[EasyUser] = {
+    queryLDAP(depositor)(implicit attrs => {
       val name = getOrEmpty("displayname")
       val org = getOrEmpty("o")
       val addr = getOrEmpty("postaladdress")
@@ -39,7 +39,7 @@ object EasyUser {
       val phone = getOrEmpty("telephonenumber")
       val mail = getOrEmpty("mail")
 
-      EasyUser(userID, name, org, addr, code, place, country, phone, mail)
+      EasyUser(depositor, name, org, addr, code, place, country, phone, mail)
     })
   }
 

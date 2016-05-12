@@ -27,17 +27,17 @@ import scala.language.postfixOps
 case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
 
 object Dataset {
-  def getDatasetByID(datasetID: DatasetID, userID: UserID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
+  def getDatasetByID(datasetID: DatasetID, depositorID: DepositorID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
     val emd = queryEMD(datasetID).single
-    val user = EasyUser.getByID(userID).single
+    val depositor = EasyUser.getByID(depositorID).single
 
-    emd.combineLatestWith(user)(Dataset(datasetID, _, _))
+    emd.combineLatestWith(depositor)(Dataset(datasetID, _, _))
   }
 
   def getDatasetByID(datasetID: DatasetID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
     for {
-      userID <- queryAMDForDepositorID(datasetID).single
-      dataset <- getDatasetByID(datasetID, userID)
+      depositorID <- queryAMDForDepositorID(datasetID).single
+      dataset <- getDatasetByID(datasetID, depositorID)
     } yield dataset
   }
 
@@ -45,7 +45,7 @@ object Dataset {
     queryFedora(datasetID, "EMD")(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
   }
 
-  private def queryAMDForDepositorID(datasetID: DatasetID)(implicit client: FedoraClient): Observable[UserID] = {
+  private def queryAMDForDepositorID(datasetID: DatasetID)(implicit client: FedoraClient): Observable[DepositorID] = {
     queryFedora(datasetID, "AMD")(_.loadXML \\ "depositorId" text)
   }
 }

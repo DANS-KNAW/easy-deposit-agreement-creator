@@ -45,18 +45,18 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
 
   version(s"$printedName v${Version()}")
   banner(s"""
-           |Create a license for the given datasetID and userID. The latter is optional as it can also
+           |Create a license for the given datasetID and depositorID. The latter is optional as it can also
            | be retrieved from the datasetID. The license will be saved at the indicated location.
            |
            |Usage:
            |
-           |$printedName -u <userID> <datasetID> <template-dir> <license-file>
+           |$printedName -u <depositorID> <datasetID> <template-dir> <license-file>
            |
            |Options:
            |""".stripMargin)
 
-  val userID = opt[UserID](name = "user-id", short = 'u',
-    descr = "The userID of the depositor of this dataset")
+  val depositorID = opt[DepositorID](name = "depositor-id", short = 'u',
+    descr = "The depositorID of the depositor of this dataset")
 
   val datasetID = trailArg[DatasetID](name = "dataset-id",
     descr = "The ID of the dataset of which a license has to be created")
@@ -100,7 +100,7 @@ object CommandLineOptions {
       appHomeDir = homeDir,
       templateDir = opts.templateDir(),
       outputFile = opts.outputFile(),
-      userID = opts.userID.get,
+      depositorID = opts.depositorID.get,
       datasetID = opts.datasetID(),
       fedora = new FedoraCredentials(
         props.getString("fcrepo.url"),
