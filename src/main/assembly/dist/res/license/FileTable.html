@@ -1,0 +1,9 @@
+<p>Uploaded files:</p>
+<table>
+#foreach ($file in $FileTable)
+    <tr>
+        <td>$file.FileKey</td>
+        <td>$file.FileValue</td>
+    </tr>
+#end
+</table>

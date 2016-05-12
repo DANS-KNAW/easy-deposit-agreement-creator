@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shtylesheet" type="text/css" href="License.css" />
+</head>
+<body>
+
+#parse("Body.html")
+
+#if ($OpenAccess)
+    #parse("OpenAccess.html")
+#elseif ($OpenAccessForRegisteredUsers)
+    #parse("OpenAccessForRegisteredUsers.html")
+#elseif ($OtherAccess)
+    #parse("OtherAccess.html")
+#elseif ($RestrictGroup)
+    #parse("RestrictGroup.html")
+#elseif ($RestrictRequest)
+    #parse("RestrictRequest.html")
+#else
+    <!-- default access right
+         never expect to be in this case, but I can't find an error function in Velocity -->
+    #parse("OpenAccess.html")
+#end
+
+#if ($UnderEmbargo)
+    #parse("Embargo.html")
+#end
+
+#parse("Tail.html")
+
+#parse("Table.html")
+
+#if ($HasFiles)
+    #parse("FileTable.html")
+#else
+    <p>No uploaded files.</p>
+#end
+
+#parse("Appendix.html")
+
+</body>
+</html>
