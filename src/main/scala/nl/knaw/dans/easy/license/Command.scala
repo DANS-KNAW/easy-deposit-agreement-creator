@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.license
 
 import java.io.{FileOutputStream, OutputStream}
+import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
@@ -31,27 +32,43 @@ object Command {
 
   def main(args: Array[String]): Unit = {
     log.debug("Starting command line interface")
-    implicit val ps = cmd.parse(args)
-    implicit val ldap = ps.ldap
-    implicit val fedora = new FedoraClient(ps.fedora)
+    implicit val parameters = cmd.parse(args)
 
-    val did = ps.datasetID
-    val depositorID = ps.depositorID
+    new FileOutputStream(parameters.outputFile)
+      .usedIn(run)
+      .doOnTerminate {
+        // close LDAP at the end of the main
+        log.debug("closing ldap")
+        parameters.ldap.close()
+      }
+      .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.debug("completed"))
+
+    Schedulers.shutdown()
+  }
+
+  /**
+    * Create a license agreement and write it the `outputStream`. The `parameters` object a.o. contain
+    * the datasetID and the depositorID (optional).
+    *
+    * ``Notice:`` neither the `outputStream` nor the `LdapContext` in `parameters` are closed at the
+    * end of this operation.
+    *
+    * @param outputStream The stream to which the license agreement needs to be written
+    * @param parameters The runtime parameters for this operation.
+    * @return `Observable[Nothing]`: the output is written to `outputStream`; if an error occurs, it is
+    *         received via the `Observable`.
+    */
+  def run(outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
+    implicit val ldap = parameters.ldap
+    implicit val fedora = new FedoraClient(parameters.fedora)
+
+    val did = parameters.datasetID
+    val depositorID = parameters.depositorID
 
     val dataset = depositorID.map(Dataset.getDatasetByID(did, _))
       .getOrElse(Dataset.getDatasetByID(did))
 
-    new FileOutputStream(ps.outputFile)
-      .usedIn(stream => dataset.flatMap(ds => run(ds, stream)))
-      .doOnTerminate {
-        // close LDAP at the end of the main
-        log.debug("closing ldap")
-        ps.ldap.close()
-      }
-      .toBlocking
-      .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.debug("completed"))
-
-    Schedulers.shutdown()
+    dataset.flatMap(run(_, outputStream))
   }
 
   def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters, client: FedoraClient): Observable[Nothing] = {
