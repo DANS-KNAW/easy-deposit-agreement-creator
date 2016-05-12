@@ -170,9 +170,10 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
     val xs = for {
       filePid <- queryRiSearch(query)
       path <- queryFedora(filePid, "EASY_FILE_METADATA")(_.loadXML \\ "path" text)
-      h = FedoraClient.getDatastream(filePid, "EASY_FILE").execute(client).getDatastreamProfile.getDsChecksum
-      hash = if (h.isBlank || h == "none") "-------------not-calculated-------------" else h
-      map = Map[KeywordMapping, String](FileKey -> path, FileValue -> hash).map { case (k, v) => (k.keyword, v) }.asJava
+      cs = FedoraClient.getDatastream(filePid, "EASY_FILE").execute(client).getDatastreamProfile.getDsChecksum
+      // check for both blank String and 'none' because checksum may be turned off or there is no checksum calculated
+      checksum = if (cs.isBlank || cs == "none") "-------------not-calculated-------------" else cs
+      map = Map[KeywordMapping, String](FileKey -> path, FileValue -> checksum).map { case (k, v) => (k.keyword, v) }.asJava
     } yield map
 
     xs.foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
