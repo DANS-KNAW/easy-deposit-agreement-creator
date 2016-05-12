@@ -25,7 +25,11 @@ import org.rogach.scallop._
 import org.slf4j.LoggerFactory
 
 class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
+  
   import CommandLineOptions.log
+
+  appendDefaultToDescription = true
+  editBuilder(_.setHelpWidth(110))
 
   val fileMayNotExist = singleArgConverter(new File(_))
   val fileShouldExist = singleArgConverter(filename => {
@@ -76,6 +80,8 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
 
   val outputFile = trailArg[File](name = "license-file",
     descr = "The file location where the license needs to be stored")(fileMayNotExist)
+
+  verify()
 }
 
 object CommandLineOptions {
