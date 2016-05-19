@@ -59,7 +59,7 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |Options:
            |""".stripMargin)
 
-  val depositorID = opt[DepositorID](name = "depositor-id", short = 'u',
+  val depositorID = opt[DepositorID](name = "depositor-id", short = 'd',
     descr = "The depositorID of the depositor of this dataset")
 
   val datasetID = trailArg[DatasetID](name = "dataset-id",
