@@ -18,6 +18,10 @@ package nl.knaw.dans.easy.license
 // @formatter:off
 trait KeywordMapping { val keyword: String }
 
+// logo in header (for 64bit encoding)
+case object DansLogo                     extends KeywordMapping { val keyword = "DansLogo" }
+
+// header data
 case object DansManagedDoi               extends KeywordMapping { val keyword = "DansManagedDoi" }
 case object DansManagedEncodedDoi        extends KeywordMapping { val keyword = "DansManagedEncodedDoi" }
 case object DateSubmitted                extends KeywordMapping { val keyword = "DateSubmitted" }

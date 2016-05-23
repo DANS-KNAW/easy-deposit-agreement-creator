@@ -25,6 +25,8 @@ import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
+import org.apache.commons.codec.binary.Base64
+import org.apache.commons.io.FileUtils
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.joda.time.DateTime
@@ -52,7 +54,6 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
       embargo(emd) +
       (CurrentDateAndTime -> currentDateAndTime)
 
-    // TODO that boolean2Boolean(true) is probably not correct!
     val metadata = metadataTable(emd).map(MetadataTable -> _)
     val files = filesTable(dataset.datasetID).map(FileTable -> _)
     metadata.zipWith(files)((meta, file) =>
@@ -62,11 +63,16 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
 
   def header(emd: EasyMetadata): PlaceholderMap = {
     Map(
+      DansLogo -> encodeImage(dansLogoFile),
       DansManagedDoi -> getDansManagedDoi(emd).getOrElse(""),
       DansManagedEncodedDoi -> getDansManagedEncodedDoi(emd).getOrElse(""),
       DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
       Title -> emd.getPreferredTitle
     )
+  }
+
+  private def encodeImage(file: File): String = {
+    new String(Base64.encodeBase64(FileUtils.readFileToByteArray(file)))
   }
 
   private def getDansManagedDoi(emd: EasyMetadata): Option[String] = {

@@ -1,7 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="shtylesheet" type="text/css" href="License.css" />
+    <style>
+        @page {
+            margin: 2cm 1.5cm;
+            size: A4;
+            @top-left {
+                content: "";
+                width: 100%;
+                height: 100%;
+                background: url(data:image/jpg;base64,$DansLogo) no-repeat 0 0;
+                background-position: left center;
+            }
+            @bottom-center {
+                content: "Experiment version of the licence agreement - page " counter(page) "/" counter(pages);
+            }
+        }
+    </style>
 </head>
 <body>
 
