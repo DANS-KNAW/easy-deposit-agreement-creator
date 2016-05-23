@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{File, FileWriter}
+import java.io._
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.{util => ju}
@@ -48,7 +48,8 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
   def datasetToPlaceholderMap(dataset: Dataset)(implicit client: FedoraClient): Observable[PlaceholderMap] = {
     val emd = dataset.emd
 
-    val placeholders = header(emd) ++
+    val placeholders = header(emd) +
+      (DansLogo -> encodeImage(dansLogoFile)) ++
       depositor(dataset.easyUser) ++
       accessRights(emd) ++
       embargo(emd) +
@@ -63,7 +64,6 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
 
   def header(emd: EasyMetadata): PlaceholderMap = {
     Map(
-      DansLogo -> encodeImage(dansLogoFile),
       DansManagedDoi -> getDansManagedDoi(emd).getOrElse(""),
       DansManagedEncodedDoi -> getDansManagedEncodedDoi(emd).getOrElse(""),
       DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
@@ -207,23 +207,19 @@ class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parame
   }
 
   /**
-    * Create the template on location `templateFile` after filling in the placeholders with `map`.
-    * If an `Exception` occurs, `templateFile` is not created/deleted.
+    * Create the template and write it to `out` after filling in the placeholders with `map`.
     *
-    * @param templateFile The location where to store the template
+    * @param out The `OutputStream` where the filled in template is written to
     * @param map The mapping between placeholders and actual values
-    * @param encoding the encoding to be used in writing to `templateFile`
-    * @return `Success` if creating a template succeeded, `Failure` otherwise
+    * @param encoding The encoding to be wused in writing to `out`
+    * @return `Success` if filling in the template succeeded, `Failure` otherwise
     */
-  def createTemplate(templateFile: File, map: PlaceholderMap, encoding: Charset = encoding) = {
-    Try {
+  def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding) = {
+    new OutputStreamWriter(out).use(writer => {
       val context = new VelocityContext
       map.foreach { case (kw, o) => context.put(kw.keyword, o) }
-      val writer = new FileWriter(templateFile)
 
       engine.getTemplate(templateFileName, encoding.displayName()).merge(context, writer)
-      writer.flush()
-      writer.close()
-    }.doOnError(_ => templateFile.delete())
+    })
   }
 }

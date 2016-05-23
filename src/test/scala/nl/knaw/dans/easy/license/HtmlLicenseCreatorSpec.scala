@@ -40,7 +40,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
   val date = mock[EmdDate]
   val rights = mock[EmdRights]
 
-  implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null)
+  implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null, null)
 
   before {
     new File(getClass.getResource("/velocity/").toURI)

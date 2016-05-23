@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.File
+import java.io.{ByteArrayOutputStream, File}
 
 import org.apache.velocity.exception.MethodInvocationException
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -24,7 +24,7 @@ import scala.util.{Failure, Success}
 
 class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with BeforeAndAfterAll {
 
-  implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null)
+  implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null, null)
 
   before {
     new File(getClass.getResource("/velocity/").toURI)
@@ -43,25 +43,24 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
     val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
 
     val map: Map[KeywordMapping, Object] = Map(keyword -> "world")
-    val resFile = new File(testDir, "template/result.html")
+    val baos = new ByteArrayOutputStream()
 
-    templateCreator.createTemplate(resFile, map) shouldBe a[Success[_]]
+    templateCreator.createTemplate(baos, map) shouldBe a[Success[_]]
 
-    resFile should exist
-    resFile.read() should include ("<p>hello world</p>")
+    new String(baos.toByteArray) should include ("<p>hello world</p>")
   }
 
   it should "fail if not all placeholders are filled in" in {
     val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
 
     val map: Map[KeywordMapping, Object] = Map.empty
-    val resFile = new File(testDir, "template/result.html")
+    val baos = new ByteArrayOutputStream()
 
-    val res = templateCreator.createTemplate(resFile, map)
+    val res = templateCreator.createTemplate(baos, map)
     res shouldBe a[Failure[_]]
     (the [MethodInvocationException] thrownBy res.get).getMessage should include ("$name")
 
-    resFile shouldNot exist
+    new String(baos.toByteArray) should not include "<p>hello world</p>"
   }
 
   it should "fail when the template does not exist" in {

@@ -108,6 +108,15 @@ object CommandLineOptions {
       outputFile = opts.outputFile(),
       depositorID = opts.depositorID.get,
       datasetID = opts.datasetID(),
+      vagrant = {
+        (for {
+          user <- props.getString("vagrant.user").toOption
+          host <- props.getString("vagrant.host").toOption
+          privateKey <- props.getString("vagrant.privatekey").toOption
+          file = new File(System.getProperty("user.home"), privateKey)
+        } yield SSHConnection(s"$user@$host", file))
+          .getOrElse(LocalConnection)
+      },
       fedora = new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),

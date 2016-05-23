@@ -53,15 +53,22 @@ package object license {
     new File(parameters.templateDir, "/MetadataTerms.properties")
   }
 
+  sealed abstract class VagrantConnection
+  case class SSHConnection(userhost: String, privateKeyFile: File) extends VagrantConnection {
+    require(privateKeyFile.exists(), s"the private key file ($privateKeyFile) should exist")
+  }
+  case object LocalConnection extends VagrantConnection
+
   case class Parameters(appHomeDir: File,
                         templateDir: File,
                         outputFile: File,
                         depositorID: Option[DepositorID],
                         datasetID: DatasetID,
+                        vagrant: VagrantConnection,
                         fedora: FedoraCredentials,
                         ldap: LdapContext) {
     override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, " +
-      s"${depositorID.getOrElse("<no depositorID>")}, $datasetID)"
+      s"${depositorID.getOrElse("<no depositorID>")}, $datasetID, $vagrant)"
   }
 
   object Version {
@@ -192,6 +199,15 @@ package object license {
       * @return
       */
     def isBlank = StringUtils.isBlank(s)
+
+    /** Converts a `String` to an `Option[String]`. If the `String` is blank
+      * (according to [[org.apache.commons.lang.StringUtils.isBlank]])
+      * the empty `Option` is returned, otherwise the `String` is returned
+      * wrapped in an `Option`.
+      *
+      * @return an `Option` of the input string that indicates whether it is blank
+      */
+    def toOption = if (s.isBlank) Option.empty else Option(s)
   }
 
   implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {

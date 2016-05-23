@@ -15,14 +15,12 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{FileOutputStream, OutputStream}
-import javax.naming.ldap.LdapContext
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileOutputStream, OutputStream}
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
-import rx.lang.scala.schedulers.ComputationScheduler
 import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
@@ -72,13 +70,17 @@ object Command {
   }
 
   def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters, client: FedoraClient): Observable[Nothing] = {
-    Observable(subscriber => {
+    new ByteArrayOutputStream().usedIn(templateOut => {
       val htmlLicenseCreator = new HtmlLicenseCreator(metadataTermsProperties)
       val velocityTemplateResolver = new VelocityTemplateResolver(velocityProperties)
 
       htmlLicenseCreator.datasetToPlaceholderMap(dataset)
-        .flatMap(velocityTemplateResolver.createTemplate(templateFile, _).toObservable)
-        .subscribe(_ => {}, subscriber.onError, subscriber.onCompleted)
+        .flatMap(velocityTemplateResolver.createTemplate(templateOut, _)
+          .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
+            .use(templateIn => PdfLicenseCreator.createPdf(templateIn, outputStream).!))
+          .toObservable)
+        .filter(_ => false)
+        .asInstanceOf[Observable[Nothing]]
     })
   }
 }
