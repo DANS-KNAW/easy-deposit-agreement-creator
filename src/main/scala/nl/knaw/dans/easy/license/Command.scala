@@ -60,13 +60,8 @@ object Command {
     implicit val ldap = parameters.ldap
     implicit val fedora = new FedoraClient(parameters.fedora)
 
-    val did = parameters.datasetID
-    val depositorID = parameters.depositorID
-
-    val dataset = depositorID.map(Dataset.getDatasetByID(did, _))
-      .getOrElse(Dataset.getDatasetByID(did))
-
-    dataset.flatMap(run(_, outputStream))
+    Dataset.getDatasetByID(parameters.datasetID)
+      .flatMap(run(_, outputStream))
   }
 
   def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters, client: FedoraClient): Observable[Nothing] = {

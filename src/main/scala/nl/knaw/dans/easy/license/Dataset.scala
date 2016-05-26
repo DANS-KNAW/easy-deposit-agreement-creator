@@ -27,18 +27,14 @@ import scala.language.postfixOps
 case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
 
 object Dataset {
-  def getDatasetByID(datasetID: DatasetID, depositorID: DepositorID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
-    val emd = queryEMD(datasetID).single
-    val depositor = EasyUser.getByID(depositorID).single
-
-    emd.combineLatestWith(depositor)(Dataset(datasetID, _, _))
-  }
-
   def getDatasetByID(datasetID: DatasetID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
-    for {
-      depositorID <- queryAMDForDepositorID(datasetID).single
-      dataset <- getDatasetByID(datasetID, depositorID)
-    } yield dataset
+    queryAMDForDepositorID(datasetID).single
+      .flatMap(depositorID => {
+        val emd = queryEMD(datasetID).single
+        val depositor = EasyUser.getByID(depositorID).single
+
+        emd.combineLatestWith(depositor)(Dataset(datasetID, _, _))
+      })
   }
 
   private def queryEMD(datasetID: DatasetID)(implicit client: FedoraClient): Observable[EasyMetadata] = {

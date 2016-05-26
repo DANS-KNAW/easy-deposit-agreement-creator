@@ -54,13 +54,10 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |
            |Usage:
            |
-           |$printedName -u <depositorID> <datasetID> <template-dir> <license-file>
+           |$printedName <datasetID> <template-dir> <license-file>
            |
            |Options:
            |""".stripMargin)
-
-  val depositorID = opt[DepositorID](name = "depositor-id", short = 'd',
-    descr = "The depositorID of the depositor of this dataset")
 
   val datasetID = trailArg[DatasetID](name = "dataset-id",
     descr = "The ID of the dataset of which a license has to be created")
@@ -106,7 +103,6 @@ object CommandLineOptions {
       appHomeDir = homeDir,
       templateDir = opts.templateDir(),
       outputFile = opts.outputFile(),
-      depositorID = opts.depositorID.get,
       datasetID = opts.datasetID(),
       vagrant = {
         (for {

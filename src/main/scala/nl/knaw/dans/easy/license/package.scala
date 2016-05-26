@@ -59,13 +59,11 @@ package object license {
   case class Parameters(appHomeDir: File,
                         templateDir: File,
                         outputFile: File,
-                        depositorID: Option[DepositorID],
                         datasetID: DatasetID,
                         vagrant: VagrantConnection,
                         fedora: FedoraCredentials,
                         ldap: LdapContext) {
-    override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, " +
-      s"${depositorID.getOrElse("<no depositorID>")}, $datasetID, $vagrant)"
+    override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $datasetID, $vagrant)"
   }
 
   object Version {
