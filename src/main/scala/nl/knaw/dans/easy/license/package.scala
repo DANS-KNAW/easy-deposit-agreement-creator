@@ -77,30 +77,6 @@ package object license {
   }
 
   implicit class FileExtensions(val file: File) extends AnyVal {
-
-    /**
-      * Copies a whole directory to a new location preserving the file dates.
-      * <p>
-      * This method copies the specified directory and all its child
-      * directories and files to the specified destination.
-      * The destination is the new location and name of the directory.
-      * <p>
-      * The destination directory is created if it does not exist.
-      * If the destination directory did exist, then this method merges
-      * the source with the destination, with the source taking precedence.
-      * <p>
-      * <strong>Note:</strong> This method tries to preserve the files' last
-      * modified date/times using [[File#setLastModified(long)]], however
-      * it is not guaranteed that those operations will succeed.
-      * If the modification operation fails, no indication is provided.
-      *
-      * @param destDir the new directory, must not be ``null``
-      * @throws NullPointerException if source or destination is ``null``
-      * @throws IOException          if source or destination is invalid
-      * @throws IOException          if an IO error occurs during copying
-      */
-    def copyFile(destDir: File) = FileUtils.copyFile(file, destDir)
-
     /**
       * Copies a whole directory to a new location preserving the file dates.
       * <p>
@@ -233,6 +209,7 @@ package object license {
     def loadXML = XML load stream
   }
 
+  // TODO not used here anymore, but useful for debugging purposed. Maybe we can migrate this to a EASY-Utils project?
   implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
     def debugThreadName(s: String = "") = observable.materialize.doOnEach(_ => println(s"$s: ${Thread.currentThread().getName}")).dematerialize
     def debug(s: String = "") = observable.materialize.doOnEach(x => println(s"$s: $x")).dematerialize
