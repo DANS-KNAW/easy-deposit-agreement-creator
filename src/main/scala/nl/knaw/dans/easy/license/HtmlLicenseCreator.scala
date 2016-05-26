@@ -107,9 +107,9 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
     Map[KeywordMapping, List[AccessCategory]](
       OpenAccess -> List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE),
       OpenAccessForRegisteredUsers -> List(OPEN_ACCESS_FOR_REGISTERED_USERS),
-      OtherAccess -> List(GROUP_ACCESS),
-      RestrictGroup -> List(REQUEST_PERMISSION),
-      RestrictRequest -> List(ACCESS_ELSEWHERE, NO_ACCESS)
+      OtherAccess -> List(ACCESS_ELSEWHERE, NO_ACCESS),
+      RestrictGroup -> List(GROUP_ACCESS),
+      RestrictRequest -> List(REQUEST_PERMISSION)
     ).mapValues(lst => boolean2Boolean(lst.contains(ac)))
   }
 
