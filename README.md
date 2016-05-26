@@ -2,25 +2,46 @@ easy-license-creator
 ====================
 [![Build Status](https://travis-ci.org/DANS-KNAW/easy-license-creator.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-license-creator)
 
-<Remove this comment and extend the descriptions below>
-
+Create a license (pdf file) for a given dataset.
 
 SYNOPSIS
 --------
 
-    easy-license-creator params
+    easy-license-creator <datasetID> <template-dir> <license-file>
 
 
 DESCRIPTION
 -----------
 
-<Replace with a longer description of this module>
+A command line tool to create a license for a given dataset as a pdf file. The tool searches for a dataset that corresponds to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the license.
 
+The License Creator uses a template of the license with placeholders in which the data is substituted. After all the placeholders are filled with actual data, it is converted into a PDF file.
+
+Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML files that are specified in `src/main/assembly/dist/res/license/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
+
+Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool requires to be installed before being used by EASY-License-Creator. In order to not having this installed on our computers while developing on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. During development we therefore require extra settings in `src/main/assembly/dist/cfg/application.properties`:
+ 
+ * `vagrant.user` - the username of *vagrant*
+ * `vagrant.host` - the hostname of *vagrant*
+ * `vagrant.privatekey` - the path to the private key that is used to ssh into the development server
+ 
+**These fields are *NOT* set when deploying and running on the development, test or production servers!!!** This is why they are commented by default.
 
 ARGUMENTS
 ---------
 
-<Replace with output from --help option on the command line>
+```
+Usage: easy-license-creator <datasetID> <template-dir> <license-file>
+Options:
+
+      --help      Show help message
+      --version   Show version of this program
+
+ trailing arguments:
+  dataset-id (required)     The ID of the dataset of which a license has to be created
+  template-dir (required)   Directory containing the template components for the license.
+  license-file (required)   The file location where the license needs to be stored
+```
 
 
 INSTALLATION AND CONFIGURATION
@@ -38,6 +59,16 @@ INSTALLATION AND CONFIGURATION
 
 General configuration settings can be set in `src/main/assembly/dist/cfg/appliation.properties` and logging can be configured
 in `src/main/assembly/dist/cfg/logback.xml`. The available settings are explained in comments in aforementioned files.
+
+
+**WeasyPrint** is installed according to the [installation page](http://weasyprint.readthedocs.io/en/latest/install.html) or via:
+
+```
+yum install redhat-rpm-configrpm python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
+yum install weasyprint
+```
+
+After this, `weasyprint --help` is supposed to show the appropriate help page.
 
 
 BUILDING FROM SOURCE
