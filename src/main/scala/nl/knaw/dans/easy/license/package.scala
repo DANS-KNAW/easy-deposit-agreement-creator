@@ -49,6 +49,9 @@ package object license {
   def dansLogoFile(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/dans_logo.jpg")
   }
+  def footerTextFile(implicit parameters: Parameters) = {
+    new File(parameters.templateDir, "/license_version.txt")
+  }
   def metadataTermsProperties(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/MetadataTerms.properties")
   }

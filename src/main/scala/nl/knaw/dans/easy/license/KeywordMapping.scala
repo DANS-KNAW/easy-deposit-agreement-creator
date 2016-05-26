@@ -21,6 +21,9 @@ trait KeywordMapping { val keyword: String }
 // logo in header (for 64bit encoding)
 case object DansLogo                     extends KeywordMapping { val keyword = "DansLogo" }
 
+// footer text
+case object FooterText                   extends KeywordMapping { val keyword = "FooterText" }
+
 // header data
 case object DansManagedDoi               extends KeywordMapping { val keyword = "DansManagedDoi" }
 case object DansManagedEncodedDoi        extends KeywordMapping { val keyword = "DansManagedEncodedDoi" }

@@ -49,7 +49,8 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
     val emd = dataset.emd
 
     val placeholders = header(emd) +
-      (DansLogo -> encodeImage(dansLogoFile)) ++
+      (DansLogo -> encodeImage(dansLogoFile)) +
+      (FooterText -> footerText(footerTextFile)) ++
       depositor(dataset.easyUser) ++
       accessRights(emd) ++
       embargo(emd) +
@@ -74,6 +75,8 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
   private def encodeImage(file: File): String = {
     new String(Base64.encodeBase64(FileUtils.readFileToByteArray(file)))
   }
+
+  private def footerText(file: File): String = file.read().stripLineEnd
 
   private def getDansManagedDoi(emd: EasyMetadata): Option[String] = {
     Option(emd.getEmdIdentifier.getDansManagedDoi)
