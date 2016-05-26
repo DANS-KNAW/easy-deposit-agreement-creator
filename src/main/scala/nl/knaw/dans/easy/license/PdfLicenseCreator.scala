@@ -23,9 +23,9 @@ object PdfLicenseCreator {
 
   def createPdf(input: InputStream, output: OutputStream)(implicit parameters: Parameters): ProcessBuilder = {
     val cmd = "weasyprint -e utf8 -f pdf - -"
-    val command = parameters.vagrant match {
-      case SSHConnection(userhost, privateKeyFile) => s"ssh -i $privateKeyFile $userhost $cmd"
-      case LocalConnection => cmd
+
+    val command = parameters.vagrant.fold(cmd) {
+      case (userhost, privateKeyFile) => s"ssh -i $privateKeyFile $userhost $cmd"
     }
 
     command #< input #> output

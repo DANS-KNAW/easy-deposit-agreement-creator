@@ -56,12 +56,6 @@ package object license {
     new File(parameters.templateDir, "/MetadataTerms.properties")
   }
 
-  sealed abstract class VagrantConnection
-  case class SSHConnection(userhost: String, privateKeyFile: File) extends VagrantConnection {
-    require(privateKeyFile.exists(), s"the private key file ($privateKeyFile) should exist")
-  }
-  case object LocalConnection extends VagrantConnection
-
   case class Parameters(appHomeDir: File,
                         templateDir: File,
                         outputFile: File,
