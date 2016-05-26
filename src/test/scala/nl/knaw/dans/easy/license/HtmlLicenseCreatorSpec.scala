@@ -168,24 +168,9 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     res should have size 5
   }
 
-  it should "map a Group Access category to an OtherAccess keyword" in {
+  it should "map a Group Access category to an RestrictGroup keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.GROUP_ACCESS
-
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
-
-    res should contain (OpenAccess, false)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, true)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
-  }
-
-  it should "map a Request Permission category to an RestrictGroup keyword" in {
-    emd.getEmdRights _ expects () returning rights
-    rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
     val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
@@ -198,9 +183,9 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     res should have size 5
   }
 
-  it should "map an Access Elsewhere category to an RestrictRequest keyword" in {
+  it should "map a Request Permission category to an RestrictRequest keyword" in {
     emd.getEmdRights _ expects () returning rights
-    rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
+    rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
     val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
 
@@ -213,7 +198,22 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     res should have size 5
   }
 
-  it should "map a No Access category to an RestrictRequest keyword" in {
+  it should "map an Access Elsewhere category to an OtherAccess keyword" in {
+    emd.getEmdRights _ expects () returning rights
+    rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
+
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+
+    res should contain (OpenAccess, false)
+    res should contain (OpenAccessForRegisteredUsers, false)
+    res should contain (OtherAccess, true)
+    res should contain (RestrictGroup, false)
+    res should contain (RestrictRequest, false)
+
+    res should have size 5
+  }
+
+  it should "map a No Access category to an OtherAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.NO_ACCESS
 
@@ -221,9 +221,9 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
+    res should contain (OtherAccess, true)
     res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, true)
+    res should contain (RestrictRequest, false)
 
     res should have size 5
   }
