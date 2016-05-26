@@ -3,7 +3,7 @@
 <head>
     <style>
         @page {
-            margin: 2cm 1.5cm;
+            margin: 2.5cm 1.5cm 2cm 1.5cm;
             size: A4;
             @top-left {
                 content: "";
@@ -11,10 +11,39 @@
                 height: 100%;
                 background: url(data:image/jpg;base64,$DansLogo) no-repeat 0 0;
                 background-position: left center;
+                background-size: 100px 30px;
             }
             @bottom-center {
                 content: "Experiment version of the licence agreement - page " counter(page) "/" counter(pages);
+                font: 14px "Bitstream Charter";
             }
+        }
+        body {
+            font: 14px "Bitstream Charter";
+            text-align: justify;
+        }
+        ol li ul {
+            list-style-type: disc;
+        }
+        ol {
+            list-style-type: lower-alpha;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            display: table;
+            border: 1px solid black;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        tr {
+            border-bottom: 1px solid black;
+        }
+        table td, table th {
+            padding: 6px 8px;
+            display: table-cell;
+            vertical-align: top;
+            border-right: 1px solid black;
         }
     </style>
 </head>
@@ -47,11 +76,13 @@
 #parse("Table.html")
 
 #if ($HasFiles)
+    <br/>
     #parse("FileTable.html")
 #else
     <p>No uploaded files.</p>
 #end
 
+<br/>
 #parse("Appendix.html")
 
 </body>
