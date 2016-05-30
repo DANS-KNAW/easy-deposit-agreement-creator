@@ -26,24 +26,10 @@ import org.slf4j.LoggerFactory
 
 class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
   
-  import CommandLineOptions.log
-
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
 
   val fileMayNotExist = singleArgConverter(new File(_))
-  val fileShouldExist = singleArgConverter(filename => {
-    val file = new File(filename)
-    if (!file.exists) {
-      log.error(s"The directory '$filename' does not exist")
-      throw new IllegalArgumentException(s"The directory '$filename' does not exist")
-    }
-    if (!file.isDirectory) {
-      log.error(s"'$filename' is not a directory")
-      throw new IllegalArgumentException(s"'$filename' is not a directory")
-    }
-    else file
-  })
 
   printedName = "easy-license-creator"
 
@@ -54,26 +40,13 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |
            |Usage:
            |
-           |$printedName <datasetID> <template-dir> <license-file>
+           |$printedName <datasetID> <license-file>
            |
            |Options:
            |""".stripMargin)
 
   val datasetID = trailArg[DatasetID](name = "dataset-id",
     descr = "The ID of the dataset of which a license has to be created")
-
-  val templateDir = trailArg[File](name = "template-dir", required = true,
-    descr = "Directory containing the template components for the license.")(fileShouldExist)
-  validateOpt(templateDir)(_.map(file =>
-    if (!file.isDirectory)
-      Left(s"Not a directory '$file'")
-    else if (file.directoryContains(new File("license")) && new File(file, "license").isDirectory)
-      Left(s"No subdirectory 'license' found in ${file.getAbsolutePath}")
-    else if (file.directoryContains(new File("velocity-engine.properties")))
-      Left(s"No properties file found in $file")
-    else
-      Right(()))
-    .getOrElse(Left("Could not parse parameter template-dir")))
 
   val outputFile = trailArg[File](name = "license-file",
     descr = "The file location where the license needs to be stored")(fileMayNotExist)
@@ -101,7 +74,7 @@ object CommandLineOptions {
 
     val params = Parameters(
       appHomeDir = homeDir,
-      templateDir = opts.templateDir(),
+      templateDir = new File(props.getString("template.dir")),
       outputFile = opts.outputFile(),
       datasetID = opts.datasetID(),
       vagrant = {

@@ -30,18 +30,24 @@ object Command {
 
   def main(args: Array[String]): Unit = {
     log.debug("Starting command line interface")
-    implicit val parameters = cmd.parse(args)
 
-    new FileOutputStream(parameters.outputFile)
-      .usedIn(run)
-      .doOnTerminate {
-        // close LDAP at the end of the main
-        log.debug("closing ldap")
-        parameters.ldap.close()
-      }
-      .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.debug("completed"))
+    try {
+      implicit val parameters = cmd.parse(args)
 
-    Schedulers.shutdown()
+      new FileOutputStream(parameters.outputFile)
+        .usedIn(run)
+        .doOnTerminate {
+          // close LDAP at the end of the main
+          log.debug("closing ldap")
+          parameters.ldap.close()
+        }
+        .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.debug("completed"))
+
+      Schedulers.shutdown()
+    }
+    catch {
+      case e: Throwable => log.error("An error was caught in main:", e)
+    }
   }
 
   /**
