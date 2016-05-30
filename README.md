@@ -31,7 +31,7 @@ ARGUMENTS
 ---------
 
 ```
-Usage: easy-license-creator <datasetID> <template-dir> <license-file>
+Usage: easy-license-creator <datasetID> <license-file>
 Options:
 
       --help      Show help message
@@ -39,7 +39,6 @@ Options:
 
  trailing arguments:
   dataset-id (required)     The ID of the dataset of which a license has to be created
-  template-dir (required)   Directory containing the template components for the license.
   license-file (required)   The file location where the license needs to be stored
 ```
 
