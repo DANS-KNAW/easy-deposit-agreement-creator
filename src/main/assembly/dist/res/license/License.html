@@ -45,6 +45,10 @@
             vertical-align: top;
             border-right: 1px solid black;
         }
+        .error {
+            color: red;
+            font-size: 150%;
+        }
     </style>
 </head>
 <body>
@@ -52,26 +56,35 @@
 #parse("Body.html")
 
 #if ($OpenAccess)
-    #parse("OpenAccess.html")
+    <p><strong>[Open Access: unlimited access without registration of user registration]</strong></p>
+    <p>The Depositor agrees to the dataset being made available in accordance with the conditions of the Creative Commons Zero Waiver, the CC0 1.0 Universal Public Domain Dedication (Appendix 1). In doing so, the Depositor renounces all possible rights relating to the dataset.</p>
 #elseif ($OpenAccessForRegisteredUsers)
-    #parse("OpenAccessForRegisteredUsers.html")
+    <p><strong>[Open Access for Registered Users: unlimited access for registered users]</strong></p>
+    <p>The Repository is permitted to make the dataset available to all persons, legal entities and organisations registered with the Repository.</p>
 #elseif ($OtherAccess)
-    #parse("OtherAccess.html")
+    <p><strong>[Other Access: the data are not available via EASY]</strong></p>
+    <p>The dataset will be made available by means of another method to be agreed with the Repository.</p>
 #elseif ($RestrictGroup)
-    #parse("RestrictGroup.html")
+    <p><strong>[Restricted Access: access restricted to registered persons or group members, N.B. only for archeology]</strong></p>
+    <p>The Depositor may grant access permission in advance for persons, legal entities and organisations that belong to one of the user groups specified by DANS and/or the Depositor.</p>
 #elseif ($RestrictRequest)
-    #parse("RestrictRequest.html")
+    <p><strong>[Restricted Access: access with the permission of the Repository]</strong></p>
+    <p>The Repository is permitted to make the dataset available to persons, legal entities and organisations registered with the Depositor only after receiving express permission from the Depositor.<p>
 #else
     <!-- default access right
-         never expect to be in this case, but I can't find an error function in Velocity -->
-    #parse("OpenAccess.html")
+         never expect to be in this case, but I can't find an error function in Velocity
+         so I use a error message in the pdf itself -->
+    <p class="error"><strong>NO VALID VALUE FOR THE ACCESS CATEGORY FOUND!!!</strong></p>
 #end
 
 #if ($UnderEmbargo)
-    #parse("Embargo.html")
+    <p><strong>You have additionally chosen:</strong></p>
+    <p><strong>[Temporary restriction: Embargo]; only possible if Open Access, Open Access for Registered Users or Restricted Access has been chosen</strong></p>
+    <p>The dataset will be temporarily unavailable until $DateAvailable, commencing on the date of publication. The embargo period cannot be longer than two years and cannot be extended. When this period elapses, one of the special provisions set out above shall automatically apply. An extension of this period is only possible in consultation with the Depositor.</p>
 #end
 
-#parse("Tail.html")
+<p><strong>The Depositor hereby agrees to the above provisions and the general code(s) of conduct referred to in this document.</strong></p>
+<p style="page-break-before: always">List of all metadata provided for this dataset at $CurrentDateAndTime</p>
 
 #parse("Table.html")
 
