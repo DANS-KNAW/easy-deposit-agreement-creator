@@ -63,19 +63,6 @@ package object license {
                         vagrant: VagrantConnection,
                         fedora: FedoraCredentials,
                         ldap: LdapContext) {
-    require(templateDir.isDirectory,
-      s"the provided template directory is not a directory: $templateDir")
-    require(templateDir.directoryContains(new File(templateDir, "license")),
-      "the provided template directory should contain a subdirectory 'license'")
-    require(new File(templateDir, "license").isDirectory,
-      "the subdirectory 'license' does exist, but is not a directory")
-    require(templateDir.directoryContains(new File(templateDir, "velocity-engine.properties")),
-      "the provided template directory should contain a properties file called 'velocity-engine.properties'")
-    require(templateDir.directoryContains(new File(templateDir, "MetadataTerms.properties")),
-      "the provided template directory should contain a properties file called 'MetadataTerms.properties'")
-    require(templateDir.directoryContains(new File(templateDir, "license_version.txt")),
-      "the provided template directory should contain a text file called 'license_version.txt'")
-
     override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $datasetID, $vagrant)"
   }
 
