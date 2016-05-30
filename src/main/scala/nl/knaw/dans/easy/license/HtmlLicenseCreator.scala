@@ -48,19 +48,20 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
   def datasetToPlaceholderMap(dataset: Dataset)(implicit client: FedoraClient): Observable[PlaceholderMap] = {
     val emd = dataset.emd
 
-    val placeholders = header(emd) +
-      (DansLogo -> encodeImage(dansLogoFile)) +
-      (FooterText -> footerText(footerTextFile)) ++
-      depositor(dataset.easyUser) ++
-      accessRights(emd) ++
-      embargo(emd) +
-      (CurrentDateAndTime -> currentDateAndTime)
+    val placeholders = accessRights(emd).map(ac => {
+      header(emd) +
+        (DansLogo -> encodeImage(dansLogoFile)) +
+        (FooterText -> footerText(footerTextFile)) ++
+        depositor(dataset.easyUser) ++
+        ac ++
+        embargo(emd) +
+        (CurrentDateAndTime -> currentDateAndTime)
+    })
 
     val metadata = metadataTable(emd).map(MetadataTable -> _)
     val files = filesTable(dataset.datasetID).map(FileTable -> _)
-    metadata.zipWith(files)((meta, file) =>
-      (map: Map[KeywordMapping, Object]) => map + meta + file + (HasFiles -> boolean2Boolean(!file._2.isEmpty)))
-      .map(_(placeholders))
+    metadata.zipWith(files)((meta, file) => (map: Map[KeywordMapping, Object]) => map + meta + file + (HasFiles -> boolean2Boolean(!file._2.isEmpty)))
+      .flatMap(f => placeholders.map(f).toObservable)
   }
 
   def header(emd: EasyMetadata): PlaceholderMap = {
@@ -104,16 +105,23 @@ class HtmlLicenseCreator(metadataTermsFile: File)(implicit parameters: Parameter
     )
   }
 
-  def accessRights(emd: EasyMetadata): PlaceholderMap = {
+  def accessRights(emd: EasyMetadata): Try[PlaceholderMap] = Try {
     val ac = Option(emd.getEmdRights.getAccessCategory).getOrElse(OPEN_ACCESS)
 
-    Map[KeywordMapping, List[AccessCategory]](
+    val result = Map[KeywordMapping, List[AccessCategory]](
       OpenAccess -> List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE),
       OpenAccessForRegisteredUsers -> List(OPEN_ACCESS_FOR_REGISTERED_USERS),
       OtherAccess -> List(ACCESS_ELSEWHERE, NO_ACCESS),
       RestrictGroup -> List(GROUP_ACCESS),
       RestrictRequest -> List(REQUEST_PERMISSION)
     ).mapValues(lst => boolean2Boolean(lst.contains(ac)))
+
+    if (result.exists { case (_, bool) => bool == true }) {
+      result
+    }
+    else {
+      throw new IllegalArgumentException(s"The specified access category ($ac) does not map to any of these keywords.")
+    }
   }
 
   def embargo(emd: EasyMetadata): PlaceholderMap = {

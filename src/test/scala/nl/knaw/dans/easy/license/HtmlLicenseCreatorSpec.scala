@@ -112,7 +112,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -127,7 +127,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ANONYMOUS_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -142,7 +142,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.FREELY_AVAILABLE
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -157,7 +157,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, true)
@@ -172,7 +172,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.GROUP_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -187,7 +187,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -202,7 +202,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -217,7 +217,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.NO_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -232,7 +232,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd)
+    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
