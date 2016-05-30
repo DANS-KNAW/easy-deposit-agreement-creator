@@ -13,9 +13,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-A command line tool to create a license for a given dataset as a pdf file. The tool searches for a dataset that corresponds to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the license.
+A command line tool that creates a pdf document containing the license for a given dataset. The tool searches for a dataset that corresponds to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the license.
 
-The License Creator uses a template of the license with placeholders in which the data is substituted. After all the placeholders are filled with actual data, it is converted into a PDF file.
+The License Creator uses a template with placeholders. After replacing the placeholders with actual data, the template is converted into a PDF file.
 
 Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML files that are specified in `src/main/assembly/dist/res/license/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
 
