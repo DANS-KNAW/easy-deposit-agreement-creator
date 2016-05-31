@@ -72,11 +72,11 @@ object Command {
 
   def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters, client: FedoraClient): Observable[Nothing] = {
     new ByteArrayOutputStream().usedIn(templateOut => {
-      val htmlLicenseCreator = new HtmlLicenseCreator(metadataTermsProperties)
-      val velocityTemplateResolver = new VelocityTemplateResolver(velocityProperties)
+      val placeholderMapper = new PlaceholderMapper(metadataTermsProperties)
+      val templateResolver = new VelocityTemplateResolver(velocityProperties)
 
-      htmlLicenseCreator.datasetToPlaceholderMap(dataset)
-        .flatMap(velocityTemplateResolver.createTemplate(templateOut, _)
+      placeholderMapper.datasetToPlaceholderMap(dataset)
+        .flatMap(templateResolver.createTemplate(templateOut, _)
           .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
             .use(templateIn => PdfLicenseCreator.createPdf(templateIn, outputStream).!))
           .toObservable)

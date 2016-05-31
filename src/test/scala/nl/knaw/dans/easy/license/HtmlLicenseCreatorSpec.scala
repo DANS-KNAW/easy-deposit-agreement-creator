@@ -62,7 +62,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     date.getEasDateSubmitted _ expects () returning dates
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).header(emd)
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).header(emd)
 
     res should contain (DansManagedDoi, "12.3456/dans-ab7-cdef")
     res should contain (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef")
@@ -81,7 +81,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     date.getEasDateSubmitted _ expects () returning ju.Collections.emptyList()
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).header(emd)
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).header(emd)
 
     res should contain (DansManagedDoi, "")
     res should contain (DansManagedEncodedDoi, "")
@@ -94,7 +94,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
   "depositor" should "yield a map with depositor data" in {
     val depositor = new EasyUser("uid", "name", "org", "addr", "postal", "city", "country", "tel", "mail")
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).depositor(depositor)
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).depositor(depositor)
 
     res should contain (DepositorName -> "name")
     res should contain (DepositorOrganisation -> "org")
@@ -112,7 +112,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -127,7 +127,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ANONYMOUS_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -142,7 +142,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.FREELY_AVAILABLE
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -157,7 +157,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, true)
@@ -172,7 +172,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.GROUP_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -187,7 +187,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -202,7 +202,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -217,7 +217,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.NO_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -232,7 +232,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).accessRights(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -250,7 +250,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning dates
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
 
     res should contain (UnderEmbargo, true)
     res should contain (DateAvailable, nextYear.toString("YYYY-MM-dd"))
@@ -264,7 +264,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning dates
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
 
     res should contain (UnderEmbargo, false)
     res should contain (DateAvailable, "1992-07-30")
@@ -276,7 +276,7 @@ class HtmlLicenseCreatorSpec extends UnitSpec with MockFactory with BeforeAndAft
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning ju.Collections.emptyList()
 
-    val res = new HtmlLicenseCreator(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
+    val res = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")).embargo(emd)
 
     res should contain (UnderEmbargo, false)
     res should contain (DateAvailable, "")
