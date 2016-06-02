@@ -13,15 +13,22 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-A command line tool that creates a pdf document containing the license for a given dataset. The tool searches for a dataset that corresponds to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the license.
+A command line tool that creates a pdf document containing the license for a given dataset. The tool searches for a dataset that corresponds 
+to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the license.
 
-**Note:** the dataset needs to be in Fedora already. Newly created datasets (for example from *Split-Multi-Deposit*) need to be ingested by EASY first before generating the license.
+**Note:** the dataset needs to be in Fedora already. Newly created datasets (for example from `easy-split-multi-deposit`) need to be ingested 
+by EASY first before generating the license.
 
 The License Creator uses a template with placeholders. After replacing the placeholders with actual data, the template is converted into a PDF file.
 
-Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML files that are specified in `src/main/assembly/dist/res/license/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
+Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML 
+files that are specified in `src/main/assembly/dist/res/license/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` 
+are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
 
-Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool requires to be installed before being used by EASY-License-Creator. In order to not having this installed on our computers while developing on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. During development we therefore require extra settings in `src/main/assembly/dist/cfg/application.properties`:
+Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool 
+requires to be installed before being used by `easy-license-creator`. In order to not having this installed on our computers while developing 
+on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. 
+During development we therefore require extra settings in `src/main/assembly/dist/cfg/application.properties`:
  
  * `vagrant.user` - the username of *vagrant*
  * `vagrant.host` - the hostname of *vagrant*
@@ -32,17 +39,15 @@ Pdf generation based on the assembled HTML is done using the command line tool [
 ARGUMENTS
 ---------
 
-```
-Usage: easy-license-creator <datasetID> <license-file>
-Options:
-
-      --help      Show help message
-      --version   Show version of this program
-
- trailing arguments:
-  dataset-id (required)     The ID of the dataset of which a license has to be created
-  license-file (required)   The file location where the license needs to be stored
-```
+    Usage: easy-license-creator <datasetID> <license-file>
+    Options:
+    
+          --help      Show help message
+          --version   Show version of this program
+    
+     trailing arguments:
+      dataset-id (required)     The ID of the dataset of which a license has to be created
+      license-file (required)   The file location where the license needs to be stored
 
 
 INSTALLATION AND CONFIGURATION
