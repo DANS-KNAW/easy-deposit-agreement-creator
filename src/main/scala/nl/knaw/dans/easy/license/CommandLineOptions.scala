@@ -74,7 +74,7 @@ object CommandLineOptions {
 
     val params = Parameters(
       appHomeDir = homeDir,
-      templateDir = new File(props.getString("template.dir")),
+      templateDir = new File(homeDir, "res/"),
       outputFile = opts.outputFile(),
       datasetID = opts.datasetID(),
       vagrant = {
