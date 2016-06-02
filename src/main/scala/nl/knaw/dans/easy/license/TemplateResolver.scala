@@ -23,7 +23,21 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory
 
-class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) {
+import scala.util.Try
+
+trait TemplateResolver {
+
+  /**
+    * Create the template and write it to `out` after filling in the placeholders with `map`.
+    *
+    * @param out The `OutputStream` where the filled in template is written to
+    * @param map The mapping between placeholders and actual values
+    * @param encoding The encoding to be wused in writing to `out`
+    * @return `Success` if filling in the template succeeded, `Failure` otherwise
+    */
+  def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding): Try[Unit]
+}
+class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) extends TemplateResolver {
 
   val log = LoggerFactory.getLogger(getClass)
 
@@ -43,14 +57,6 @@ class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parame
     engine
   }
 
-  /**
-    * Create the template and write it to `out` after filling in the placeholders with `map`.
-    *
-    * @param out The `OutputStream` where the filled in template is written to
-    * @param map The mapping between placeholders and actual values
-    * @param encoding The encoding to be wused in writing to `out`
-    * @return `Success` if filling in the template succeeded, `Failure` otherwise
-    */
   def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding) = {
     new OutputStreamWriter(out).use(writer => {
       val context = new VelocityContext

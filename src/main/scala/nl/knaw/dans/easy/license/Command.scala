@@ -24,30 +24,10 @@ import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
 
-object Command {
-  val log = LoggerFactory.getLogger(getClass)
-
-  def main(args: Array[String]): Unit = {
-    log.debug("Starting command line interface")
-
-    try {
-      implicit val parameters = cmd.parse(args)
-
-      new FileOutputStream(parameters.outputFile)
-        .usedIn(run)
-        .doOnTerminate {
-          // close LDAP at the end of the main
-          log.debug("closing ldap")
-          parameters.ldap.close()
-        }
-        .subscribe(_ => {}, e => log.error("An error was caught in main:", e), () => log.debug("completed"))
-
-      Schedulers.shutdown()
-    }
-    catch {
-      case e: Throwable => log.error("An error was caught in main:", e)
-    }
-  }
+class Command(datasetLoader: DatasetLoader,
+              placeholders: PlaceholderMapper,
+              templateResolver: TemplateResolver,
+              pdfGenerator: PdfGenerator)(implicit parameters: Parameters) {
 
   /**
     * Create a license agreement and write it the `outputStream`. The `parameters` object a.o. contain
@@ -57,27 +37,60 @@ object Command {
     * end of this operation.
     *
     * @param outputStream The stream to which the license agreement needs to be written
-    * @param parameters The runtime parameters for this operation.
     * @return `Observable[Nothing]`: the output is written to `outputStream`; if an error occurs, it is
     *         received via the `Observable`.
     */
-  def run(outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
-    new DatasetLoaderImpl().getDatasetByID(parameters.datasetID)
-      .flatMap(run(_, outputStream))
+  def run(outputStream: OutputStream): Observable[Nothing] = {
+    datasetLoader.getDatasetByID(parameters.datasetID).flatMap(run(_, outputStream))
   }
 
-  def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
+  def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
     new ByteArrayOutputStream().usedIn(templateOut => {
-      val placeholderMapper = new PlaceholderMapper(metadataTermsProperties)
-      val templateResolver = new VelocityTemplateResolver(velocityProperties)
-
-      placeholderMapper.datasetToPlaceholderMap(dataset)
+      placeholders.datasetToPlaceholderMap(dataset)
         .flatMap(templateResolver.createTemplate(templateOut, _)
           .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
-            .use(templateIn => PdfLicenseCreator.createPdf(templateIn, outputStream).!))
+            .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
           .toObservable)
         .filter(_ => false)
         .asInstanceOf[Observable[Nothing]]
     })
+  }
+}
+
+object Command {
+  val log = LoggerFactory.getLogger(getClass)
+
+  def apply(implicit parameters: Parameters) = {
+    new Command(
+      new DatasetLoaderImpl,
+      new PlaceholderMapper(metadataTermsProperties),
+      new VelocityTemplateResolver(velocityProperties),
+      new WeasyPrintPdfGenerator
+    )
+  }
+
+  def main(args: Array[String]): Unit = {
+    log.debug("Starting command line interface")
+
+    try {
+      val parameters = cmd.parse(args)
+
+      new FileOutputStream(parameters.outputFile)
+        .usedIn(Command(parameters).run)
+        .doOnTerminate {
+          // close LDAP at the end of the main
+          log.debug("closing ldap")
+          parameters.ldap.close()
+        }
+        .subscribe(
+          _ => {},
+          e => log.error("An error was caught in main:", e),
+          () => log.debug("completed"))
+
+      Schedulers.shutdown()
+    }
+    catch {
+      case e: Throwable => log.error("An error was caught in main:", e)
+    }
   }
 }

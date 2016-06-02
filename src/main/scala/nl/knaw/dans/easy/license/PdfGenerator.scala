@@ -19,9 +19,14 @@ import java.io.{File, InputStream, OutputStream}
 
 import scala.sys.process._
 
-object PdfLicenseCreator {
+trait PdfGenerator {
 
-  def createPdf(input: InputStream, output: OutputStream)(implicit parameters: Parameters): ProcessBuilder = {
+  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder
+}
+
+class WeasyPrintPdfGenerator(implicit parameters: Parameters) extends PdfGenerator {
+
+  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
     def formatCommand(cmd: String)(userhost: String, privateKeyFile: File) = {
       s"ssh -oStrictHostKeyChecking=no -i $privateKeyFile $userhost $cmd"
     }
