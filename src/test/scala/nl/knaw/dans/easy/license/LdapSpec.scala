@@ -20,10 +20,9 @@ import javax.naming.directory.{Attributes, SearchControls, SearchResult}
 import javax.naming.ldap.LdapContext
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.FlatSpec
 import rx.lang.scala.observers.TestSubscriber
 
-class QuerySpec extends UnitSpec with MockFactory {
+class LdapSpec extends UnitSpec with MockFactory {
 
   "queryLDAP" should "return the results of sending a query to LDAP" in {
     val testDepositorID = "foobar"
@@ -49,8 +48,9 @@ class QuerySpec extends UnitSpec with MockFactory {
       result.next _ expects () returns new SearchResult("foobar2", null, attrs2)
     }
 
+    val ldap = new LdapImpl(ctx)
     val testSubscriber = TestSubscriber[Attributes]
-    queryLDAP(testDepositorID)(identity)(ctx).subscribe(testSubscriber)
+    ldap.query(testDepositorID)(identity).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValues(attrs1, attrs2)
@@ -71,8 +71,9 @@ class QuerySpec extends UnitSpec with MockFactory {
 
     result.hasMore _ expects () returns false once()
 
+    val ldap = new LdapImpl(ctx)
     val testSubscriber = TestSubscriber[Attributes]
-    queryLDAP(testDepositorID)(identity)(ctx).subscribe(testSubscriber)
+    ldap.query(testDepositorID)(identity).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertNoValues()

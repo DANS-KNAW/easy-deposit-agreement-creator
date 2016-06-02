@@ -15,9 +15,6 @@
  */
 package nl.knaw.dans.easy.license
 
-import javax.naming.ldap.LdapContext
-
-import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl}
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import rx.lang.scala.Observable
@@ -26,22 +23,24 @@ import scala.language.postfixOps
 
 case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
 
-object Dataset {
-  def getDatasetByID(datasetID: DatasetID)(implicit ctx: LdapContext, client: FedoraClient): Observable[Dataset] = {
-    queryAMDForDepositorID(datasetID).single
-      .flatMap(depositorID => {
-        val emd = queryEMD(datasetID).single
-        val depositor = EasyUser.getByID(depositorID).single
+trait DatasetLoader {
+
+  def getDatasetByID(datasetID: DatasetID): Observable[Dataset]
+}
+
+case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoader {
+
+  val fedora = parameters.fedora
+  val ldap = parameters.ldap
+
+  def getDatasetByID(datasetID: DatasetID) = {
+    fedora.getAMD(datasetID)(_.loadXML \\ "depositorId" text)
+      .flatMap(depositorId => {
+        val emd = fedora.getEMD(datasetID)(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
+        val depositor = ldap.getUserById(depositorId)
 
         emd.combineLatestWith(depositor)(Dataset(datasetID, _, _))
       })
   }
-
-  private def queryEMD(datasetID: DatasetID)(implicit client: FedoraClient): Observable[EasyMetadata] = {
-    queryFedora(datasetID, "EMD")(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
-  }
-
-  private def queryAMDForDepositorID(datasetID: DatasetID)(implicit client: FedoraClient): Observable[DepositorID] = {
-    queryFedora(datasetID, "AMD")(_.loadXML \\ "depositorId" text)
-  }
 }
+

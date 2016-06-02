@@ -15,21 +15,34 @@
  */
 package nl.knaw.dans.easy.license
 
-import javax.naming.directory.Attributes
+import javax.naming.directory.{Attributes, SearchControls}
 import javax.naming.ldap.LdapContext
 
 import rx.lang.scala.Observable
-
-import scala.language.postfixOps
 
 case class EasyUser(userID: DepositorID, name: String, organization: String, address: String,
                     postalCode: String, city: String, country: String, telephone: String,
                     email: String)
 
-object EasyUser {
+trait Ldap extends AutoCloseable {
 
-  def getByID(depositor: DepositorID)(implicit ctx: LdapContext): Observable[EasyUser] = {
-    queryLDAP(depositor)(implicit attrs => {
+  def getUserById(depositorID: DepositorID): Observable[EasyUser]
+
+  def query[T](depositorID: DepositorID)(f: Attributes => T): Observable[T]
+}
+
+case class LdapImpl(ctx: LdapContext) extends Ldap {
+
+  private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {
+    Option(attrs get attrID).map(_.get.toString)
+  }
+
+  private def getOrEmpty(attrID: String)(implicit attrs: Attributes) = {
+    get(attrID) getOrElse ""
+  }
+
+  def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
+    query(depositorID)(implicit attrs => {
       val name = getOrEmpty("displayname")
       val org = getOrEmpty("o")
       val addr = getOrEmpty("postaladdress")
@@ -39,14 +52,25 @@ object EasyUser {
       val phone = getOrEmpty("telephonenumber")
       val mail = getOrEmpty("mail")
 
-      EasyUser(depositor, name, org, addr, code, place, country, phone, mail)
+
+      EasyUser(depositorID, name, org, addr, code, place, country, phone, mail)
     })
   }
 
-  private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {
-    Option(attrs get attrID).map(_.get.toString)
+  def query[T](depositorID: DepositorID)(f: Attributes => T) = {
+    Observable.defer {
+      val searchFilter = s"(&(objectClass=easyUser)(uid=$depositorID))"
+      val searchControls = {
+        val sc = new SearchControls()
+        sc.setSearchScope(SearchControls.SUBTREE_SCOPE)
+        sc
+      }
+
+      ctx.search("dc=dans,dc=knaw,dc=nl", searchFilter, searchControls)
+        .toObservable
+        .map(f compose (_.getAttributes))
+    }
   }
 
-  private def getOrEmpty(attrID: String)(implicit attrs: Attributes) = get(attrID) getOrElse ""
+  def close() = ctx.close()
 }
-

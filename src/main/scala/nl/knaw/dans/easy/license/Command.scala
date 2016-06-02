@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.license
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileOutputStream, OutputStream}
 
-import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
@@ -63,14 +62,11 @@ object Command {
     *         received via the `Observable`.
     */
   def run(outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
-    implicit val ldap = parameters.ldap
-    implicit val fedora = new FedoraClient(parameters.fedora)
-
-    Dataset.getDatasetByID(parameters.datasetID)
+    new DatasetLoaderImpl().getDatasetByID(parameters.datasetID)
       .flatMap(run(_, outputStream))
   }
 
-  def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters, client: FedoraClient): Observable[Nothing] = {
+  def run(dataset: Dataset, outputStream: OutputStream)(implicit parameters: Parameters): Observable[Nothing] = {
     new ByteArrayOutputStream().usedIn(templateOut => {
       val placeholderMapper = new PlaceholderMapper(metadataTermsProperties)
       val templateResolver = new VelocityTemplateResolver(velocityProperties)

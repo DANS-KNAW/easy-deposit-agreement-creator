@@ -86,10 +86,10 @@ object CommandLineOptions {
         } yield SSHConnection(s"$user@$host", file))
           .getOrElse(LocalConnection)
       },
-      fedora = new FedoraCredentials(
+      fedora = new FedoraImpl(new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),
-        props.getString("fcrepo.password")),
+        props.getString("fcrepo.password"))),
       ldap = {
         import java.{util => ju}
 
@@ -100,7 +100,7 @@ object CommandLineOptions {
         env.put(Context.SECURITY_CREDENTIALS, props.getString("auth.ldap.password"))
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
 
-        new InitialLdapContext(env, null)
+        LdapImpl(new InitialLdapContext(env, null))
       })
 
     log.debug(s"Using the following settings: $params")

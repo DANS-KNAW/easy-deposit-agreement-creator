@@ -19,16 +19,11 @@ import java.io._
 import java.nio.charset.Charset
 import java.util.Properties
 import javax.naming.NamingEnumeration
-import javax.naming.directory.{Attributes, SearchControls}
-import javax.naming.ldap.LdapContext
 
-import com.yourmediashelf.fedora.client.request.RiSearch
-import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
 import org.apache.commons.lang.StringUtils
 import rx.lang.scala.Observable
 
-import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
@@ -40,6 +35,7 @@ package object license {
   type PlaceholderMap = Map[KeywordMapping, Object]
 
   val encoding = Charsets.UTF_8
+  val checkSumNotCalculated = "-------------not-calculated-------------"
   def velocityProperties(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/velocity-engine.properties")
   }
@@ -61,8 +57,8 @@ package object license {
                         outputFile: File,
                         datasetID: DatasetID,
                         vagrant: VagrantConnection,
-                        fedora: FedoraCredentials,
-                        ldap: LdapContext) {
+                        fedora: Fedora,
+                        ldap: Ldap) {
     override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $datasetID, $vagrant)"
   }
 
@@ -211,37 +207,6 @@ package object license {
   implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
     def debugThreadName(s: String = "") = observable.materialize.doOnEach(_ => println(s"$s: ${Thread.currentThread().getName}")).dematerialize
     def debug(s: String = "") = observable.materialize.doOnEach(x => println(s"$s: $x")).dematerialize
-  }
-
-  def queryFedora[T](datasetID: DatasetID, datastreamID: String)(f: InputStream => T)(implicit client: FedoraClient): Observable[T] = {
-    FedoraClient.getDatastreamDissemination(datasetID, datastreamID)
-      .execute(client)
-      .getEntityInputStream
-      .usedIn(f.andThen(Observable.just(_)))
-  }
-
-  def queryRiSearch[T](query: => String)(implicit client: FedoraClient) = {
-    Observable.defer {
-      new RiSearch(query).lang("sparql").format("csv").execute(client)
-        .getEntityInputStream
-        .usedIn(is => Observable.from(Source.fromInputStream(is)
-          .getLines().toIterable).drop(1).map(_.split("/").last))
-    }
-  }
-
-  def queryLDAP[T](depositorID: DepositorID)(f: Attributes => T)(implicit ctx: LdapContext): Observable[T] = {
-    Observable.defer {
-      val searchFilter = s"(&(objectClass=easyUser)(uid=$depositorID))"
-      val searchControls = {
-        val sc = new SearchControls()
-        sc.setSearchScope(SearchControls.SUBTREE_SCOPE)
-        sc
-      }
-
-      ctx.search("dc=dans,dc=knaw,dc=nl", searchFilter, searchControls)
-        .toObservable
-        .map(f compose (_.getAttributes))
-    }
   }
 
   def loadProperties(file: File): Try[Properties] = {

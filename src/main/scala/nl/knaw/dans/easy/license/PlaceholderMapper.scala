@@ -17,18 +17,14 @@ package nl.knaw.dans.easy.license
 
 import java.io._
 import java.net.URLEncoder
-import java.nio.charset.Charset
 import java.{util => ju}
 
-import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.FileUtils
-import org.apache.velocity.VelocityContext
-import org.apache.velocity.app.VelocityEngine
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import rx.lang.scala.{Observable, ObservableExtensions}
@@ -40,55 +36,52 @@ import scala.util.Try
 class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters) {
 
   val log = LoggerFactory.getLogger(getClass)
+  val fedora = parameters.fedora
 
   val metadataNames = loadProperties(metadataTermsFile)
     .doOnError(e => log.error(s"could not read the metadata terms in $metadataTermsFile", e))
     .getOrElse(new ju.Properties())
 
-  def datasetToPlaceholderMap(dataset: Dataset)(implicit client: FedoraClient): Observable[PlaceholderMap] = {
+  def datasetToPlaceholderMap(dataset: Dataset): Observable[PlaceholderMap] = {
     val emd = dataset.emd
 
-    val placeholders = accessRights(emd).map(ac => {
-      header(emd) +
-        (DansLogo -> encodeImage(dansLogoFile)) +
-        (FooterText -> footerText(footerTextFile)) ++
-        depositor(dataset.easyUser) ++
-        ac ++
-        embargo(emd) +
-        (CurrentDateAndTime -> currentDateAndTime)
-    })
+    val headerMap = header(emd)
+    val dansLogo = DansLogo -> encodeImage(dansLogoFile)
+    val footer = FooterText -> footerText(footerTextFile)
+    val depositorMap = depositor(dataset.easyUser)
+    val accessRight = accessRights(emd)
+    val embargoMap = embargo(emd)
+    val dateTime = CurrentDateAndTime -> currentDateAndTime
+
+    val placeholders = accessRight.map(ac =>
+      headerMap + dansLogo + footer ++ depositorMap ++ ac ++ embargoMap + dateTime)
 
     val metadata = metadataTable(emd).map(MetadataTable -> _)
     val files = filesTable(dataset.datasetID).map(FileTable -> _)
-    metadata.zipWith(files)((meta, file) => (map: Map[KeywordMapping, Object]) => map + meta + file + (HasFiles -> boolean2Boolean(!file._2.isEmpty)))
+    metadata.combineLatestWith(files)((meta, file) =>
+      (map: Map[KeywordMapping, Object]) => map + meta + file + (HasFiles -> boolean2Boolean(!file._2.isEmpty)))
       .flatMap(f => placeholders.map(f).toObservable)
   }
 
   def header(emd: EasyMetadata): PlaceholderMap = {
+    val doi = Option(emd.getEmdIdentifier.getDansManagedDoi)
+
     Map(
-      DansManagedDoi -> getDansManagedDoi(emd).getOrElse(""),
-      DansManagedEncodedDoi -> getDansManagedEncodedDoi(emd).getOrElse(""),
+      DansManagedDoi -> doi.getOrElse(""),
+      // this can throw an UnsupportedEncodingException, although this is not expected!
+      DansManagedEncodedDoi -> doi.map(URLEncoder.encode(_, encoding.displayName())).getOrElse(""),
       DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
       Title -> emd.getPreferredTitle
     )
   }
 
-  private def encodeImage(file: File): String = {
+  def encodeImage(file: File): String = {
     new String(Base64.encodeBase64(FileUtils.readFileToByteArray(file)))
   }
 
-  private def footerText(file: File): String = file.read().stripLineEnd
+  def footerText(file: File): String = file.read().stripLineEnd
 
-  private def getDansManagedDoi(emd: EasyMetadata): Option[String] = {
-    Option(emd.getEmdIdentifier.getDansManagedDoi)
-  }
-
-  // this may throw an UnsupportedEncodingException, although this is not expected!
-  private def getDansManagedEncodedDoi(emd: EasyMetadata): Option[String] = {
-    getDansManagedDoi(emd).map(doi => URLEncoder.encode(doi, encoding.displayName()))
-  }
-
-  private def getDate(emd: EasyMetadata)(f: EmdDate => ju.List[IsoDate]) = {
+  def getDate(emd: EasyMetadata)(f: EmdDate => ju.List[IsoDate]) = {
     f(emd.getEmdDate).asScala.headOption
   }
 
@@ -134,7 +127,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
 
   def currentDateAndTime = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
 
-  def metadataTable(emd: EasyMetadata)(implicit client: FedoraClient): Observable[ju.List[ju.Map[String, String]]] = {
+  def metadataTable(emd: EasyMetadata): Observable[ju.List[ju.Map[String, String]]] = {
     emd.getTerms
       .asScala
       .toObservable
@@ -142,9 +135,16 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
       .filter { case (_, items) => items.nonEmpty }
       .flatMap { case (term, items) =>
         val name = metadataNames.getProperty(term.getQualifiedName)
-        val valueObs = if (term.getName == Term.Name.AUDIENCE) formatAudience(emd)
-        else if (term.getName == Term.Name.ACCESSRIGHTS) Observable.just(formatAccessRights(items.head))
-        else Observable.just(items.mkString(", "))
+        val termName = term.getName
+        val valueObs = {
+          if (termName == Term.Name.AUDIENCE)
+            formatAudience(emd)
+          else if (termName == Term.Name.ACCESSRIGHTS)
+            // head is safe as items cannot be empty at this point due to `filter` above
+            Observable.just(formatAccessRights(items.head))
+          else
+            Observable.just(items.mkString(", "))
+        }
 
         valueObs.map(value => Map[KeywordMapping, String](MetadataKey -> name, MetadataValue -> value)
           .map { case (k, v) => (k.keyword, v) }
@@ -153,15 +153,17 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
       .foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
   }
 
-  private def formatAudience(emd: EasyMetadata)(implicit client: FedoraClient): Observable[String] = {
-    // TODO I need a DisciplineCollectionService or something???
-
+  def formatAudience(emd: EasyMetadata): Observable[String] = {
     emd.getEmdAudience.getValues.asScala.toObservable
-      .flatMap(sid => queryFedora(sid, "DC")(_.loadXML \\ "title" text))
+      .flatMap(sid => fedora.getDC(sid)(_.loadXML \\ "title" text))
       .reduce(_ + "; " + _)
+      .onErrorResumeNext(e => {
+        log.warn(s"Found a dataset with no audience: ${emd.getPreferredTitle}. Returning an empty String instead.")
+        Observable.just("")
+      })
   }
 
-  private def formatAccessRights(item: MetadataItem): String = {
+  def formatAccessRights(item: MetadataItem): String = {
     Try(AccessCategory.valueOf(item.toString)) // may throw an IllegalArgumentException
       .map {
         // @formatter:off
@@ -178,21 +180,29 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
         .getOrElse(item.toString)
   }
 
-  def filesTable(datasetID: DatasetID)(implicit client: FedoraClient): Observable[ju.List[ju.Map[String, String]]] = {
-    lazy val query = "PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> " +
-      "PREFIX fmodel: <info:fedora/fedora-system:def/model#> " +
-      s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
-      "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
+  def filesTable(datasetID: DatasetID): Observable[ju.List[ju.Map[String, String]]] = {
+    Observable.defer {
+      val query = "PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> " +
+        "PREFIX fmodel: <info:fedora/fedora-system:def/model#> " +
+        s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
+        "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
 
-    val xs = for {
-      filePid <- queryRiSearch(query)
-      path <- queryFedora(filePid, "EASY_FILE_METADATA")(_.loadXML \\ "path" text)
-      cs = FedoraClient.getDatastream(filePid, "EASY_FILE").execute(client).getDatastreamProfile.getDsChecksum
-      // check for both blank String and 'none' because checksum may be turned off or there is no checksum calculated
-      checksum = if (cs.isBlank || cs == "none") "-------------not-calculated-------------" else cs
-      map = Map[KeywordMapping, String](FileKey -> path, FileValue -> checksum).map { case (k, v) => (k.keyword, v) }.asJava
-    } yield map
 
-    xs.foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
+      fedora.queryRiSearch(query)
+        .flatMap(filePid => {
+          val path = fedora.getFileMetadata(filePid)(_.loadXML \\ "path" text)
+          val checksums = fedora.getFile(filePid)(_.getDsChecksum)
+            .map(cs => {
+              if (cs.isBlank || cs == "none") checkSumNotCalculated
+              else cs
+            })
+
+          path.combineLatestWith(checksums) {
+            (p, cs) => Map[KeywordMapping, String](FileKey -> p, FileValue -> cs)
+              .map { case (k, v) => (k.keyword, v) }.asJava
+          }
+        })
+        .foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
+    }
   }
 }
