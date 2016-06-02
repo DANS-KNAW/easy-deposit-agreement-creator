@@ -23,7 +23,7 @@ object PdfLicenseCreator {
 
   def createPdf(input: InputStream, output: OutputStream)(implicit parameters: Parameters): ProcessBuilder = {
     def formatCommand(cmd: String)(userhost: String, privateKeyFile: File) = {
-      s"ssh -i $privateKeyFile $userhost $cmd"
+      s"ssh -oStrictHostKeyChecking=no -i $privateKeyFile $userhost $cmd"
     }
 
     val cmd = "weasyprint -e utf8 -f pdf - -"
