@@ -53,27 +53,51 @@ The license is generated from a series of template files with placeholders. Usin
   * *RiSearch* - this is part of Fedora and provides the relation between the dataset and the files.
 
 ### Required data in the template
+Besides the dataset's metadata and the list of files contained in the dataset, several other values are required in the creation of the license agreement.
 
+| Data | Used in | Stored in |
+|------|---------|-----------|
+| Dataset - identifier | all occasions where a query for (a part of) the dataset in Fedora is required | application parameter |
+| Dataset - DANS managed DOI | template `Body.html` | `emd:identifier // dc:identifier` |
+| Dataset - encoded DANS managed DOI | template `Body.html`, see the link on the managed DOI above | `let id = emd:identifier // dc:identifier in (id@eas:identification-system ++ "/" ++ id.value)` |
+| Dataset - date submitted | template `Body.html` | `emd:date // eas:dateSubmitted` |
+| Dataset - preferred title | template `Body.html` | `emd:title // dc:title` |
+| Dataset - access category | template `License.html` | `emd:rights // dct:accessRights` or `dc:rights` (*these are always the same, only in different schemas. Therefore we can always use the value from EMD to get the least amount of Fedora queries*)|
+| Dataset - is under embargo | code `LicenseComposer.java:193` | to be calculated based on the current date and `Dataset - date available` below |
+| Dataset - date available | template `Embargo.html` | `emd:date // eas:available` |
+| Current time | template `Tail.html`, this is the timestamp of creating the license: `new org.joda.time.DateTime().toString("YYYY-MM-dd HH:mm:ss"))` | calculated at runtime |
+| EasyUser - displayName | template `Body.html` | LDAP user database - `(givenName <> initials)? + dansPrefixes? + sn?` |
+| EasyUser - organization | template `Body.html` | LDAP user database - `o` |
+| EasyUser - address | template `Body.html` | LDAP user database - `postalAddress` |
+| EasyUser - postalCode | template `Body.html` | LDAP user database - `postalCode` |
+| EasyUser - city | template `Body.html` | LDAP user database - `l` |
+| EasyUser - country | template `Body.html` | LDAP user database - `st` |
+| EasyUser - telephone | template `Body.html` | LDAP user database - `telephoneNumber` |
+| EasyUser - email | template `Body.html` | LDAP user database - `mail` |
 
-+benodigde data voor de templates+
-||Data||Gebruikt in||Waar te vinden||
-|Dataset.getDmoStoreId()|code {{LicenseComposer.java:205}}|-{{dc:identifier}} of {{foxml:digitalObject@PID}} of- *+ingegeven in applicatie+*|
-|Dataset.getDansManagedDoi|template {{Body.html}}|{{emd:identifier // dc:identifier}}|
-|Dataset.getEncodedDansManagedDoi|template {{Body.html}}, see the link at {{Body.html:3}}|{{let id = emd:identifier // dc:identifier in (id@eas:identification-system ++ "/" ++ id.value)}}|
-|DatasetDates.getDateSubmitted|template {{Body.html}}| |
-|Dataset.getDateSubmitted|code {{LicenseComposer.java:83}}|{{emd:date // eas:dateSubmitted}}|
-|Dataset.getPreferredTitle|template {{Body.html}}|{{emd:title // dc:title}}|
-|Dataset.getAccessCategory|code {{LicenseComposer.java:192}}|{{emd:rights // dct:accessRights}} of {{dc:rights}} ({color:#d04437}*deze zijn altijd hetzelfde, alleen verschillend (export) schema, dus kunnen we altijd de waarde uit EMD gebruiken (zodat zo min mogelijk Fedora requests gemaakt hoeven te worden!)*{color})|
-|Dataset.isUnderEmbargo|code {{LicenseComposer.java:193}}|berekenen op basis van de huidige datum en {{Dataset.getDateAvailable}}|
-|DatasetDates.getDateAvailable|template {{Embargo.html}}| |
-|Dataset.getDateAvailable|code {{LicenseComposer.java:87}}|{{emd:date // eas:available}}|
-|String.toString|template {{Tail.html}}, this is the timestamp of creating the license: {{new org.joda.time.DateTime().toString("YYYY-MM-dd HH:mm:ss"))}}|wordt op runtime berekend|
-|EasyUser.getDisplayName|template {{Body.html}}|LDAP user database - {{(givenName <> initials)? + dansPrefixes? + sn?}}|
-|EasyUser.getOrganization|template {{Body.html}}|LDAP user database - {{o}}|
-|EasyUser.getAddress|template {{Body.html}}|LDAP user database - {{postalAddress}}|
-|EasyUser.getPostalCode|template {{Body.html}}|LDAP user database - {{postalCode}}|
-|EasyUser.getCity|template {{Body.html}}|LDAP user database - {{l}}|
-|EasyUser.getCountry|template {{Body.html}}|LDAP user database - {{st}}|
-|EasyUser.getTelephone|template {{Body.html}}|LDAP user database - {{telephoneNumber}}|
-|EasyUser.getEmail|template {{Body.html}}|LDAP user database - {{mail}}|
+### Displaying the dataset metadata
+* For each term in the metadata the *qualified name* is calculated ([namespace].[name]) and mapped to the corresponding value in `MetadataTerms.properties`.
+* If the term equals **AUDIENCE**, all associated *discipline identifiers* are queried in the [...] and displayed as a comma-separated `String`.
+* If the term equals **ACCESSRIGHTS**, it is mapped to the corresponding string representation (see below).
+* For all other terms the values are displayed as a comma-separated `String`.
+* Every term corresponds to one row in the table.
+
+### Displaying the files in the dataset
+* All files contained in the dataset are retrieved from Fedora using `RiSearch`.
+* For each file the SHA1-hash is queried.
+* Each file (path and hash) corresponds to one row in the table.
+* In case the dataset does not contain any files, the text "*No uploaded files*" is added instead of the table.
+* In case the SHA1-hash of a file is not calculated, the alternative text "*------------- not-calculated -------------*" is used
+
+### Mapping of access categories
+| Access Category | License snippet | String representation |
+|-----------------|-----------------|-----------------------|
+| ANONYMOUS_ACCESS | OpenAccess.html | {{Anonymous}} |
+| OPEN_ACCESS | OpenAccess.html | {color:#205081}*Open Access*{color} |
+| OPEN_ACCESS_FOR_REGISTERED_USERS | OpenAccessForRegisteredUsers.html | {{Open access for registered users}} |
+| GROUP_ACCESS | RestrictGroup.html | {{Restricted -'archaeology' group}} |
+| REQUEST_PERMISSION | RestrictRequest.html | {{Restricted -request permission}} |
+| ACCESS_ELSEWHERE | OtherAccess.html | {{Elsewhere}} |
+| NO_ACCESS | OtherAccess.html | {{Other}} |
+| FREELY_AVAILABLE | OpenAccess.html | Open Access |
 
