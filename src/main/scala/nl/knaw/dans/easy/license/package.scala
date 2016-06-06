@@ -39,9 +39,6 @@ package object license {
   def velocityProperties(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/velocity-engine.properties")
   }
-  def templateFile(implicit parameters: Parameters) = {
-    new File(parameters.templateDir, "/License-template.html")
-  }
   def dansLogoFile(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/dans_logo.jpg")
   }
