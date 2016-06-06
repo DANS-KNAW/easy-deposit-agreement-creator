@@ -22,7 +22,8 @@ import javax.naming.NamingEnumeration
 
 import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
 import org.apache.commons.lang.StringUtils
-import rx.lang.scala.Observable
+import rx.lang.scala.Notification.{OnCompleted, OnError, OnNext}
+import rx.lang.scala.{Notification, Observable}
 
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -202,7 +203,18 @@ package object license {
 
   // TODO not used here anymore, but useful for debugging purposed. Maybe we can migrate this to a EASY-Utils project?
   implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
-    def debugThreadName(s: String = "") = observable.materialize.doOnEach(_ => println(s"$s: ${Thread.currentThread().getName}")).dematerialize
+    def debugThreadName(s: String = "") = {
+
+      def notificationKind(notification: Notification[T]) = {
+        notification match {
+          case OnNext(_) => "OnNext"
+          case OnError(_) => "OnError"
+          case OnCompleted => "OnCompleted"
+        }
+      }
+
+      observable.materialize.doOnEach(o => println(s"$s: ${notificationKind(o)} - ${Thread.currentThread().getName}")).dematerialize
+    }
     def debug(s: String = "") = observable.materialize.doOnEach(x => println(s"$s: $x")).dematerialize
   }
 

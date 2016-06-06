@@ -27,6 +27,7 @@ import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import rx.lang.scala.schedulers.IOScheduler
 import rx.lang.scala.{Observable, ObservableExtensions}
 
 import scala.collection.JavaConverters._
@@ -155,7 +156,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
 
   def formatAudience(emd: EasyMetadata): Observable[String] = {
     emd.getEmdAudience.getValues.asScala.toObservable
-      .flatMap(sid => fedora.getDC(sid)(_.loadXML \\ "title" text))
+      .flatMap(sid => fedora.getDC(sid)(_.loadXML \\ "title" text).subscribeOn(IOScheduler()))
       .reduce(_ + "; " + _)
       .onErrorResumeNext(e => {
         log.warn(s"Found a dataset with no audience: ${emd.getPreferredTitle}. Returning an empty String instead.")
@@ -189,9 +190,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
 
 
       fedora.queryRiSearch(query)
+        .subscribeOn(IOScheduler())
         .flatMap(filePid => {
-          val path = fedora.getFileMetadata(filePid)(_.loadXML \\ "path" text)
+          val path = fedora.getFileMetadata(filePid)(_.loadXML \\ "path" text).subscribeOn(IOScheduler())
           val checksums = fedora.getFile(filePid)(_.getDsChecksum)
+            .subscribeOn(IOScheduler())
             .map(cs => {
               if (cs.isBlank || cs == "none") checkSumNotCalculated
               else cs

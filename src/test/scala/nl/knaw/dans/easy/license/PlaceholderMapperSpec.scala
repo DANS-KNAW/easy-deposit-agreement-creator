@@ -50,8 +50,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     null, null, fedora, null)
 
   before {
-    new File(getClass.getResource("/placeholdermapper/").toURI)
-      .copyDir(parameters.templateDir)
+    new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateDir)
   }
 
   after {
@@ -377,6 +376,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     val testSubscriber = TestSubscriber[ju.List[ju.Map[String, String]]]()
     testInstance.metadataTable(emd).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValue(expected)
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
@@ -400,6 +400,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     val testSubscriber = TestSubscriber[String]()
     testInstance.formatAudience(emd).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValue("ABC; DEF")
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
@@ -418,6 +419,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     val testSubscriber = TestSubscriber[String]()
     testInstance.formatAudience(emd).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValue("ABC")
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
@@ -434,6 +436,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     val testSubscriber = TestSubscriber[String]()
     testInstance.formatAudience(emd).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValue("")
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
@@ -523,15 +526,21 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("ghi", *) returning Observable.just("")
     }
 
-    val expected = List(
+    // due to concurrency we cannot determine the order of the results; therefore we use a set here
+    val expected = Set(
       Map(FileKey.keyword -> "ABC", FileValue.keyword -> "123").asJava,
       Map(FileKey.keyword -> "DEF", FileValue.keyword -> checkSumNotCalculated).asJava,
       Map(FileKey.keyword -> "GHI", FileValue.keyword -> checkSumNotCalculated).asJava
     ).asJava
 
-    val testSubscriber = TestSubscriber[ju.List[ju.Map[String, String]]]()
-    testInstance.filesTable("foobar").subscribe(testSubscriber)
+    val testSubscriber = TestSubscriber[ju.Set[ju.Map[String, String]]]()
+    testInstance.filesTable("foobar").map(list => {
+      val set = new ju.HashSet[ju.Map[String, String]]
+      set.addAll(list)
+      set
+    }).subscribe(testSubscriber)
 
+    testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValue(expected)
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()

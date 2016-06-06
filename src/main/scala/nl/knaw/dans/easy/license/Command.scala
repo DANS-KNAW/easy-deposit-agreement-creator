@@ -20,6 +20,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileOutputStream, O
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
+import rx.lang.scala.schedulers.ComputationScheduler
 import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
@@ -47,6 +48,7 @@ class Command(datasetLoader: DatasetLoader,
   def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
     new ByteArrayOutputStream().usedIn(templateOut => {
       placeholders.datasetToPlaceholderMap(dataset)
+        .observeOn(ComputationScheduler())
         .flatMap(templateResolver.createTemplate(templateOut, _)
           .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
             .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
@@ -82,6 +84,7 @@ object Command {
           log.debug("closing ldap")
           parameters.ldap.close()
         }
+        .toBlocking
         .subscribe(
           _ => {},
           e => log.error("An error was caught in main:", e),

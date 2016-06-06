@@ -27,8 +27,7 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
   implicit val parameters = new Parameters(null, new File(testDir, "template"), null, null, null, null, null)
 
   before {
-    new File(getClass.getResource("/velocity/").toURI)
-      .copyDir(parameters.templateDir)
+    new File(getClass.getResource("/velocity/").toURI).copyDir(parameters.templateDir)
   }
 
   after {
