@@ -20,42 +20,12 @@ import javax.naming.ldap.LdapContext
 
 import rx.lang.scala.Observable
 
-case class EasyUser(userID: DepositorID, name: String, organization: String, address: String,
-                    postalCode: String, city: String, country: String, telephone: String,
-                    email: String)
-
 trait Ldap extends AutoCloseable {
-
-  def getUserById(depositorID: DepositorID): Observable[EasyUser]
 
   def query[T](depositorID: DepositorID)(f: Attributes => T): Observable[T]
 }
 
 case class LdapImpl(ctx: LdapContext) extends Ldap {
-
-  private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {
-    Option(attrs get attrID).map(_.get.toString)
-  }
-
-  private def getOrEmpty(attrID: String)(implicit attrs: Attributes) = {
-    get(attrID) getOrElse ""
-  }
-
-  def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
-    query(depositorID)(implicit attrs => {
-      val name = getOrEmpty("displayname")
-      val org = getOrEmpty("o")
-      val addr = getOrEmpty("postaladdress")
-      val code = getOrEmpty("postalcode")
-      val place = getOrEmpty("l")
-      val country = getOrEmpty("st")
-      val phone = getOrEmpty("telephonenumber")
-      val mail = getOrEmpty("mail")
-
-
-      EasyUser(depositorID, name, org, addr, code, place, country, phone, mail)
-    })
-  }
 
   def query[T](depositorID: DepositorID)(f: Attributes => T) = {
     Observable.defer {

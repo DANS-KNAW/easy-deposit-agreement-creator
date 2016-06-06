@@ -41,7 +41,7 @@ class Command(datasetLoader: DatasetLoader,
     *         received via the `Observable`.
     */
   def run(outputStream: OutputStream): Observable[Nothing] = {
-    datasetLoader.getDatasetByID(parameters.datasetID).flatMap(run(_, outputStream))
+    datasetLoader.getDatasetById(parameters.datasetID).flatMap(run(_, outputStream))
   }
 
   def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {

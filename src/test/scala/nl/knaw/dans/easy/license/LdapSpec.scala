@@ -24,7 +24,7 @@ import rx.lang.scala.observers.TestSubscriber
 
 class LdapSpec extends UnitSpec with MockFactory {
 
-  "queryLDAP" should "return the results of sending a query to LDAP" in {
+  "query" should "return the results of sending a query to LDAP" in {
     val testDepositorID = "foobar"
 
     val ctx = mock[LdapContext]
