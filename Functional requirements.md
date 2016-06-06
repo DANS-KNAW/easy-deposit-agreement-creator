@@ -47,8 +47,33 @@ The license is generated from a series of template files with placeholders. Usin
   * `MetadataTerms.properties` - a mapping between terms from the metadata and the text to be displayed in the license
   * `Table.html` - an overview of the metadata of the dataset
 
-### Data
+### Data resources
   * *Fedora* - metadata of the dataset is stored in Fedora. The EMD datastream dissemination contains the metadata of the dataset itself, the AMD datastream dissemination contains the depositor identifier, the EASY_FILE datastream and EASY_FILE_METADATA datastream dissemination contain the data of the files in the dataset.
   * *LDAP* - the depositor data required for the license is stored in LDAP.
   * *RiSearch* - this is part of Fedora and provides the relation between the dataset and the files.
+
+### Required data in the template
+
+
++benodigde data voor de templates+
+||Data||Gebruikt in||Waar te vinden||
+|Dataset.getDmoStoreId()|code {{LicenseComposer.java:205}}|-{{dc:identifier}} of {{foxml:digitalObject@PID}} of- *+ingegeven in applicatie+*|
+|Dataset.getDansManagedDoi|template {{Body.html}}|{{emd:identifier // dc:identifier}}|
+|Dataset.getEncodedDansManagedDoi|template {{Body.html}}, see the link at {{Body.html:3}}|{{let id = emd:identifier // dc:identifier in (id@eas:identification-system ++ "/" ++ id.value)}}|
+|DatasetDates.getDateSubmitted|template {{Body.html}}| |
+|Dataset.getDateSubmitted|code {{LicenseComposer.java:83}}|{{emd:date // eas:dateSubmitted}}|
+|Dataset.getPreferredTitle|template {{Body.html}}|{{emd:title // dc:title}}|
+|Dataset.getAccessCategory|code {{LicenseComposer.java:192}}|{{emd:rights // dct:accessRights}} of {{dc:rights}} ({color:#d04437}*deze zijn altijd hetzelfde, alleen verschillend (export) schema, dus kunnen we altijd de waarde uit EMD gebruiken (zodat zo min mogelijk Fedora requests gemaakt hoeven te worden!)*{color})|
+|Dataset.isUnderEmbargo|code {{LicenseComposer.java:193}}|berekenen op basis van de huidige datum en {{Dataset.getDateAvailable}}|
+|DatasetDates.getDateAvailable|template {{Embargo.html}}| |
+|Dataset.getDateAvailable|code {{LicenseComposer.java:87}}|{{emd:date // eas:available}}|
+|String.toString|template {{Tail.html}}, this is the timestamp of creating the license: {{new org.joda.time.DateTime().toString("YYYY-MM-dd HH:mm:ss"))}}|wordt op runtime berekend|
+|EasyUser.getDisplayName|template {{Body.html}}|LDAP user database - {{(givenName <> initials)? + dansPrefixes? + sn?}}|
+|EasyUser.getOrganization|template {{Body.html}}|LDAP user database - {{o}}|
+|EasyUser.getAddress|template {{Body.html}}|LDAP user database - {{postalAddress}}|
+|EasyUser.getPostalCode|template {{Body.html}}|LDAP user database - {{postalCode}}|
+|EasyUser.getCity|template {{Body.html}}|LDAP user database - {{l}}|
+|EasyUser.getCountry|template {{Body.html}}|LDAP user database - {{st}}|
+|EasyUser.getTelephone|template {{Body.html}}|LDAP user database - {{telephoneNumber}}|
+|EasyUser.getEmail|template {{Body.html}}|LDAP user database - {{mail}}|
 
