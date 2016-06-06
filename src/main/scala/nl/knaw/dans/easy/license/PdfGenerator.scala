@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{File, InputStream, OutputStream}
+import java.io.{InputStream, OutputStream}
 
 import scala.sys.process._
 
@@ -27,12 +27,6 @@ trait PdfGenerator {
 class WeasyPrintPdfGenerator(implicit parameters: Parameters) extends PdfGenerator {
 
   def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
-    def formatCommand(cmd: String)(userhost: String, privateKeyFile: File) = {
-      s"ssh -oStrictHostKeyChecking=no -i $privateKeyFile $userhost $cmd"
-    }
-
-    val cmd = "weasyprint -e utf8 -f pdf - -"
-
-    parameters.vagrant.fold(cmd)(formatCommand(cmd)) #< input #> output
+    parameters.pdfScript.getAbsolutePath #< input #> output
   }
 }

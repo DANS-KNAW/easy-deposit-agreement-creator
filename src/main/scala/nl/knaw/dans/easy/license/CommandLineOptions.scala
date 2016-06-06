@@ -75,17 +75,9 @@ object CommandLineOptions {
     val params = Parameters(
       appHomeDir = homeDir,
       templateDir = new File(homeDir, "res/"),
+      pdfScript = new File(homeDir, s"res/${props.getString("pdf.script")}"),
       outputFile = opts.outputFile(),
       datasetID = opts.datasetID(),
-      vagrant = {
-        (for {
-          user <- props.getString("vagrant.user").toOption
-          host <- props.getString("vagrant.host").toOption
-          privateKey <- props.getString("vagrant.privatekey").toOption
-          file = new File(System.getProperty("user.home"), privateKey)
-        } yield SSHConnection(s"$user@$host", file))
-          .getOrElse(LocalConnection)
-      },
       fedora = new FedoraImpl(new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),

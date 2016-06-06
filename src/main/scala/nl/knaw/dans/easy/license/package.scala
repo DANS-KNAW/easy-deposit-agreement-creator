@@ -54,12 +54,12 @@ package object license {
 
   case class Parameters(appHomeDir: File,
                         templateDir: File,
+                        pdfScript: File,
                         outputFile: File,
                         datasetID: DatasetID,
-                        vagrant: VagrantConnection,
                         fedora: Fedora,
                         ldap: Ldap) {
-    override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $datasetID, $vagrant)"
+    override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $pdfScript, $datasetID)"
   }
 
   object Version {

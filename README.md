@@ -28,13 +28,10 @@ are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.prop
 Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool 
 requires to be installed before being used by `easy-license-creator`. In order to not having this installed on our computers while developing 
 on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. 
-During development we therefore require extra settings in `src/main/assembly/dist/cfg/application.properties`:
- 
- * `vagrant.user` - the username of *vagrant*
- * `vagrant.host` - the hostname of *vagrant*
- * `vagrant.privatekey` - the path to the private key that is used to ssh into the development server
- 
-**These fields are *NOT* set when deploying and running on the development, test or production servers!!!** This is why they are commented by default.
+During development we therefore require a different script than the one that is used in production. Follow the steps below:
+
+1. In `application.properties` set `pdf.script=localrun.sh`;
+2. In `localrun.sh` fill in the variables `USER_HOST` and `PRIVATE_KEY`.
 
 ARGUMENTS
 ---------
