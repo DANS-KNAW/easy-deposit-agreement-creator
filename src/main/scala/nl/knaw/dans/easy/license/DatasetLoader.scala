@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.license
 
 import javax.naming.directory.Attributes
 
+import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl}
 import rx.lang.scala.Observable
@@ -28,13 +29,17 @@ case class EasyUser(userID: DepositorID, name: String, organization: String, add
                     postalCode: String, city: String, country: String, telephone: String,
                     email: String)
 
-case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
+case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser, files: Observable[FileItem])
+
+case class FileItem(filePid: String, path: String, accessibleTo: FileAccessRight, checkSum: String)
 
 trait DatasetLoader {
 
   def getDatasetById(datasetID: DatasetID): Observable[Dataset]
 
   def getUserById(depositorID: DepositorID): Observable[EasyUser]
+
+  def getFilesInDataset(datasetID: DatasetID): Observable[FileItem]
 }
 
 case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoader {
@@ -49,7 +54,7 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
 
     fedora.getEMD(datasetID)(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
       .subscribeOn(IOScheduler())
-      .combineLatestWith(depositor)(Dataset(datasetID, _, _))
+      .combineLatestWith(depositor)(Dataset(datasetID, _, _, getFilesInDataset(datasetID)))
       .single
   }
 
@@ -75,6 +80,32 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
 
       EasyUser(depositorID, name, org, addr, code, place, country, phone, mail)
     }).single
+  }
+
+  private def getFileItem(filePid: String): Observable[FileItem] = {
+    val pathAndAccessCategory = fedora.getFileMetadata(filePid)(is => {
+      val xml = is.loadXML
+      (xml \\ "path" text,
+        FileAccessRight.valueOf(xml \\ "accessibleTo" text)
+          .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $filePid")))
+    }).subscribeOn(IOScheduler())
+
+    val checksums = fedora.getFile(filePid)(_.getDsChecksum).subscribeOn(IOScheduler())
+
+    pathAndAccessCategory.combineLatestWith(checksums) {
+      case ((p, ac), cs) => FileItem(filePid, p, ac, cs)
+    }
+  }
+
+  def getFilesInDataset(datasetID: DatasetID): Observable[FileItem] = {
+    val query = "PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> " +
+      "PREFIX fmodel: <info:fedora/fedora-system:def/model#> " +
+      s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
+      "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
+
+    fedora.queryRiSearch(query)
+      .subscribeOn(IOScheduler())
+      .flatMap(getFileItem)
   }
 }
 

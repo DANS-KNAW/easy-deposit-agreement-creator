@@ -59,7 +59,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
       headerMap + dansLogo + footer ++ depositorMap ++ ac ++ embargoMap + dateTime)
 
     val metadata = metadataTable(emd).map(MetadataTable -> _)
-    val files = filesTable(dataset.datasetID).map(FileTable -> _)
+    val files = filesTable(dataset.files).map(FileTable -> _)
     metadata.combineLatestWith(files)((meta, file) =>
       (map: Map[KeywordMapping, Object]) => map + meta + file + (HasFiles -> boolean2Boolean(!file._2.isEmpty)))
       .flatMap(f => placeholders.map(f).toObservable)
@@ -194,38 +194,16 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
     }
   }
 
-  def formatFileAccessRights(category: String): String = {
-    FileAccessRight.valueOf(category).map(formatFileAccessRights).getOrElse(category)
-  }
-
-  def filesTable(datasetID: DatasetID): Observable[ju.List[ju.Map[String, String]]] = {
-    Observable.defer {
-      val query = "PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> " +
-        "PREFIX fmodel: <info:fedora/fedora-system:def/model#> " +
-        s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
-        "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
-
-      fedora.queryRiSearch(query)
-        .subscribeOn(IOScheduler())
-        .flatMap(filePid => {
-          val pathAndAccessCategory = fedora.getFileMetadata(filePid)(is => {
-            val xml = is.loadXML
-            (xml \\ "path" text, formatFileAccessRights(xml \\ "accessibleTo" text))
-          }).subscribeOn(IOScheduler())
-
-          val checksums = fedora.getFile(filePid)(_.getDsChecksum)
-            .subscribeOn(IOScheduler())
-            .map(cs => {
-              if (cs.isBlank || cs == "none") checkSumNotCalculated
-              else cs
-            })
-
-          pathAndAccessCategory.combineLatestWith(checksums) {
-            case ((p, ac), cs) => Map[KeywordMapping, String](FilePath -> p, FileChecksum -> cs, FileAccessibleTo -> ac)
-              .map { case (k, v) => (k.keyword, v) }.asJava
-          }
-        })
-        .foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
-    }
+  def filesTable(fileItems: Observable[FileItem]): Observable[ju.List[ju.Map[String, String]]] = {
+    fileItems.map(fileItem => Map[KeywordMapping, String](
+        FilePath -> fileItem.path,
+        FileChecksum -> {
+          val cs = fileItem.checkSum
+          if (cs.isBlank || cs == "none") checkSumNotCalculated else cs
+        },
+        FileAccessibleTo -> formatFileAccessRights(fileItem.accessibleTo))
+      .map { case (k, v) => (k.keyword, v) }
+      .asJava)
+      .foldLeft(new ju.ArrayList[ju.Map[String, String]])((list, map) => { list.add(map); list })
   }
 }

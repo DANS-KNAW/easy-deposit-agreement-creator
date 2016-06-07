@@ -491,40 +491,20 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     testInstance.formatFileAccessRights(FileAccessRight.NONE) shouldBe "None"
   }
 
-  "formatFileAccessRights with String" should "return a String representation when a valid category is given" in {
-    testInstance.formatFileAccessRights("NONE") shouldBe "None"
-  }
-
-  it should "return the input String itself if it is not a category" in {
-    val category = "TEST"
-    testInstance.formatFileAccessRights(category) shouldBe category
-  }
-
-
   "filesTable" should "give a mapping of files and checksums in the dataset" in {
-    inSequence {
-      fedora.queryRiSearch _ expects * returning Observable.just("abc", "def", "ghi")
-      (fedora.getFileMetadata(_: String)(_: InputStream => (String, String))) expects ("abc", *) returning Observable.just(("ABC", "ANONYMOUS"))
-      (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("abc", *) returning Observable.just("123")
-      (fedora.getFileMetadata(_: String)(_: InputStream => (String, String))) expects ("def", *) returning Observable.just(("DEF", "KNOWN"))
-      (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("def", *) returning Observable.just("none")
-      (fedora.getFileMetadata(_: String)(_: InputStream => (String, String))) expects ("ghi", *) returning Observable.just(("GHI", "RESTRICTED_REQUEST"))
-      (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("ghi", *) returning Observable.just("")
-    }
+    val input = Observable.just(
+      FileItem("file1", "ABC", FileAccessRight.ANONYMOUS, "123"),
+      FileItem("file2", "DEF", FileAccessRight.KNOWN, "none"),
+      FileItem("file3", "GHI", FileAccessRight.RESTRICTED_GROUP, ""))
 
-    // due to concurrency we cannot determine the order of the results; therefore we use a set here
-    val expected = Set(
-      Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "ANONYMOUS").asJava,
-      Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "KNOWN").asJava,
-      Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "RESTRICTED_REQUEST").asJava
+    val expected = List(
+      Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava,
+      Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Known").asJava,
+      Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava
     ).asJava
 
-    val testSubscriber = TestSubscriber[ju.Set[ju.Map[String, String]]]()
-    testInstance.filesTable("foobar").map(list => {
-      val set = new ju.HashSet[ju.Map[String, String]]
-      set.addAll(list)
-      set
-    }).subscribe(testSubscriber)
+    val testSubscriber = TestSubscriber[ju.List[ju.Map[String, String]]]()
+    testInstance.filesTable(input).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValue(expected)

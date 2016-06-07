@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.license
 import java.io.InputStream
 import javax.naming.directory.Attributes
 
+import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl, MDContainer, Term}
 import org.scalamock.scalatest.MockFactory
@@ -81,32 +82,56 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   "getDatasetById" should "return the dataset corresponding to the given identifier" in {
     val id = "testID"
     val depID = "depID"
+    val filePid = "filePid"
+    val path = "path"
+    val far = FileAccessRight.NONE
+    val checksum = "checksum"
     val user = new EasyUser(depID, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val expected = new Dataset(id, emdMock, user)
+    val fileItem = FileItem(filePid, path, far, checksum)
+    val expected = (id, emdMock, user)
 
     (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID)
     (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
+    fedora.queryRiSearch _ expects * returning Observable.just(filePid)
+    (fedora.getFileMetadata(_: String)(_: InputStream => (String, FileAccessRight.Value))) expects (filePid, *) returning Observable.just((path, far))
+    (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects (filePid, *) returning Observable.just(checksum)
     (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID, *) returning Observable.just(user)
 
     val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Dataset]()
-    loader.getDatasetById(id).subscribe(testObserver)
+    val testObserver1 = TestSubscriber[(String, EasyMetadata, EasyUser)]()
+    val testObserver2 = TestSubscriber[FileItem]()
+    val obs = loader.getDatasetById(id).publish
+    obs.map(dataset => (dataset.datasetID, dataset.emd, dataset.easyUser)).subscribe(testObserver1)
+    obs.flatMap(_.files).subscribe(testObserver2)
 
-    testObserver.awaitTerminalEvent()
-    testObserver.assertValue(expected)
-    testObserver.assertNoErrors()
-    testObserver.assertCompleted()
+    obs.connect
+
+    testObserver1.awaitTerminalEvent()
+    testObserver2.awaitTerminalEvent()
+
+    testObserver1.assertValue(expected)
+    testObserver1.assertNoErrors()
+    testObserver1.assertCompleted()
+
+    testObserver2.assertValue(fileItem)
+    testObserver2.assertNoErrors()
+    testObserver2.assertCompleted()
   }
 
   it should "fail if more than one depositor was found in the AMD" in {
     val id = "testID"
     val depID1 = "depID"
     val depID2 = "depID"
+    val filePid = "filePid"
+    val path = "path"
+    val far = FileAccessRight.NONE
+    val checksum = "checksum"
     val user1 = new EasyUser(depID1, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     val user2 = new EasyUser(depID2, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
 
     (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID1, depID2)
     (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
+    fedora.queryRiSearch _ expects * returning Observable.just(filePid) twice()
     (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID1, *) returning Observable.just(user1)
     (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID2, *) returning Observable.just(user2)
 
