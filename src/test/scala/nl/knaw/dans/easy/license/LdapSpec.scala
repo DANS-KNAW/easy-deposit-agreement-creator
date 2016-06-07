@@ -56,7 +56,6 @@ class LdapSpec extends UnitSpec with MockFactory {
     testSubscriber.assertValues(attrs1, attrs2)
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 
   it should "return an Observable with no onNext calls when the query has no results" in {
@@ -79,6 +78,5 @@ class LdapSpec extends UnitSpec with MockFactory {
     testSubscriber.assertNoValues()
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 }

@@ -380,7 +380,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     testSubscriber.assertValue(expected)
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 
   "formatAudience" should "retrieve the audience identifier from the EMD, " +
@@ -404,7 +403,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     testSubscriber.assertValue("ABC; DEF")
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 
   it should "do the same with one element in the audience" in {
@@ -423,7 +421,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     testSubscriber.assertValue("ABC")
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 
   it should "yield an Observable with one empty String when there is no audience" in {
@@ -440,7 +437,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     testSubscriber.assertValue("")
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 
   "formatAccessRights" should "return a String representation of the access category ANONYMOUS_ACCESS" in {
@@ -544,6 +540,5 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     testSubscriber.assertValue(expected)
     testSubscriber.assertNoErrors()
     testSubscriber.assertCompleted()
-    testSubscriber.assertUnsubscribed()
   }
 }

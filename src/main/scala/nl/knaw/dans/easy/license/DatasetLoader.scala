@@ -45,7 +45,7 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
   def getDatasetById(datasetID: DatasetID) = {
     val depositor = fedora.getAMD(datasetID)(_.loadXML \\ "depositorId" text)
       .subscribeOn(IOScheduler())
-      .flatMap(getUserById(_))
+      .flatMap(getUserById(_).subscribeOn(IOScheduler()))
 
     fedora.getEMD(datasetID)(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
       .subscribeOn(IOScheduler())

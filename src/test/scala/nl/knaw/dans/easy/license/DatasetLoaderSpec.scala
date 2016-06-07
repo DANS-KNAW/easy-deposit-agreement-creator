@@ -50,7 +50,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertValue(user)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   it should "fail with a NoSuchElementException if the query to ldap doesn't yield any user data" in {
@@ -63,7 +62,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertNoValues()
     testObserver.assertError(classOf[NoSuchElementException])
     testObserver.assertNotCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   it should "fail with an IllegalArgumentException if the query to ldap yields more than one user data object" in {
@@ -78,7 +76,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertNoValues()
     testObserver.assertError(classOf[IllegalArgumentException])
     testObserver.assertNotCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   "getDatasetById" should "return the dataset corresponding to the given identifier" in {
@@ -99,7 +96,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertValue(expected)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   it should "fail if more than one depositor was found in the AMD" in {
@@ -122,7 +118,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertNoValues()
     testObserver.assertError(classOf[IllegalArgumentException])
     testObserver.assertNotCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   it should "fail if no AMD was found with the corresponding datasetID" in {
@@ -140,7 +135,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertNoValues()
     testObserver.assertError(classOf[NoSuchElementException])
     testObserver.assertNotCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   it should "fail if no EMD was found with the corresponding datasetID" in {
@@ -160,7 +154,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertNoValues()
     testObserver.assertError(classOf[NoSuchElementException])
     testObserver.assertNotCompleted()
-    testObserver.assertUnsubscribed()
   }
 
   it should "fail if no user was found with the corresponding depositorID" in {
@@ -179,6 +172,5 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertNoValues()
     testObserver.assertError(classOf[NoSuchElementException])
     testObserver.assertNotCompleted()
-    testObserver.assertUnsubscribed()
   }
 }

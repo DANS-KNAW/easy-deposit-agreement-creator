@@ -190,6 +190,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
 
 
       fedora.queryRiSearch(query)
+        .subscribeOn(IOScheduler())
         .flatMap(filePid => {
           val path = fedora.getFileMetadata(filePid)(_.loadXML \\ "path" text).subscribeOn(IOScheduler())
           val checksums = fedora.getFile(filePid)(_.getDsChecksum)
