@@ -26,16 +26,76 @@ import scala.io.Source
 
 trait Fedora {
 
+  /**
+    * Queries Fedora for the AMD datastream dissemination xml of the dataset with `identifier = pid`
+    * and transforms the result of that query into an instance of type `T` using the function `f`.
+    *
+    * After the data is read from the `InputStream` this function will take care of closing this resource.
+    *
+    * @param pid identifier of the dataset to be queried
+    * @param f function that transforms an `InputStream` of xml to an instance of type `T`
+    * @tparam T the result type of the transformer function
+    * @return the instance of `T` wrapped in an `Observable`
+    */
   def getAMD[T](pid: String)(f: InputStream => T): Observable[T]
 
+  /**
+    * Queries Fedora for the DC datastream dissemination xml of the dataset with `identifier = pid`
+    * and transforms the result of that query into an instance of type `T` using the function `f`.
+    *
+    * After the data is read from the `InputStream` this function will take care of closing this resource.
+    *
+    * @param pid identifier of the dataset to be queried
+    * @param f function that transforms an `InputStream` of xml to an instance of type `T`
+    * @tparam T the result type of the transformer function
+    * @return the instance of `T` wrapped in an `Observable`
+    */
   def getDC[T](pid: String)(f: InputStream => T): Observable[T]
 
+  /**
+    * Queries Fedora for the EMD datastream dissemination xml of the dataset with `identifier = pid`
+    * and transforms the result of that query into an instance of type `T` using the function `f`.
+    *
+    * After the data is read from the `InputStream` this function will take care of closing this resource.
+    *
+    * @param pid identifier of the dataset to be queried
+    * @param f function that transforms an `InputStream` of xml to an instance of type `T`
+    * @tparam T the result type of the transformer function
+    * @return the instance of `T` wrapped in an `Observable`
+    */
   def getEMD[T](pid: String)(f: InputStream => T): Observable[T]
 
+  /**
+    * Queries Fedora for the FILE_METADATA datastream dissemination xml of the dataset with `identifier = pid`
+    * and transforms the result of that query into an instance of type `T` using the function `f`.
+    *
+    * After the data is read from the `InputStream` this function will take care of closing this resource.
+    *
+    * @param pid identifier of the dataset to be queried
+    * @param f function that transforms an `InputStream` of xml to an instance of type `T`
+    * @tparam T the result type of the transformer function
+    * @return the instance of `T` wrapped in an `Observable`
+    */
   def getFileMetadata[T](pid: String)(f: InputStream => T): Observable[T]
 
+  /**
+    * Queries Fedora for the EASY_FILE datastream of the dataset with `identifier = pid`
+    * and transforms the result of that query (an `DatastreamProfile` object) into an instance of
+    * type `T` using the function `f`.
+    *
+    * @param pid identifier of the dataset to be queried
+    * @param f function that transforms an `DatastreamProfile` to an instance of type `T`
+    * @tparam T the result type of the transformer function
+    * @return the instance of `T` wrapped in an `Observable`
+    */
   def getFile[T](pid: String)(f: DatastreamProfile => T): Observable[T]
 
+  /**
+    * Executes a ``RiSearch`` query in Fedora.
+    *
+    * @param query the query to be executed
+    * @return the result of that query
+    */
   def queryRiSearch(query: String): Observable[String]
 }
 
