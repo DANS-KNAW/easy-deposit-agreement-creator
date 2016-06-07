@@ -67,7 +67,7 @@ in `src/main/assembly/dist/cfg/logback.xml`. The available settings are explaine
 **WeasyPrint** is installed according to the [installation page](http://weasyprint.readthedocs.io/en/latest/install.html) or via:
 
 ```
-yum install redhat-rpm-configrpm python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel weasyprint
+yum install redhat-rpm-config python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel weasyprint
 ```
 
 After this, `weasyprint --help` is supposed to show the appropriate help page.
