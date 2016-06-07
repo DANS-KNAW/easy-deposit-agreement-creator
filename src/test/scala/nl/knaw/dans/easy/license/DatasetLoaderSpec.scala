@@ -123,9 +123,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     val depID1 = "depID"
     val depID2 = "depID"
     val filePid = "filePid"
-    val path = "path"
-    val far = FileAccessRight.NONE
-    val checksum = "checksum"
     val user1 = new EasyUser(depID1, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     val user2 = new EasyUser(depID2, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
 

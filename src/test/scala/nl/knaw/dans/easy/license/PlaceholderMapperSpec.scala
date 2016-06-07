@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.license
 import java.io.{File, InputStream}
 import java.{util => ju}
 
-import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.pf.language.emd.Term.{Name, Namespace}
 import nl.knaw.dans.pf.language.emd._
