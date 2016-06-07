@@ -61,7 +61,7 @@ case object MetadataValue                extends KeywordMapping { val keyword = 
 // file table
 case object HasFiles                     extends KeywordMapping { val keyword = "HasFiles" }
 case object FileTable                    extends KeywordMapping { val keyword = "FileTable" }
-case object FileKey                      extends KeywordMapping { val keyword = "FileKey" }
-case object FileValue                    extends KeywordMapping { val keyword = "FileValue" }
-
+case object FilePath                     extends KeywordMapping { val keyword = "FilePath" }
+case object FileChecksum                 extends KeywordMapping { val keyword = "FileChecksum" }
+case object FileAccessibleTo             extends KeywordMapping { val keyword = "FileAccessibleTo" }
 // @formatter:on

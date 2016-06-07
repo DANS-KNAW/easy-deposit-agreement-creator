@@ -3,11 +3,13 @@
     <tr>
         <th>File</th>
         <th>SHA-1 checksum</th>
+        <th>Accessible to</th>
     </tr>
 #foreach ($file in $FileTable)
     <tr>
-        <td>$file.FileKey</td>
-        <td>$file.FileValue</td>
+        <td>$file.FilePath</td>
+        <td>$file.FileChecksum</td>
+        <td>$file.FileAccessibleTo</td>
     </tr>
 #end
 </table>

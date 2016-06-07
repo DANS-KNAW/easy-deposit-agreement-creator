@@ -21,6 +21,7 @@ import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
+import nl.knaw.dans.easy.license.FileAccessRight._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
 import org.apache.commons.codec.binary.Base64
@@ -177,8 +178,24 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
         case NO_ACCESS                        => "Other"
         case FREELY_AVAILABLE                 => "Open Access"
         // @formatter:on
-      }.doOnError(e => log.warn("No available mapping; using acces category value directly"))
-        .getOrElse(item.toString)
+    }.doOnError(e => log.warn("No available mapping; using acces category value directly"))
+      .getOrElse(item.toString)
+  }
+
+  def formatFileAccessRights(accessRight: FileAccessRight.Value): String = {
+    accessRight match {
+      // @formatter:off
+      case ANONYMOUS          => "Anonymous"
+      case KNOWN              => "Known"
+      case RESTRICTED_REQUEST => "Restricted request"
+      case RESTRICTED_GROUP   => "Restricted group"
+      case NONE               => "None"
+      // @formatter:on
+    }
+  }
+
+  def formatFileAccessRights(category: String): String = {
+    FileAccessRight.valueOf(category).map(formatFileAccessRights).getOrElse(category)
   }
 
   def filesTable(datasetID: DatasetID): Observable[ju.List[ju.Map[String, String]]] = {
@@ -188,11 +205,14 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
         s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
         "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
 
-
       fedora.queryRiSearch(query)
         .subscribeOn(IOScheduler())
         .flatMap(filePid => {
-          val path = fedora.getFileMetadata(filePid)(_.loadXML \\ "path" text).subscribeOn(IOScheduler())
+          val pathAndAccessCategory = fedora.getFileMetadata(filePid)(is => {
+            val xml = is.loadXML
+            (xml \\ "path" text, formatFileAccessRights(xml \\ "accessibleTo" text))
+          }).subscribeOn(IOScheduler())
+
           val checksums = fedora.getFile(filePid)(_.getDsChecksum)
             .subscribeOn(IOScheduler())
             .map(cs => {
@@ -200,8 +220,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
               else cs
             })
 
-          path.combineLatestWith(checksums) {
-            (p, cs) => Map[KeywordMapping, String](FileKey -> p, FileValue -> cs)
+          pathAndAccessCategory.combineLatestWith(checksums) {
+            case ((p, ac), cs) => Map[KeywordMapping, String](FilePath -> p, FileChecksum -> cs, FileAccessibleTo -> ac)
               .map { case (k, v) => (k.keyword, v) }.asJava
           }
         })

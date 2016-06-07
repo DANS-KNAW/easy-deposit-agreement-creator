@@ -108,11 +108,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "footerText" should "return the text in a file without its line endings" in {
-    val file = new File(parameters.templateDir, "FooterTextTest.txt")
-
-    val res = testInstance.footerText(file)
-
-    res shouldBe "hello\nworld"
+    testInstance.footerText(new File(parameters.templateDir, "FooterTextTest.txt")) shouldBe "hello\nworld"
   }
 
   "getDate" should "return the first IsoDate from the list generated in the function when this list is not empty" in {
@@ -440,93 +436,87 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "formatAccessRights" should "return a String representation of the access category ANONYMOUS_ACCESS" in {
-    val mockItem = metadataItemMock("ANONYMOUS_ACCESS")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Anonymous"
+    testInstance.formatAccessRights(metadataItemMock("ANONYMOUS_ACCESS")) shouldBe "Anonymous"
   }
 
   it should "return a String representation of the access category OPEN_ACCESS" in {
-    val mockItem = metadataItemMock("OPEN_ACCESS")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Open Access"
+    testInstance.formatAccessRights(metadataItemMock("OPEN_ACCESS")) shouldBe "Open Access"
   }
 
   it should "return a String representation of the access category OPEN_ACCESS_FOR_REGISTERED_USERS" in {
-    val mockItem = metadataItemMock("OPEN_ACCESS_FOR_REGISTERED_USERS")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Open access for registered users"
+    testInstance.formatAccessRights(metadataItemMock("OPEN_ACCESS_FOR_REGISTERED_USERS")) shouldBe "Open access for registered users"
   }
 
   it should "return a String representation of the access category GROUP_ACCESS" in {
-    val mockItem = metadataItemMock("GROUP_ACCESS")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Restricted - 'archaeology' group"
+    testInstance.formatAccessRights(metadataItemMock("GROUP_ACCESS")) shouldBe "Restricted - 'archaeology' group"
   }
 
   it should "return a String representation of the access category REQUEST_PERMISSION" in {
-    val mockItem = metadataItemMock("REQUEST_PERMISSION")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Restricted - request permission"
+    testInstance.formatAccessRights(metadataItemMock("REQUEST_PERMISSION")) shouldBe "Restricted - request permission"
   }
 
   it should "return a String representation of the access category ACCESS_ELSEWHERE" in {
-    val mockItem = metadataItemMock("ACCESS_ELSEWHERE")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Elsewhere"
+    testInstance.formatAccessRights(metadataItemMock("ACCESS_ELSEWHERE")) shouldBe "Elsewhere"
   }
 
   it should "return a String representation of the access category NO_ACCESS" in {
-    val mockItem = metadataItemMock("NO_ACCESS")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Other"
+    testInstance.formatAccessRights(metadataItemMock("NO_ACCESS")) shouldBe "Other"
   }
 
   it should "return a String representation of the access category FREELY_AVAILABLE" in {
-    val mockItem = metadataItemMock("FREELY_AVAILABLE")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "Open Access"
+    testInstance.formatAccessRights(metadataItemMock("FREELY_AVAILABLE")) shouldBe "Open Access"
   }
 
   it should "return a String representation of an unknown access category" in {
-    val mockItem = metadataItemMock("test")
-
-    val res = testInstance.formatAccessRights(mockItem)
-
-    res shouldBe "test"
+    testInstance.formatAccessRights(metadataItemMock("test")) shouldBe "test"
   }
+
+  "formatFileAccessRights" should "return a String representation of the file access category ANONYMOUS" in {
+    testInstance.formatFileAccessRights(FileAccessRight.ANONYMOUS) shouldBe "Anonymous"
+  }
+
+  it should "return a String representation of the file access category KNOWN" in {
+    testInstance.formatFileAccessRights(FileAccessRight.KNOWN) shouldBe "Known"
+  }
+
+  it should "return a String representation of the file access category RESTRICTED_REQUEST" in {
+    testInstance.formatFileAccessRights(FileAccessRight.RESTRICTED_REQUEST) shouldBe "Restricted request"
+  }
+
+  it should "return a String representation of the file access category RESTRICTED_GROUP" in {
+    testInstance.formatFileAccessRights(FileAccessRight.RESTRICTED_GROUP) shouldBe "Restricted group"
+  }
+
+  it should "return a String representation of the file access category NONE" in {
+    testInstance.formatFileAccessRights(FileAccessRight.NONE) shouldBe "None"
+  }
+
+  "formatFileAccessRights with String" should "return a String representation when a valid category is given" in {
+    testInstance.formatFileAccessRights("NONE") shouldBe "None"
+  }
+
+  it should "return the input String itself if it is not a category" in {
+    val category = "TEST"
+    testInstance.formatFileAccessRights(category) shouldBe category
+  }
+
 
   "filesTable" should "give a mapping of files and checksums in the dataset" in {
     inSequence {
       fedora.queryRiSearch _ expects * returning Observable.just("abc", "def", "ghi")
-      (fedora.getFileMetadata(_: String)(_: InputStream => String)) expects ("abc", *) returning Observable.just("ABC")
+      (fedora.getFileMetadata(_: String)(_: InputStream => (String, String))) expects ("abc", *) returning Observable.just(("ABC", "ANONYMOUS"))
       (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("abc", *) returning Observable.just("123")
-      (fedora.getFileMetadata(_: String)(_: InputStream => String)) expects ("def", *) returning Observable.just("DEF")
+      (fedora.getFileMetadata(_: String)(_: InputStream => (String, String))) expects ("def", *) returning Observable.just(("DEF", "KNOWN"))
       (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("def", *) returning Observable.just("none")
-      (fedora.getFileMetadata(_: String)(_: InputStream => String)) expects ("ghi", *) returning Observable.just("GHI")
+      (fedora.getFileMetadata(_: String)(_: InputStream => (String, String))) expects ("ghi", *) returning Observable.just(("GHI", "RESTRICTED_REQUEST"))
       (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects ("ghi", *) returning Observable.just("")
     }
 
     // due to concurrency we cannot determine the order of the results; therefore we use a set here
     val expected = Set(
-      Map(FileKey.keyword -> "ABC", FileValue.keyword -> "123").asJava,
-      Map(FileKey.keyword -> "DEF", FileValue.keyword -> checkSumNotCalculated).asJava,
-      Map(FileKey.keyword -> "GHI", FileValue.keyword -> checkSumNotCalculated).asJava
+      Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "ANONYMOUS").asJava,
+      Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "KNOWN").asJava,
+      Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "RESTRICTED_REQUEST").asJava
     ).asJava
 
     val testSubscriber = TestSubscriber[ju.Set[ju.Map[String, String]]]()

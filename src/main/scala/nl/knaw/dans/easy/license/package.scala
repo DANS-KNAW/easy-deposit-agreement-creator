@@ -36,7 +36,7 @@ package object license {
   type PlaceholderMap = Map[KeywordMapping, Object]
 
   val encoding = Charsets.UTF_8
-  val checkSumNotCalculated = "-------------not-calculated-------------"
+  val checkSumNotCalculated = "------not-calculated------"
   def velocityProperties(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/velocity-engine.properties")
   }
