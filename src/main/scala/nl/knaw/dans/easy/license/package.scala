@@ -34,6 +34,7 @@ package object license {
   type DatasetID = String
   type DepositorID = String
   type PlaceholderMap = Map[KeywordMapping, Object]
+  type Audience = String
 
   val encoding = Charsets.UTF_8
   val checkSumNotCalculated = "------not-calculated------"

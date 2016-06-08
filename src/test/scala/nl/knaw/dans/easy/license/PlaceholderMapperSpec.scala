@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{File, InputStream}
+import java.io.File
 import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
@@ -25,8 +25,6 @@ import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import rx.lang.scala.Observable
-import rx.lang.scala.observers.TestSubscriber
 
 import scala.collection.JavaConverters._
 
@@ -81,12 +79,12 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     val res = testInstance.header(emd)
 
-    res should contain (DansManagedDoi, "12.3456/dans-ab7-cdef")
-    res should contain (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef")
-    res should contain (DateSubmitted, "1992-07-30")
-    res should contain (Title, "my preferred title")
+    res.get should contain (DansManagedDoi, "12.3456/dans-ab7-cdef")
+    res.get should contain (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef")
+    res.get should contain (DateSubmitted, "1992-07-30")
+    res.get should contain (Title, "my preferred title")
 
-    res should have size 4
+    res.get should have size 4
   }
 
   it should "yield a map with default values if the actual values are null" in {
@@ -98,12 +96,12 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     val res = testInstance.header(emd)
 
-    res should contain (DansManagedDoi, "")
-    res should contain (DansManagedEncodedDoi, "")
-    res should contain (DateSubmitted, new IsoDate().toString)
-    res should contain (Title, "my preferred title")
+    res.get should contain (DansManagedDoi, "")
+    res.get should contain (DansManagedEncodedDoi, "")
+    res.get should contain (DateSubmitted, new IsoDate().toString)
+    res.get should contain (Title, "my preferred title")
 
-    res should have size 4
+    res.get should have size 4
   }
 
   "footerText" should "return the text in a file without its line endings" in {
@@ -156,7 +154,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -171,7 +169,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ANONYMOUS_ACCESS
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -186,7 +184,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.FREELY_AVAILABLE
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -201,7 +199,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, true)
@@ -216,7 +214,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.GROUP_ACCESS
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -231,7 +229,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -246,7 +244,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -261,7 +259,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.NO_ACCESS
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, false)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -276,7 +274,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = testInstance.accessRights(emd).get
+    val res = testInstance.datasetAccessCategory(emd).get
 
     res should contain (OpenAccess, true)
     res should contain (OpenAccessForRegisteredUsers, false)
@@ -329,145 +327,85 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "metadataTable" should "give a mapping for the metadata elements in the dataset" in {
-    val term1 = new Term(Name.AUDIENCE, Namespace.DC)
-    val term2 = new Term(Name.ACCESSRIGHTS, Namespace.DC)
-    val term3 = new Term(Name.MEDIUM, Namespace.DC)
-    val term4 = new Term(Name.ABSTRACT, Namespace.EAS)
-    val terms = Set(term1, term2, term3, term4).asJava
+    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
+    val accessrightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
+    val mediumTerm = new Term(Name.MEDIUM, Namespace.DC)
+    val abstractTerm = new Term(Name.ABSTRACT, Namespace.EAS)
+    val terms = Set(audienceTerm, accessrightsTerm, mediumTerm, abstractTerm).asJava
 
     val item1 = metadataItemMock("item1")
-    val item2 = metadataItemMock("item2")
-    val item3 = metadataItemMock("item3")
+    val item2 = metadataItemMock("ANONYMOUS_ACCESS")
+    val item3 = metadataItemMock("OPEN_ACCESS")
     val item4 = metadataItemMock("item4")
     val item5 = metadataItemMock("item5")
+    val item6 = metadataItemMock("item6")
 
-    val items1 = List(item1, item2).asJava
-    val items2 = List(item2, item3).asJava
-    val items3 = List(item3, item4, item5).asJava
-    val items4 = ju.Collections.emptyList[MetadataItem]()
+    val audienceItems = List(item1, item2).asJava
+    val accessrightItems = List(item2, item3).asJava
+    val mediumItems = List(item4, item5, item6).asJava
+    val abstractItems = ju.Collections.emptyList[MetadataItem]()
 
     emd.getTerms _ expects () returning terms
-    emd.getTerm _ expects term1 returning items1
-    emd.getTerm _ expects term2 returning items2
-    emd.getTerm _ expects term3 returning items3
-    emd.getTerm _ expects term4 returning items4
-
-    val testInstance = new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties")) {
-      override def formatAccessRights(item: MetadataItem) = {
-        "test123"
-      }
-
-      override def formatAudience(emd: EasyMetadata) = {
-        Observable.just("audience")
-      }
-    }
+    emd.getTerm _ expects audienceTerm returning audienceItems
+    emd.getTerm _ expects accessrightsTerm returning accessrightItems
+    emd.getTerm _ expects mediumTerm returning mediumItems
+    emd.getTerm _ expects abstractTerm returning abstractItems
 
     val expected = List(
-      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "audience").asJava,
-      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "test123").asJava,
-      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item3, item4, item5").asJava
+      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
+      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
+      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4, item5, item6").asJava
     ).asJava
 
-    val testSubscriber = TestSubscriber[ju.List[ju.Map[String, String]]]()
-    testInstance.metadataTable(emd).subscribe(testSubscriber)
-
-    testSubscriber.awaitTerminalEvent()
-    testSubscriber.assertValue(expected)
-    testSubscriber.assertNoErrors()
-    testSubscriber.assertCompleted()
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234") shouldBe expected
   }
 
-  "formatAudience" should "retrieve the audience identifier from the EMD, " +
-    "look for the title of this identifier in Fedora's DC " +
-    "and return the combination of the results separated by <semicolon>" in {
-    val audience = mock[EmdAudience]
-
-    emd.getEmdAudience _ expects () returning audience
-    audience.getValues _ expects () returning ju.Arrays.asList("abc", "def")
-    emd.getPreferredTitle _ expects () never()
-
-    inSequence {
-      (fedora.getDC(_: String)(_: InputStream => String)) expects ("abc", *) returning Observable.just("ABC")
-      (fedora.getDC(_: String)(_: InputStream => String)) expects ("def", *) returning Observable.just("DEF")
-    }
-
-    val testSubscriber = TestSubscriber[String]()
-    testInstance.formatAudience(emd).subscribe(testSubscriber)
-
-    testSubscriber.awaitTerminalEvent()
-    testSubscriber.assertValue("ABC; DEF")
-    testSubscriber.assertNoErrors()
-    testSubscriber.assertCompleted()
+  "formatAudience" should "combine the audiences separated by <semicolon>" in {
+    testInstance.formatAudience(Seq("abc", "def"), "datasetID:1234") shouldBe "abc; def"
   }
 
   it should "do the same with one element in the audience" in {
-    val audience = mock[EmdAudience]
-
-    emd.getEmdAudience _ expects () returning audience once()
-    audience.getValues _ expects () returning ju.Arrays.asList("abc") once()
-    emd.getPreferredTitle _ expects () never()
-
-    (fedora.getDC(_: String)(_: InputStream => String)) expects ("abc", *) returning Observable.just("ABC")
-
-    val testSubscriber = TestSubscriber[String]()
-    testInstance.formatAudience(emd).subscribe(testSubscriber)
-
-    testSubscriber.awaitTerminalEvent()
-    testSubscriber.assertValue("ABC")
-    testSubscriber.assertNoErrors()
-    testSubscriber.assertCompleted()
+    testInstance.formatAudience(Seq("abc"), "datasetID:1234") shouldBe "abc"
   }
 
   it should "yield an Observable with one empty String when there is no audience" in {
-    val audience = mock[EmdAudience]
-
-    emd.getEmdAudience _ expects () returning audience
-    audience.getValues _ expects () returning ju.Collections.emptyList[String]
-    emd.getPreferredTitle _ expects () returning "wie dit leest is een aap" once()
-
-    val testSubscriber = TestSubscriber[String]()
-    testInstance.formatAudience(emd).subscribe(testSubscriber)
-
-    testSubscriber.awaitTerminalEvent()
-    testSubscriber.assertValue("")
-    testSubscriber.assertNoErrors()
-    testSubscriber.assertCompleted()
+    testInstance.formatAudience(Seq.empty, "datasetID:1234") shouldBe ""
   }
 
   "formatAccessRights" should "return a String representation of the access category ANONYMOUS_ACCESS" in {
-    testInstance.formatAccessRights(metadataItemMock("ANONYMOUS_ACCESS")) shouldBe "Anonymous"
+    testInstance.formatDatasetAccessRights(metadataItemMock("ANONYMOUS_ACCESS")) shouldBe "Anonymous"
   }
 
   it should "return a String representation of the access category OPEN_ACCESS" in {
-    testInstance.formatAccessRights(metadataItemMock("OPEN_ACCESS")) shouldBe "Open Access"
+    testInstance.formatDatasetAccessRights(metadataItemMock("OPEN_ACCESS")) shouldBe "Open Access"
   }
 
   it should "return a String representation of the access category OPEN_ACCESS_FOR_REGISTERED_USERS" in {
-    testInstance.formatAccessRights(metadataItemMock("OPEN_ACCESS_FOR_REGISTERED_USERS")) shouldBe "Open access for registered users"
+    testInstance.formatDatasetAccessRights(metadataItemMock("OPEN_ACCESS_FOR_REGISTERED_USERS")) shouldBe "Open access for registered users"
   }
 
   it should "return a String representation of the access category GROUP_ACCESS" in {
-    testInstance.formatAccessRights(metadataItemMock("GROUP_ACCESS")) shouldBe "Restricted - 'archaeology' group"
+    testInstance.formatDatasetAccessRights(metadataItemMock("GROUP_ACCESS")) shouldBe "Restricted - 'archaeology' group"
   }
 
   it should "return a String representation of the access category REQUEST_PERMISSION" in {
-    testInstance.formatAccessRights(metadataItemMock("REQUEST_PERMISSION")) shouldBe "Restricted - request permission"
+    testInstance.formatDatasetAccessRights(metadataItemMock("REQUEST_PERMISSION")) shouldBe "Restricted - request permission"
   }
 
   it should "return a String representation of the access category ACCESS_ELSEWHERE" in {
-    testInstance.formatAccessRights(metadataItemMock("ACCESS_ELSEWHERE")) shouldBe "Elsewhere"
+    testInstance.formatDatasetAccessRights(metadataItemMock("ACCESS_ELSEWHERE")) shouldBe "Elsewhere"
   }
 
   it should "return a String representation of the access category NO_ACCESS" in {
-    testInstance.formatAccessRights(metadataItemMock("NO_ACCESS")) shouldBe "Other"
+    testInstance.formatDatasetAccessRights(metadataItemMock("NO_ACCESS")) shouldBe "Other"
   }
 
   it should "return a String representation of the access category FREELY_AVAILABLE" in {
-    testInstance.formatAccessRights(metadataItemMock("FREELY_AVAILABLE")) shouldBe "Open Access"
+    testInstance.formatDatasetAccessRights(metadataItemMock("FREELY_AVAILABLE")) shouldBe "Open Access"
   }
 
   it should "return a String representation of an unknown access category" in {
-    testInstance.formatAccessRights(metadataItemMock("test")) shouldBe "test"
+    testInstance.formatDatasetAccessRights(metadataItemMock("test")) shouldBe "test"
   }
 
   "formatFileAccessRights" should "return a String representation of the file access category ANONYMOUS" in {
@@ -491,10 +429,11 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "filesTable" should "give a mapping of files and checksums in the dataset" in {
-    val input = Observable.just(
+    val input = Seq(
       FileItem("file1", "ABC", FileAccessRight.ANONYMOUS, "123"),
       FileItem("file2", "DEF", FileAccessRight.KNOWN, "none"),
-      FileItem("file3", "GHI", FileAccessRight.RESTRICTED_GROUP, ""))
+      FileItem("file3", "GHI", FileAccessRight.RESTRICTED_GROUP, "")
+    )
 
     val expected = List(
       Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava,
@@ -502,12 +441,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava
     ).asJava
 
-    val testSubscriber = TestSubscriber[ju.List[ju.Map[String, String]]]()
-    testInstance.filesTable(input).subscribe(testSubscriber)
-
-    testSubscriber.awaitTerminalEvent()
-    testSubscriber.assertValue(expected)
-    testSubscriber.assertNoErrors()
-    testSubscriber.assertCompleted()
+    testInstance.filesTable(input) shouldBe expected
   }
 }

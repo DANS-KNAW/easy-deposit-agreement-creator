@@ -26,7 +26,7 @@ import rx.schedulers.Schedulers
 import scala.language.postfixOps
 
 class Command(datasetLoader: DatasetLoader,
-              placeholders: PlaceholderMapper,
+              placeholderMapper: PlaceholderMapper,
               templateResolver: TemplateResolver,
               pdfGenerator: PdfGenerator)(implicit parameters: Parameters) {
 
@@ -47,13 +47,17 @@ class Command(datasetLoader: DatasetLoader,
 
   def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
     new ByteArrayOutputStream().usedIn(templateOut => {
-      placeholders.datasetToPlaceholderMap(dataset)
+      val audiences = datasetLoader.getAudiences(dataset.emd.getEmdAudience).toSeq
+      val files = datasetLoader.getFilesInDataset(dataset.datasetID).toSeq
+
+      audiences.combineLatestWith(files)(placeholderMapper.datasetToPlaceholderMap(dataset, _, _))
+        .flatMap(_.toObservable)
         .observeOn(ComputationScheduler())
         .flatMap(templateResolver.createTemplate(templateOut, _)
           .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
-            .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
+              .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
           .toObservable)
-        .filter(_ => false)
+        .filter(_ => false) // discard all elements, we only want the onError and onCompleted
         .asInstanceOf[Observable[Nothing]]
     })
   }
