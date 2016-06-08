@@ -17,6 +17,8 @@ package nl.knaw.dans.easy.license
 
 import java.io.{InputStream, OutputStream}
 
+import org.slf4j.LoggerFactory
+
 import scala.sys.process._
 
 trait PdfGenerator {
@@ -26,7 +28,11 @@ trait PdfGenerator {
 
 class WeasyPrintPdfGenerator(implicit parameters: Parameters) extends PdfGenerator {
 
+  val log = LoggerFactory.getLogger(getClass)
+
   def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
+    log.debug("create pdf")
+
     parameters.pdfScript.getAbsolutePath #< input #> output
   }
 }

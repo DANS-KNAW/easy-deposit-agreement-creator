@@ -44,6 +44,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
     .getOrElse(new ju.Properties())
 
   def datasetToPlaceholderMap(dataset: Dataset, audiences: Seq[AudienceTitle], fileItems: Seq[FileItem]): Try[PlaceholderMap] = {
+    log.debug("create placeholder map")
+
     val emd = dataset.emd
 
     for {

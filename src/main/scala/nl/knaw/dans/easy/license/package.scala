@@ -22,6 +22,7 @@ import javax.naming.NamingEnumeration
 
 import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
 import org.apache.commons.lang.StringUtils
+import org.slf4j.Logger
 import rx.lang.scala.Notification.{OnCompleted, OnError, OnNext}
 import rx.lang.scala.{Notification, Observable}
 
@@ -209,7 +210,7 @@ package object license {
 
   // TODO not used here anymore, but useful for debugging purposed. Maybe we can migrate this to a EASY-Utils project?
   implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
-    def debugThreadName(s: String = "") = {
+    def debugThreadName(s: String = "")(implicit logger: Logger) = {
 
       def notificationKind(notification: Notification[T]) = {
         notification match {
@@ -219,9 +220,16 @@ package object license {
         }
       }
 
-      observable.materialize.doOnEach(o => println(s"$s: ${notificationKind(o)} - ${Thread.currentThread().getName}")).dematerialize
+      observable.materialize
+        .doOnEach(o => logger.debug(s"$s: ${notificationKind(o)} - ${Thread.currentThread().getName}"))
+        .dematerialize
     }
-    def debug(s: String = "") = observable.materialize.doOnEach(x => println(s"$s: $x")).dematerialize
+
+    def debug(s: String = "")(implicit logger: Logger) = {
+      observable.materialize
+        .doOnEach(x => logger.debug(s"$s: $x"))
+        .dematerialize
+    }
   }
 
   def loadProperties(file: File): Try[Properties] = {
