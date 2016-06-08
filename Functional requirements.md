@@ -101,3 +101,18 @@ Besides the dataset's metadata and the list of files contained in the dataset, s
 | NO_ACCESS | OtherAccess.html | {{Other}} |
 | FREELY_AVAILABLE | OpenAccess.html | Open Access |
 
+## Page layout
+* The document has an A4 page size and the following margins (top-right-bottom-left): 2.5cm 1.5cm 2cm 1.5cm
+* Every page has a header with the DANS logo
+* Every page has a footer with the license's version number as well as the page number
+
+## Pdf generation
+The license is generated from an html template and converted to pdf by [Apache Velocity](http://velocity.apache.org/) and [WeasyPrint](http://weasyprint.org/) respectively. See the README on installation notes for WeasyPrint. 
+
+### Velocity
+Velocity is a Java library and it supposed to be used as such! If a placeholder in the template requires a list or map, it needs to be a `java.util.List` or `java.util`Map` instance. This requires some extra attention as the License Creator itself is written in Scala.
+
+Velocity does not complain or give an error message by default if certain placeholders cannot be resolved. This only happens when the property `runtime.references.strict = true` is set in the Velocity properties file. Besides that Velocity requires the path to the resources to be set using the property `file.resource.loader.path`. As an extra parameter we added `template.file.name`, holding the name of the file to be resolved by Velocity. This file is supposed to be present inside the `file.resource.loader.path` folder. All these parameters can are set in the `velocity-engine.properties` file in `src/main/assembly/dist/res/`.
+
+### WeasyPrint
+The transformation from html to pdf is done using the WeasyPrint command line tool. This tool is installed on the servers (*deasy*, *teasy* and *easy01*). For running it locally (during development) we recommend using the `localrun.sh` script. Indicate this in the `application.properties` located in `src/main/assembly/dist/cfg/` and fill in the `...` placeholders in the script.
