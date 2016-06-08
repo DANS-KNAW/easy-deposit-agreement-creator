@@ -187,11 +187,12 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     (fedora.getFile(_: String)(_: DatastreamProfile => String)) expects (pid2, *) returning Observable.just(chcksm2)
 
     val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[FileItem]()
-    loader.getFilesInDataset(id).subscribe(testObserver)
+    val testObserver = TestSubscriber[Set[FileItem]]()
+    // toSet such that concurrency thingies (order of results) do not matter
+    loader.getFilesInDataset(id).toSet.subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValues(fi1, fi2)
+    testObserver.assertValues(Set(fi1, fi2))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }
