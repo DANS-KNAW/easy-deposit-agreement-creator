@@ -20,9 +20,11 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileOutputStream, O
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
+import rx.lang.scala.ObservableExtensions
 import rx.lang.scala.schedulers.ComputationScheduler
 import rx.schedulers.Schedulers
 
+import scala.collection.JavaConverters._
 import scala.language.postfixOps
 
 class Command(datasetLoader: DatasetLoader,
@@ -47,7 +49,8 @@ class Command(datasetLoader: DatasetLoader,
 
   def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
     new ByteArrayOutputStream().usedIn(templateOut => {
-      val audiences = datasetLoader.getAudiences(dataset.emd.getEmdAudience).toSeq
+
+      val audiences = dataset.emd.getEmdAudience.getValues.asScala.toObservable.flatMap(datasetLoader.getAudience).toSeq
       val files = datasetLoader.getFilesInDataset(dataset.datasetID).toSeq
 
       audiences.combineLatestWith(files)(placeholderMapper.datasetToPlaceholderMap(dataset, _, _))
@@ -55,7 +58,7 @@ class Command(datasetLoader: DatasetLoader,
         .observeOn(ComputationScheduler())
         .flatMap(templateResolver.createTemplate(templateOut, _)
           .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
-              .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
+            .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
           .toObservable)
         .filter(_ => false) // discard all elements, we only want the onError and onCompleted
         .asInstanceOf[Observable[Nothing]]

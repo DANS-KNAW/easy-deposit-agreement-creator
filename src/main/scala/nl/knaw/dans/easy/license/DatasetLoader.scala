@@ -19,12 +19,10 @@ import javax.naming.directory.Attributes
 
 import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
-import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl, EmdAudience}
+import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl}
 import rx.lang.scala.Observable
-import rx.lang.scala.ObservableExtensions
 import rx.lang.scala.schedulers.IOScheduler
 
-import scala.collection.JavaConverters._
 import scala.language.postfixOps
 
 case class EasyUser(userID: DepositorID, name: String, organization: String, address: String,
@@ -33,16 +31,40 @@ case class EasyUser(userID: DepositorID, name: String, organization: String, add
 
 case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
 
-case class FileItem(filePid: String, path: String, accessibleTo: FileAccessRight, checkSum: String)
+case class FileItem(filePid: FileID, path: String, accessibleTo: FileAccessRight, checkSum: String)
 
 trait DatasetLoader {
 
-  def getAudiences(audience: EmdAudience): Observable[Audience]
+  /**
+    * Queries the audience title from Fedora given an audience identifiers
+    *
+    * @param audienceID the identifier of the audience
+    * @return The audidence title corresponding to the `audienceID`
+    */
+  def getAudience(audienceID: AudienceID): Observable[AudienceTitle]
 
+  /**
+    * Create a `Dataset` based on the given `datasetID`
+    *
+    * @param datasetID the identifier of the dataset
+    * @return the dataset corresponding to `datasetID`
+    */
   def getDatasetById(datasetID: DatasetID): Observable[Dataset]
 
+  /**
+    * Returns all files corresponding to the dataset with identifier `datasetID`
+    *
+    * @param datasetID the identifier of the dataset
+    * @return the files corresponding to the dataset with identifier `datasetID`
+    */
   def getFilesInDataset(datasetID: DatasetID): Observable[FileItem]
 
+  /**
+    * Queries the user data given a `depositorID`
+    *
+    * @param depositorID the identifier of the user
+    * @return the user data corresponding to the `depositorID`
+    */
   def getUserById(depositorID: DepositorID): Observable[EasyUser]
 }
 
@@ -51,9 +73,8 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
   val fedora = parameters.fedora
   val ldap = parameters.ldap
 
-  def getAudiences(audience: EmdAudience) = {
-    audience.getValues.asScala.toObservable
-      .flatMap(sid => fedora.getDC(sid)(_.loadXML \\ "title" text).subscribeOn(IOScheduler()))
+  def getAudience(audienceID: AudienceID) = {
+    fedora.getDC(audienceID)(_.loadXML \\ "title" text).subscribeOn(IOScheduler())
   }
 
   def getDatasetById(datasetID: DatasetID) = {
@@ -67,7 +88,7 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
       .single
   }
 
-  private def getFileItem(filePid: String): Observable[FileItem] = {
+  private def getFileItem(filePid: FileID): Observable[FileItem] = {
     val pathAndAccessCategory = fedora.getFileMetadata(filePid)(is => {
       val xml = is.loadXML
       (xml \\ "path" text,

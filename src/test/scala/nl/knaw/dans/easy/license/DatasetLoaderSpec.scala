@@ -25,8 +25,6 @@ import org.scalamock.scalatest.MockFactory
 import rx.lang.scala.Observable
 import rx.lang.scala.observers.TestSubscriber
 
-import scala.collection.JavaConverters._
-
 class DatasetLoaderSpec extends UnitSpec with MockFactory {
 
   trait MockEasyMetadata extends EasyMetadataImpl {
@@ -199,37 +197,16 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   }
 
   "getAudiences" should "search the title for each audienceID in the EmdAudience in Fedora" in {
-    val audienceMock = mock[EmdAudience]
-
     val (id1, title1) = ("id1", "title1")
-    val (id2, title2) = ("id2", "title2")
-
-    audienceMock.getValues _ expects () returning List(id1, id2).asJava
 
     (fedora.getDC(_: String)(_: InputStream => String)) expects (id1, *) returning Observable.just(title1)
-    (fedora.getDC(_: String)(_: InputStream => String)) expects (id2, *) returning Observable.just(title2)
 
     val loader = new DatasetLoaderImpl()
     val testObserver = TestSubscriber[String]()
-    loader.getAudiences(audienceMock).subscribe(testObserver)
+    loader.getAudience(id1).subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValues(title1, title2)
-    testObserver.assertNoErrors()
-    testObserver.assertCompleted()
-  }
-
-  it should "do nothing if there are no audiences in the EmdAudience" in {
-    val audienceMock = mock[EmdAudience]
-
-    audienceMock.getValues _ expects () returning Nil.asJava
-
-    val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[String]()
-    loader.getAudiences(audienceMock).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertNoValues()
+    testObserver.assertValues(title1)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }

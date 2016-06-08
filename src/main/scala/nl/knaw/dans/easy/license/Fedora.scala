@@ -37,7 +37,7 @@ trait Fedora {
     * @tparam T the result type of the transformer function
     * @return the instance of `T` wrapped in an `Observable`
     */
-  def getAMD[T](pid: String)(f: InputStream => T): Observable[T]
+  def getAMD[T](pid: DatasetID)(f: InputStream => T): Observable[T]
 
   /**
     * Queries Fedora for the DC datastream dissemination xml of the dataset with `identifier = pid`
@@ -50,7 +50,7 @@ trait Fedora {
     * @tparam T the result type of the transformer function
     * @return the instance of `T` wrapped in an `Observable`
     */
-  def getDC[T](pid: String)(f: InputStream => T): Observable[T]
+  def getDC[T](pid: DatasetID)(f: InputStream => T): Observable[T]
 
   /**
     * Queries Fedora for the EMD datastream dissemination xml of the dataset with `identifier = pid`
@@ -63,7 +63,7 @@ trait Fedora {
     * @tparam T the result type of the transformer function
     * @return the instance of `T` wrapped in an `Observable`
     */
-  def getEMD[T](pid: String)(f: InputStream => T): Observable[T]
+  def getEMD[T](pid: DatasetID)(f: InputStream => T): Observable[T]
 
   /**
     * Queries Fedora for the FILE_METADATA datastream dissemination xml of the dataset with `identifier = pid`
@@ -76,7 +76,7 @@ trait Fedora {
     * @tparam T the result type of the transformer function
     * @return the instance of `T` wrapped in an `Observable`
     */
-  def getFileMetadata[T](pid: String)(f: InputStream => T): Observable[T]
+  def getFileMetadata[T](pid: FileID)(f: InputStream => T): Observable[T]
 
   /**
     * Queries Fedora for the EASY_FILE datastream of the dataset with `identifier = pid`
@@ -88,7 +88,7 @@ trait Fedora {
     * @tparam T the result type of the transformer function
     * @return the instance of `T` wrapped in an `Observable`
     */
-  def getFile[T](pid: String)(f: DatastreamProfile => T): Observable[T]
+  def getFile[T](pid: FileID)(f: DatastreamProfile => T): Observable[T]
 
   /**
     * Executes a ``RiSearch`` query in Fedora.
@@ -110,15 +110,15 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
       .usedIn(f.andThen(Observable.just(_)))
   }
 
-  def getAMD[T](pid: String)(f: (InputStream) => T) = query(pid, "AMD")(f).single
+  def getAMD[T](pid: DatasetID)(f: (InputStream) => T) = query(pid, "AMD")(f).single
 
-  def getDC[T](pid: String)(f: (InputStream) => T) = query(pid, "DC")(f).single
+  def getDC[T](pid: DatasetID)(f: (InputStream) => T) = query(pid, "DC")(f).single
 
-  def getEMD[T](pid: String)(f: (InputStream) => T) = query(pid, "EMD")(f).single
+  def getEMD[T](pid: DatasetID)(f: (InputStream) => T) = query(pid, "EMD")(f).single
 
-  def getFileMetadata[T](pid: String)(f: (InputStream) => T) = query(pid, "EASY_FILE_METADATA")(f).single
+  def getFileMetadata[T](pid: FileID)(f: (InputStream) => T) = query(pid, "EASY_FILE_METADATA")(f).single
 
-  def getFile[T](pid: String)(f: DatastreamProfile => T): Observable[T] = {
+  def getFile[T](pid: FileID)(f: DatastreamProfile => T): Observable[T] = {
     Observable.just(FedoraClient.getDatastream(pid, "EASY_FILE")
       .execute(client)
       .getDatastreamProfile)

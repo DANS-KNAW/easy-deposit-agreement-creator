@@ -43,7 +43,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
     .doOnError(e => log.error(s"could not read the metadata terms in $metadataTermsFile", e))
     .getOrElse(new ju.Properties())
 
-  def datasetToPlaceholderMap(dataset: Dataset, audiences: Seq[Audience], fileItems: Seq[FileItem]): Try[PlaceholderMap] = {
+  def datasetToPlaceholderMap(dataset: Dataset, audiences: Seq[AudienceTitle], fileItems: Seq[FileItem]): Try[PlaceholderMap] = {
     val emd = dataset.emd
 
     for {
@@ -125,7 +125,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
 
   def currentDateAndTime = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
 
-  def metadataTable(emd: EasyMetadata, audiences: Seq[Audience], datasetID: => DatasetID): Table = {
+  def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
     emd.getTerms
       .asScala
       .map(term => (term, emd.getTerm(term).asScala))
@@ -146,7 +146,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
       .foldLeft(new Table)((list, map) => { list.add(map); list })
   }
 
-  def formatAudience(audiences: Seq[Audience], datasetID: => DatasetID): String = {
+  def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
     Try(audiences.reduce(_ + "; " + _)) // may throw an UnsupportedOperationException
       .doOnError {
         case e: UnsupportedOperationException => log.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
