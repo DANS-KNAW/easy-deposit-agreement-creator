@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.license
 
 import java.io.InputStream
+import java.util
 import javax.naming.directory.Attributes
 
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
@@ -83,13 +84,34 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     val id = "testID"
     val depID = "depID"
     val user = new EasyUser(depID, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val expected = Dataset(id, emdMock, user)
+    val audience = mock[EmdAudience]
+    val audiences = Seq("aud1", "aud2")
+    val files = Seq(
+      new FileItem("path1", FileAccessRight.RESTRICTED_GROUP, "chs1"),
+      new FileItem("path2", FileAccessRight.KNOWN, "chs2")
+    )
+    val expected = Dataset(id, emdMock, user, audiences, files)
 
     (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID)
     (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
-    (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID, *) returning Observable.just(user)
+    emdMock.getEmdAudience _ expects () returning audience
 
-    val loader = new DatasetLoaderImpl()
+    val loader = new DatasetLoaderImpl() {
+      override def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
+        if (depositorID == depID) Observable.just(user)
+        else fail(s"not the correct depositorID, was $depositorID, should be $depID")
+      }
+
+      override def getAudiences(a: EmdAudience): Observable[AudienceTitle] = {
+        if (a == audience) Observable.from(audiences)
+        else fail("not the correct audiences")
+      }
+
+      override def getFilesInDataset(did: DatasetID): Observable[FileItem] = {
+        if (did == id) Observable.from(files)
+        else fail(s"not the correct datasetID, was $did, should be $id")
+      }
+    }
     val testObserver = TestSubscriber[Dataset]()
     loader.getDatasetById(id).subscribe(testObserver)
 
@@ -97,82 +119,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertValue(expected)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
-  }
-
-  it should "fail if more than one depositor was found in the AMD" in {
-    val id = "testID"
-    val depID1 = "depID"
-    val depID2 = "depID"
-    val user1 = new EasyUser(depID1, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val user2 = new EasyUser(depID2, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-
-    (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID1, depID2)
-    (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
-    (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID1, *) returning Observable.just(user1)
-    (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID2, *) returning Observable.just(user2)
-
-    val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Dataset]()
-    loader.getDatasetById(id).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertNoValues()
-    testObserver.assertError(classOf[IllegalArgumentException])
-    testObserver.assertNotCompleted()
-  }
-
-  it should "fail if no AMD was found with the corresponding datasetID" in {
-    val id = "testID"
-
-    (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.empty
-    (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
-    (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (*, *) never()
-
-    val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Dataset]()
-    loader.getDatasetById(id).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertNoValues()
-    testObserver.assertError(classOf[NoSuchElementException])
-    testObserver.assertNotCompleted()
-  }
-
-  it should "fail if no EMD was found with the corresponding datasetID" in {
-    val id = "testID"
-    val depID = "depID"
-    val user = new EasyUser(depID, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-
-    (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID)
-    (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.empty
-    (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID, *) returning Observable.just(user) noMoreThanOnce()
-
-    val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Dataset]()
-    loader.getDatasetById(id).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertNoValues()
-    testObserver.assertError(classOf[NoSuchElementException])
-    testObserver.assertNotCompleted()
-  }
-
-  it should "fail if no user was found with the corresponding depositorID" in {
-    val id = "testID"
-    val depID = "depID"
-
-    (fedora.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID)
-    (fedora.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
-    (ldap.query(_: DepositorID)(_: Attributes => EasyUser)) expects (depID, *) returning Observable.empty
-
-    val loader = new DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Dataset]()
-    loader.getDatasetById(id).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertNoValues()
-    testObserver.assertError(classOf[NoSuchElementException])
-    testObserver.assertNotCompleted()
   }
 
   "getFilesInDataset" should "return the files contained in the dataset corresponding to the given datasetID" in {
@@ -199,7 +145,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     testObserver.assertCompleted()
   }
 
-  "getAudiences" should "search the title for each audienceID in the EmdAudience in Fedora" in {
+  "getAudience" should "search the title for each audienceID in the EmdAudience in Fedora" in {
     val (id1, title1) = ("id1", "title1")
 
     (fedora.getDC(_: String)(_: InputStream => String)) expects (id1, *) returning Observable.just(title1)
@@ -210,6 +156,27 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
 
     testObserver.awaitTerminalEvent()
     testObserver.assertValues(title1)
+    testObserver.assertNoErrors()
+    testObserver.assertCompleted()
+  }
+
+  "getAudiences" should "search the title for each audienceID in the EmdAudience in Fedora" in {
+    val (id1, title1) = ("id1", "title1")
+    val (id2, title2) = ("id2", "title2")
+    val (id3, title3) = ("id3", "title3")
+    val audience = mock[EmdAudience]
+
+    (fedora.getDC(_: String)(_: InputStream => String)) expects (id1, *) returning Observable.just(title1)
+    (fedora.getDC(_: String)(_: InputStream => String)) expects (id2, *) returning Observable.just(title2)
+    (fedora.getDC(_: String)(_: InputStream => String)) expects (id3, *) returning Observable.just(title3)
+    audience.getValues _ expects () returning util.Arrays.asList(id1, id2, id3)
+
+    val loader = new DatasetLoaderImpl()
+    val testObserver = TestSubscriber[String]()
+    loader.getAudiences(audience).subscribe(testObserver)
+
+    testObserver.awaitTerminalEvent()
+    testObserver.assertValues(title1, title2, title3)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }

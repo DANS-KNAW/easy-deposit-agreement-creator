@@ -43,7 +43,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
     .doOnError(e => log.error(s"could not read the metadata terms in $metadataTermsFile", e))
     .getOrElse(new ju.Properties())
 
-  def datasetToPlaceholderMap(dataset: Dataset, audiences: Seq[AudienceTitle], fileItems: Seq[FileItem]): Try[PlaceholderMap] = {
+  def datasetToPlaceholderMap(dataset: Dataset): Try[PlaceholderMap] = {
     log.debug("create placeholder map")
 
     val emd = dataset.emd
@@ -56,8 +56,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
       accessRightMap <- datasetAccessCategory(emd)
       embargoMap = embargo(emd)
       dateTime = CurrentDateAndTime -> currentDateAndTime
-      metadata = MetadataTable -> metadataTable(emd, audiences, dataset.datasetID)
-      files@(_, table) = FileTable -> filesTable(fileItems)
+      metadata = MetadataTable -> metadataTable(emd, dataset.audiences, dataset.datasetID)
+      files@(_, table) = FileTable -> filesTable(dataset.fileItems)
       hasFiles = HasFiles -> boolean2Boolean(!table.isEmpty)
     } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime + metadata + files + hasFiles
   }

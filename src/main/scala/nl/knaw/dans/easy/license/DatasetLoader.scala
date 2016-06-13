@@ -19,17 +19,28 @@ import javax.naming.directory.Attributes
 
 import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
-import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl}
-import rx.lang.scala.Observable
+import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl, EmdAudience}
+import rx.lang.scala.{Observable, ObservableExtensions}
 import rx.lang.scala.schedulers.IOScheduler
 
+import scala.collection.JavaConverters._
 import scala.language.postfixOps
 
-case class EasyUser(userID: DepositorID, name: String, organization: String, address: String,
-                    postalCode: String, city: String, country: String, telephone: String,
+case class EasyUser(userID: DepositorID,
+                    name: String,
+                    organization: String,
+                    address: String,
+                    postalCode: String,
+                    city: String,
+                    country: String,
+                    telephone: String,
                     email: String)
 
-case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
+case class Dataset(datasetID: DatasetID,
+                   emd: EasyMetadata,
+                   easyUser: EasyUser,
+                   audiences: Seq[AudienceTitle],
+                   fileItems: Seq[FileItem])
 
 case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
 
@@ -44,12 +55,54 @@ trait DatasetLoader {
   def getAudience(audienceID: AudienceID): Observable[AudienceTitle]
 
   /**
+    * Queries the audience titles from Fedora for the audiences in `EmdAudience`.
+    * @param audience the audience object with the identifiers
+    * @return the titles of the audiences that correspond to the identifiers in `EmdAudience`
+    */
+  def getAudiences(audience: EmdAudience): Observable[AudienceTitle] = {
+    audience.getValues.asScala.toObservable.flatMap(getAudience)
+  }
+
+  /**
     * Create a `Dataset` based on the given `datasetID`
     *
     * @param datasetID the identifier of the dataset
     * @return the dataset corresponding to `datasetID`
     */
   def getDatasetById(datasetID: DatasetID): Observable[Dataset]
+
+  /**
+    * Create a `Dataset` based on the given `datasetID`, `emd` and `easyUser`, while querying for
+    * the audience titles and the files belonging to the dataset.
+    *
+    * @param datasetID the identifier of the dataset
+    * @param emd the `EasyMetadata` of the dataset
+    * @param easyUser the depositor of the dataset
+    * @return the dataset corresponding to `datasetID`
+    */
+  def getDataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser): Observable[Dataset] = {
+    val audiences = getAudiences(emd.getEmdAudience).toSeq
+    val files = getFilesInDataset(datasetID).toSeq
+
+    audiences.combineLatestWith(files)(Dataset(datasetID, emd, easyUser, _, _))
+  }
+
+  /**
+    * Create a `Dataset` based on the given `datasetID`, `emd`, `depositorID` and `files`, while
+    * querying for the audience titles and the depositor data.
+    *
+    * @param datasetID the identifier of the dataset
+    * @param emd the `EasyMetadata` of the dataset
+    * @param depositorID the depositor's identifier
+    * @param files the files belonging to the dataset
+    * @return the dataset corresponding to `datasetID`
+    */
+  def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem]): Observable[Dataset] = {
+    val audiences = getAudiences(emd.getEmdAudience).toSeq
+    val easyUser = getUserById(depositorID)
+
+    easyUser.combineLatestWith(audiences)(Dataset(datasetID, emd, _, _, files))
+  }
 
   /**
     * Returns all files corresponding to the dataset with identifier `datasetID`
@@ -78,14 +131,21 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
   }
 
   def getDatasetById(datasetID: DatasetID) = {
-    val emd = fedora.getEMD(datasetID)(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
+    val emdObs = fedora.getEMD(datasetID)(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
       .subscribeOn(IOScheduler())
     val depositorObs = fedora.getAMD(datasetID)(_.loadXML \\ "depositorId" text)
       .subscribeOn(IOScheduler())
       .flatMap(getUserById(_).subscribeOn(IOScheduler()))
 
-    emd.combineLatestWith(depositorObs)(Dataset(datasetID, _, _))
-      .single
+    // publish because emd is used in multiple places here
+    emdObs.publish(emd => {
+      emd.combineLatestWith(depositorObs) { (emdValue, depositorValue) =>
+        (audiences: Seq[AudienceTitle]) => (files: Seq[FileItem]) => Dataset(datasetID, emdValue, depositorValue, audiences, files)
+      }
+        .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_(_))
+        .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_(_))
+        .single
+    })
   }
 
   private def getFileItem(filePid: FileID): Observable[FileItem] = {
@@ -133,7 +193,6 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
       val country = getOrEmpty("st")
       val phone = getOrEmpty("telephonenumber")
       val mail = getOrEmpty("mail")
-
 
       EasyUser(depositorID, name, org, addr, code, place, country, phone, mail)
     }).single

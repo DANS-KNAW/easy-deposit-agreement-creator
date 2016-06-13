@@ -19,12 +19,13 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileOutputStream, O
 import java.util.Properties
 
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
+import nl.knaw.dans.pf.language.emd.EasyMetadata
 import org.slf4j.LoggerFactory
-import rx.lang.scala.{Observable, ObservableExtensions}
+import rx.lang.scala.Observable
 import rx.schedulers.Schedulers
 
-import scala.collection.JavaConverters._
 import scala.language.postfixOps
+import scala.util.Try
 
 class Command(datasetLoader: DatasetLoader,
               placeholderMapper: PlaceholderMapper,
@@ -33,7 +34,7 @@ class Command(datasetLoader: DatasetLoader,
 
   /**
     * Create a license agreement and write it the `outputStream`. The `parameters` object a.o. contain
-    * the datasetID and the depositorID (optional).
+    * the datasetID.
     *
     * ``Notice:`` neither the `outputStream` nor the `LdapContext` in `parameters` are closed at the
     * end of this operation.
@@ -42,26 +43,37 @@ class Command(datasetLoader: DatasetLoader,
     * @return `Observable[Nothing]`: the output is written to `outputStream`; if an error occurs, it is
     *         received via the `Observable`.
     */
+  // used by modification tools; only the datasetID is known
   def run(outputStream: OutputStream): Observable[Nothing] = {
-    datasetLoader.getDatasetById(parameters.datasetID).flatMap(run(_, outputStream))
+    datasetLoader.getDatasetById(parameters.datasetID)
+      .flatMap(run(_)(outputStream).toObservable)
   }
 
-  def run(dataset: Dataset, outputStream: OutputStream): Observable[Nothing] = {
-    new ByteArrayOutputStream()
-      .usedIn(templateOut => {
-        val audiences = dataset.emd.getEmdAudience.getValues.asScala.toObservable.flatMap(datasetLoader.getAudience).toSeq
-        val files = datasetLoader.getFilesInDataset(dataset.datasetID).toSeq
+  // used by business layer; datasetID, emd and depositor data are known, audience titles and file details require querying from Fedora
+  def run(emd: EasyMetadata, easyUser: EasyUser)(outputStream: OutputStream): Observable[Nothing] = {
+    datasetLoader.getDataset(parameters.datasetID, emd, easyUser)
+      .flatMap(run(_)(outputStream).toObservable)
+  }
 
-        audiences.combineLatestWith(files)(placeholderMapper.datasetToPlaceholderMap(dataset, _, _))
-          .flatMap(_.toObservable)
-          .flatMap(templateResolver.createTemplate(templateOut, _)
-            .flatMap(_ => new ByteArrayInputStream(templateOut.toByteArray)
-              .use(templateIn => pdfGenerator.createPdf(templateIn, outputStream).!))
-            .toObservable)
-          .filter(_ => false) // discard all elements, we only want the onError and onCompleted
-          .asInstanceOf[Observable[Nothing]]
+  // used by Stage-Dataset; emd, depositorID and file details are known, audience titles and depositor data require querying from Fedora and LDAP
+  def run(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])(outputStream: OutputStream): Observable[Nothing] = {
+    datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files)
+      .flatMap(run(_)(outputStream).toObservable)
+  }
+
+  def run(dataset: Dataset)(outputStream: OutputStream): Try[Nothing] = {
+    new ByteArrayOutputStream()
+      .use(templateOut => {
+        Command.log.info(s"""creating the license for dataset "${dataset.datasetID}"""")
+        for {
+          placeholders <- placeholderMapper.datasetToPlaceholderMap(dataset)
+          _ <- templateResolver.createTemplate(templateOut, placeholders)
+          pdfInput = new ByteArrayInputStream(templateOut.toByteArray)
+          result <- pdfInput.use(pdfGenerator.createPdf(_, outputStream).!)
+        } yield result
       })
-      .doOnSubscribe(Command.log.info(s"""creating the license for dataset "${dataset.datasetID}""""))
+      .flatten
+      .asInstanceOf[Try[Nothing]]
   }
 }
 
