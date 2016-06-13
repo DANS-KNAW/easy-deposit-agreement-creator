@@ -177,8 +177,10 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
 
   "getFilesInDataset" should "return the files contained in the dataset corresponding to the given datasetID" in {
     val id = "testID"
-    val fi1@FileItem(pid1, path1, accTo1, chcksm1) = FileItem("pid1", "path1", FileAccessRight.NONE, "chcksm1")
-    val fi2@FileItem(pid2, path2, accTo2, chcksm2) = FileItem("pid2", "path2", FileAccessRight.KNOWN, "chcksm2")
+    val pid1 = "pid1"
+    val pid2 = "pid2"
+    val fi1@FileItem(path1, accTo1, chcksm1) = FileItem("path1", FileAccessRight.NONE, "chcksm1")
+    val fi2@FileItem(path2, accTo2, chcksm2) = FileItem("path2", FileAccessRight.KNOWN, "chcksm2")
 
     fedora.queryRiSearch _ expects where[String](_ contains id) returning Observable.just(pid1, pid2)
     (fedora.getFileMetadata(_: String)(_: InputStream => (String, FileAccessRight.Value))) expects (pid1, *) returning Observable.just((path1, accTo1))

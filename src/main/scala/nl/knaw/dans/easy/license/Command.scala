@@ -21,7 +21,6 @@ import java.util.Properties
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
 import rx.lang.scala.{Observable, ObservableExtensions}
-import rx.lang.scala.schedulers.IOScheduler
 import rx.schedulers.Schedulers
 
 import scala.collection.JavaConverters._

@@ -31,7 +31,7 @@ case class EasyUser(userID: DepositorID, name: String, organization: String, add
 
 case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser)
 
-case class FileItem(filePid: FileID, path: String, accessibleTo: FileAccessRight, checkSum: String)
+case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
 
 trait DatasetLoader {
 
@@ -100,7 +100,7 @@ case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoa
 
     pathAndAccessCategory
       .combineLatestWith(checksums) {
-        case ((p, ac), cs) => FileItem(filePid, p, ac, cs)
+        case ((p, ac), cs) => FileItem(p, ac, cs)
       }
   }
 
