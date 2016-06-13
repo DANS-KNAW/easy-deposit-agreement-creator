@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.license
 import java.io.{File, OutputStream, OutputStreamWriter}
 import java.nio.charset.Charset
 import java.util.Properties
-import java.{util => ju}
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
