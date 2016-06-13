@@ -16,8 +16,10 @@
 package nl.knaw.dans.easy.license
 
 import java.io.{ByteArrayOutputStream, File}
+import java.util.Properties
 
 import org.apache.velocity.exception.MethodInvocationException
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
 import scala.util.{Failure, Success}
@@ -37,9 +39,31 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
   override def afterAll = testDir.getParentFile.deleteDirectory()
 
   val keyword: KeywordMapping = new KeywordMapping { val keyword: String = "name" }
+  val testProperties = {
+    val p = new Properties()
+
+    p.setProperty("runtime.references.strict", "true")
+    p.setProperty("file.resource.loader.path", "target/test/VelocityTemplateResolverSpec/template/")
+    p.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute")
+    p.setProperty("template.file.name", "LicenseTest.html")
+
+    p
+  }
+  val testPropertiesFail = {
+    val p = new Properties()
+
+    p.setProperty("runtime.references.strict", "true")
+    p.setProperty("file.resource.loader.path", "target/test/VelocityTemplateResolverSpec/template/")
+    p.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute")
+    p.setProperty("template.file.name", "LicenseFailTest.html")
+
+    p
+  }
 
   "createTemplate" should """map the "name" keyword to "world" in the template and put the result in a file""" in {
-    val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
+
+
+    val templateCreator = new VelocityTemplateResolver(testProperties)
 
     val map: Map[KeywordMapping, Object] = Map(keyword -> "world")
     val baos = new ByteArrayOutputStream()
@@ -50,7 +74,7 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
   }
 
   it should "fail if not all placeholders are filled in" in {
-    val templateCreator = new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine.properties"))
+    val templateCreator = new VelocityTemplateResolver(testProperties)
 
     val map: Map[KeywordMapping, Object] = Map.empty
     val baos = new ByteArrayOutputStream()
@@ -64,10 +88,11 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
 
   it should "fail when the template does not exist" in {
     try {
-      new VelocityTemplateResolver(new File(parameters.templateDir, "velocity-test-engine-fail.properties"))
+      new VelocityTemplateResolver(testPropertiesFail)
       fail("an error should have been thrown, but this was not the case.")
     }
     catch {
+      case e: TestFailedException => throw e // propagate failure
       case _: Throwable => new File(testDir, "template/result.html") shouldNot exist
     }
   }

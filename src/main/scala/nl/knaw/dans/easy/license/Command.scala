@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.license
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileOutputStream, OutputStream}
+import java.util.Properties
 
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
 import org.slf4j.LoggerFactory
@@ -72,7 +73,7 @@ object Command {
     new Command(
       new DatasetLoaderImpl,
       new PlaceholderMapper(metadataTermsProperties),
-      new VelocityTemplateResolver(velocityProperties),
+      new VelocityTemplateResolver(velocityProperties.fold(s => { log.error(s); new Properties() }, p => p)),
       new WeasyPrintPdfGenerator
     )
   }

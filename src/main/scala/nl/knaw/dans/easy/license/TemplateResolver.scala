@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.license
 
 import java.io.{File, OutputStream, OutputStreamWriter}
 import java.nio.charset.Charset
+import java.util.Properties
 import java.{util => ju}
 
 import org.apache.velocity.VelocityContext
@@ -37,13 +38,9 @@ trait TemplateResolver {
     */
   def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding): Try[Unit]
 }
-class VelocityTemplateResolver(propertiesFile: File)(implicit parameters: Parameters) extends TemplateResolver {
+class VelocityTemplateResolver(properties: Properties)(implicit parameters: Parameters) extends TemplateResolver {
 
   val log = LoggerFactory.getLogger(getClass)
-
-  val properties = loadProperties(propertiesFile)
-    .doOnError(e => log.error(s"could not read the velocity properties in $propertiesFile", e))
-    .getOrElse(new ju.Properties())
 
   val velocityResources = new File(properties.getProperty("file.resource.loader.path"))
   val templateFileName = properties.getProperty("template.file.name")

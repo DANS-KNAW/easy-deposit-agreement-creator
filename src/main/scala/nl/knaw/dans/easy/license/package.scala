@@ -44,8 +44,12 @@ package object license {
 
   val encoding = Charsets.UTF_8
   val checkSumNotCalculated = "------not-calculated------"
-  def velocityProperties(implicit parameters: Parameters) = {
-    new File(parameters.templateDir, "/velocity-engine.properties")
+  def velocityProperties(implicit parameters: Parameters): Either[String, Properties] = {
+    val propertiesFile = new File(parameters.templateDir, "/velocity-engine.properties")
+
+    loadProperties(propertiesFile)
+      .map(Right(_))
+      .getOrElse(Left(s"could not read the velocity properties in $propertiesFile"))
   }
   def dansLogoFile(implicit parameters: Parameters) = {
     new File(parameters.templateDir, "/dans_logo.jpg")
