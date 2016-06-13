@@ -35,8 +35,7 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
 
   version(s"$printedName v${Version()}")
   banner(s"""
-           |Create a license for the given datasetID and depositorID. The latter is optional as it can also
-           | be retrieved from the datasetID. The license will be saved at the indicated location.
+           |Create a license for the given datasetID. The license will be saved at the indicated location.
            |
            |Usage:
            |
