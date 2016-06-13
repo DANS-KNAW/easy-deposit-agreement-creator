@@ -44,24 +44,32 @@ class Command(datasetLoader: DatasetLoader,
     *         received via the `Observable`.
     */
   // used by modification tools; only the datasetID is known
-  def run(outputStream: OutputStream): Observable[Nothing] = {
+  def createLicense(outputStream: OutputStream): Observable[Nothing] = {
     datasetLoader.getDatasetById(parameters.datasetID)
-      .flatMap(run(_)(outputStream).toObservable)
+      .run(outputStream)
   }
 
   // used by business layer; datasetID, emd and depositor data are known, audience titles and file details require querying from Fedora
-  def run(emd: EasyMetadata, easyUser: EasyUser)(outputStream: OutputStream): Observable[Nothing] = {
+  def createLicense(emd: EasyMetadata, easyUser: EasyUser)(outputStream: OutputStream): Observable[Nothing] = {
     datasetLoader.getDataset(parameters.datasetID, emd, easyUser)
-      .flatMap(run(_)(outputStream).toObservable)
+      .run(outputStream)
   }
 
   // used by Stage-Dataset; emd, depositorID and file details are known, audience titles and depositor data require querying from Fedora and LDAP
-  def run(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])(outputStream: OutputStream): Observable[Nothing] = {
+  def createLicense(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])(outputStream: OutputStream): Observable[Nothing] = {
     datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files)
-      .flatMap(run(_)(outputStream).toObservable)
+      .run(outputStream)
   }
 
-  def run(dataset: Dataset)(outputStream: OutputStream): Try[Nothing] = {
+  implicit class Run(dataset: Observable[Dataset]) {
+    def run(outputStream: OutputStream): Observable[Nothing] = {
+      dataset.flatMap(createLicense(_)(outputStream).toObservable)
+        .filter(_ => false)
+        .asInstanceOf[Observable[Nothing]]
+    }
+  }
+
+  def createLicense(dataset: Dataset)(outputStream: OutputStream): Try[Int] = {
     new ByteArrayOutputStream()
       .use(templateOut => {
         Command.log.info(s"""creating the license for dataset "${dataset.datasetID}"""")
@@ -73,7 +81,6 @@ class Command(datasetLoader: DatasetLoader,
         } yield result
       })
       .flatten
-      .asInstanceOf[Try[Nothing]]
   }
 }
 
@@ -96,7 +103,7 @@ object Command {
       val parameters = cmd.parse(args)
 
       new FileOutputStream(parameters.outputFile)
-        .usedIn(Command(parameters).run)
+        .usedIn(Command(parameters).createLicense)
         .doOnCompleted(log.info(s"license saved at ${parameters.outputFile.getAbsolutePath}"))
         .doOnTerminate {
           // close LDAP at the end of the main
