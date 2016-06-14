@@ -66,6 +66,7 @@ package object license {
                         pdfScript: File,
                         outputFile: File,
                         datasetID: DatasetID,
+                        isSample: Boolean,
                         fedora: Fedora,
                         ldap: Ldap) {
     override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $pdfScript, $datasetID)"

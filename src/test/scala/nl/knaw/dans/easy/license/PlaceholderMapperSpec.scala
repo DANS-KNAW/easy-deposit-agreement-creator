@@ -44,7 +44,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   val fedora = mock[Fedora]
 
   implicit val parameters = new Parameters(null, new File(testDir, "placeholdermapper"), null,
-    null, null, fedora, null)
+    null, null, false, fedora, null)
 
   before {
     new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateDir)
@@ -79,12 +79,13 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     val res = testInstance.header(emd)
 
+    res.get should contain (IsSample, false)
     res.get should contain (DansManagedDoi, "12.3456/dans-ab7-cdef")
     res.get should contain (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef")
     res.get should contain (DateSubmitted, "1992-07-30")
     res.get should contain (Title, "my preferred title")
 
-    res.get should have size 4
+    res.get should have size 5
   }
 
   it should "yield a map with default values if the actual values are null" in {
@@ -96,12 +97,52 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     val res = testInstance.header(emd)
 
+    res.get should contain (IsSample, false)
     res.get should contain (DansManagedDoi, "")
     res.get should contain (DansManagedEncodedDoi, "")
     res.get should contain (DateSubmitted, new IsoDate().toString)
     res.get should contain (Title, "my preferred title")
 
-    res.get should have size 4
+    res.get should have size 5
+  }
+
+  "sampleHeader" should "yield a map of the date and title" in {
+    implicit val parameters = new Parameters(null, new File(testDir, "placeholdermapper"), null,
+      null, null, true, fedora, null)
+    val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
+
+    emd.getEmdIdentifier _ expects () never()
+    ident.getDansManagedDoi _ expects () never()
+    emd.getEmdDate _ expects () returning date
+    date.getEasDateSubmitted _ expects () returning dates
+    emd.getPreferredTitle _ expects () returning "my preferred title"
+
+    val res = testInstance.sampleHeader(emd)
+
+    res.get should contain (IsSample, true)
+    res.get should contain (DateSubmitted, "1992-07-30")
+    res.get should contain (Title, "my preferred title")
+
+    res.get should have size 3
+  }
+
+  it should "yield a map with default values if the actual values are null" in {
+    implicit val parameters = new Parameters(null, new File(testDir, "placeholdermapper"), null,
+      null, null, true, fedora, null)
+
+    emd.getEmdIdentifier _ expects () never()
+    ident.getDansManagedDoi _ expects () never()
+    emd.getEmdDate _ expects () returning date
+    date.getEasDateSubmitted _ expects () returning ju.Collections.emptyList()
+    emd.getPreferredTitle _ expects () returning "my preferred title"
+
+    val res = testInstance.sampleHeader(emd)
+
+    res.get should contain (IsSample, true)
+    res.get should contain (DateSubmitted, new IsoDate().toString)
+    res.get should contain (Title, "my preferred title")
+
+    res.get should have size 3
   }
 
   "footerText" should "return the text in a file without its line endings" in {

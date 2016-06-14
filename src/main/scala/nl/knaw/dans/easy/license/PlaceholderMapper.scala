@@ -49,7 +49,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
     val emd = dataset.emd
 
     for {
-      headerMap <- header(emd)
+      headerMap <- if (parameters.isSample) sampleHeader(emd) else header(emd)
       dansLogo = DansLogo -> encodeImage(dansLogoFile)
       footer = FooterText -> footerText(footerTextFile)
       depositorMap = depositor(dataset.easyUser)
@@ -66,9 +66,18 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters
     val doi = Option(emd.getEmdIdentifier.getDansManagedDoi)
 
     Map(
+      IsSample -> boolean2Boolean(false),
       DansManagedDoi -> doi.getOrElse(""),
       // the following can throw an UnsupportedEncodingException, although this is not expected to ever happen!
       DansManagedEncodedDoi -> doi.map(URLEncoder.encode(_, encoding.displayName())).getOrElse(""),
+      DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
+      Title -> emd.getPreferredTitle
+    )
+  }
+
+  def sampleHeader(emd: EasyMetadata): Try[PlaceholderMap] = Try {
+    Map(
+      IsSample -> boolean2Boolean(true),
       DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
       Title -> emd.getPreferredTitle
     )

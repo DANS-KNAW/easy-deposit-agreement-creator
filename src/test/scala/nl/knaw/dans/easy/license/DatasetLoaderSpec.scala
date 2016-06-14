@@ -39,7 +39,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   val ldap = mock[Ldap]
   val emdMock = mock[MockEasyMetadata]
 
-  implicit val parameters = new Parameters(null, null, null, null, null, fedora, ldap)
+  implicit val parameters = new Parameters(null, null, null, null, null, false, fedora, ldap)
 
   "getUserById" should "query the user data from ldap for a given user id" in {
     val user = new EasyUser("id", "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")

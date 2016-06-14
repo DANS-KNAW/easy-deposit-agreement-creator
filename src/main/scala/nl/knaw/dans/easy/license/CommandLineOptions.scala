@@ -39,7 +39,7 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |
            |Usage:
            |
-           |$printedName <datasetID> <license-file>
+           |$printedName [ -s ] <datasetID> <license-file>
            |
            |Options:
            |""".stripMargin)
@@ -49,6 +49,9 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
 
   val outputFile = trailArg[File](name = "license-file",
     descr = "The file location where the license needs to be stored")(fileMayNotExist)
+
+  val isSample = opt[Boolean](name = "sample", short = 's', default = Option(false),
+    descr = "Indicates whether or not a sample license needs to be created")
 
   verify()
 }
@@ -77,6 +80,7 @@ object CommandLineOptions {
       pdfScript = new File(homeDir, s"res/${props.getString("pdf.script")}"),
       outputFile = opts.outputFile(),
       datasetID = opts.datasetID(),
+      isSample = opts.isSample(),
       fedora = new FedoraImpl(new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),

@@ -57,6 +57,12 @@
 </head>
 <body>
 
+#if ($IsSample)
+    #parse("Header-sample.html")
+#else
+    #parse("Header.html")
+#end
+
 #parse("Body.html")
 
 #if ($OpenAccess)

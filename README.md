@@ -7,7 +7,7 @@ Create a license (pdf file) for a given dataset.
 SYNOPSIS
 --------
 
-    easy-license-creator <datasetID> <template-dir> <license-file>
+    easy-license-creator [ -s ] <datasetID> <license-file>
 
 
 DESCRIPTION
@@ -33,12 +33,16 @@ During development we therefore require a different script than the one that is 
 1. In `application.properties` set `pdf.script=localrun.sh`;
 2. In `localrun.sh` fill in the variables `USER_HOST` and `PRIVATE_KEY`.
 
+A `--sample` or `-s` flag can be added to the command line tool to signal that a 'sample license' needs to be created. This version of the license
+can be created when the DOI is not yet calculated. Also in the title of the license it is clearly indicated that this version is a *sample*.
+
 ARGUMENTS
 ---------
 
     Usage: easy-license-creator <datasetID> <license-file>
     Options:
     
+      -s, --sample    Indicates whether or not a sample license needs to be created
           --help      Show help message
           --version   Show version of this program
     
