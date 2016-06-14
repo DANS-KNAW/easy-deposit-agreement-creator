@@ -12,9 +12,10 @@ The new design of the License Creator consists of (1) an API which can be called
 The input and output of both parts of the License Creator are as follows:
   * *input (via command line):* dataset identifier, output file location
   * *input (via API call):* either one of
-      * dataset identifier, `OutputStream`
+      * dataset identifier, `OutputStream` - *used in modification tools*
+      * EMD object, depositor object, `OutputStream` - *used in the business-layer*
+      * EMD object, depositor identifier, list of file metadata objects, `OutputStream` - *used in Easy-Stage-Dataset*
       * dataset object, `OutputStream`
-      * TODO other forms of input
   * *output (via command line):* pdf document with the license agreement
   * *output (via API call):* `Unit`
 
@@ -92,14 +93,14 @@ Besides the dataset's metadata and the list of files contained in the dataset, s
 ### Mapping of access categories
 | Access Category | License snippet | String representation |
 |-----------------|-----------------|-----------------------|
-| ANONYMOUS_ACCESS | OpenAccess.html | {{Anonymous}} |
-| OPEN_ACCESS | OpenAccess.html | {color:#205081}*Open Access*{color} |
-| OPEN_ACCESS_FOR_REGISTERED_USERS | OpenAccessForRegisteredUsers.html | {{Open access for registered users}} |
-| GROUP_ACCESS | RestrictGroup.html | {{Restricted -'archaeology' group}} |
-| REQUEST_PERMISSION | RestrictRequest.html | {{Restricted -request permission}} |
-| ACCESS_ELSEWHERE | OtherAccess.html | {{Elsewhere}} |
-| NO_ACCESS | OtherAccess.html | {{Other}} |
-| FREELY_AVAILABLE | OpenAccess.html | Open Access |
+| ANONYMOUS_ACCESS | OpenAccess.html | `Anonymous` |
+| OPEN_ACCESS | OpenAccess.html | `Open Access` |
+| OPEN_ACCESS_FOR_REGISTERED_USERS | OpenAccessForRegisteredUsers.html | `Open access for registered users` |
+| GROUP_ACCESS | RestrictGroup.html | `Restricted -'archaeology' group` |
+| REQUEST_PERMISSION | RestrictRequest.html | `Restricted -request permission` |
+| ACCESS_ELSEWHERE | OtherAccess.html | `Elsewhere` |
+| NO_ACCESS | OtherAccess.html | `Other` |
+| FREELY_AVAILABLE | OpenAccess.html | `Open Access` |
 
 ## Page layout
 * The document has an A4 page size and the following margins (top-right-bottom-left): 2.5cm 1.5cm 2cm 1.5cm
