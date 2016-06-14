@@ -78,7 +78,7 @@ Besides the dataset's metadata and the list of files contained in the dataset, s
 
 ### Displaying the dataset metadata
 * For each term in the metadata the *qualified name* is calculated ([namespace].[name]) and mapped to the corresponding value in `MetadataTerms.properties`.
-* If the term equals **AUDIENCE**, all associated *discipline identifiers* are queried in the [...] and displayed as a comma-separated `String`.
+* If the term equals **AUDIENCE**, all associated *discipline identifiers* are queried from Fedora and displayed as a comma-separated `String`.
 * If the term equals **ACCESSRIGHTS**, it is mapped to the corresponding string representation (see below).
 * For all other terms the values are displayed as a comma-separated `String`.
 * Every term corresponds to one row in the table.
@@ -93,14 +93,14 @@ Besides the dataset's metadata and the list of files contained in the dataset, s
 ### Mapping of access categories
 | Access Category | License snippet | String representation |
 |-----------------|-----------------|-----------------------|
-| ANONYMOUS_ACCESS | OpenAccess.html | `Anonymous` |
-| OPEN_ACCESS | OpenAccess.html | `Open Access` |
-| OPEN_ACCESS_FOR_REGISTERED_USERS | OpenAccessForRegisteredUsers.html | `Open access for registered users` |
-| GROUP_ACCESS | RestrictGroup.html | `Restricted -'archaeology' group` |
-| REQUEST_PERMISSION | RestrictRequest.html | `Restricted -request permission` |
-| ACCESS_ELSEWHERE | OtherAccess.html | `Elsewhere` |
-| NO_ACCESS | OtherAccess.html | `Other` |
-| FREELY_AVAILABLE | OpenAccess.html | `Open Access` |
+| ANONYMOUS_ACCESS | OpenAccess.html | `"Anonymous"` |
+| OPEN_ACCESS | OpenAccess.html | `"Open Access"` |
+| OPEN_ACCESS_FOR_REGISTERED_USERS | OpenAccessForRegisteredUsers.html | `"Open access for registered users"` |
+| GROUP_ACCESS | RestrictGroup.html | `"Restricted -'archaeology' group"` |
+| REQUEST_PERMISSION | RestrictRequest.html | `"Restricted -request permission"` |
+| ACCESS_ELSEWHERE | OtherAccess.html | `"Elsewhere"` |
+| NO_ACCESS | OtherAccess.html | `"Other"` |
+| FREELY_AVAILABLE | OpenAccess.html | `"Open Access"` |
 
 ## Page layout
 * The document has an A4 page size and the following margins (top-right-bottom-left): 2.5cm 1.5cm 2cm 1.5cm
@@ -111,7 +111,7 @@ Besides the dataset's metadata and the list of files contained in the dataset, s
 The license is generated from an html template and converted to pdf by [Apache Velocity](http://velocity.apache.org/) and [WeasyPrint](http://weasyprint.org/) respectively. See the README on installation notes for WeasyPrint. 
 
 ### Velocity
-Velocity is a Java library and it supposed to be used as such! If a placeholder in the template requires a list or map, it needs to be a `java.util.List` or `java.util`Map` instance. This requires some extra attention as the License Creator itself is written in Scala.
+Velocity is a Java library and it supposed to be used as such! If a placeholder in the template requires a list or map, it needs to be a `java.util.List` or `java.util.Map` instance. This requires some extra attention as the License Creator itself is written in Scala.
 
 Velocity does not complain or give an error message by default if certain placeholders cannot be resolved. This only happens when the property `runtime.references.strict = true` is set in the Velocity properties file. Besides that Velocity requires the path to the resources to be set using the property `file.resource.loader.path`. As an extra parameter we added `template.file.name`, holding the name of the file to be resolved by Velocity. This file is supposed to be present inside the `file.resource.loader.path` folder. All these parameters can are set in the `velocity-engine.properties` file in `src/main/assembly/dist/res/`.
 
