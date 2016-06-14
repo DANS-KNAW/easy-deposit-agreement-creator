@@ -61,15 +61,13 @@ package object license {
     new File(parameters.templateDir, "/MetadataTerms.properties")
   }
 
-  case class Parameters(appHomeDir: File,
-                        templateDir: File,
+  case class Parameters(templateDir: File,
                         pdfScript: File,
-                        outputFile: File,
                         datasetID: DatasetID,
                         isSample: Boolean,
                         fedora: Fedora,
                         ldap: Ldap) {
-    override def toString: String = s"Parameters($appHomeDir, $templateDir, $outputFile, $pdfScript, $datasetID)"
+    override def toString: String = s"Parameters($templateDir, $pdfScript, $datasetID)"
   }
 
   object Version {

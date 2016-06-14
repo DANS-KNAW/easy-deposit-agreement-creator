@@ -60,7 +60,7 @@ object CommandLineOptions {
 
   val log = LoggerFactory.getLogger(getClass)
 
-  def parse(args: Array[String]): Parameters = {
+  def parse(args: Array[String]): (Parameters, File) = {
     log.debug("Loading application properties ...")
     val homeDir = new File(System.getProperty("app.home"))
     val props = {
@@ -75,10 +75,8 @@ object CommandLineOptions {
     val opts = new CommandLineOptions(args)
 
     val params = Parameters(
-      appHomeDir = homeDir,
       templateDir = new File(homeDir, "res/"),
       pdfScript = new File(homeDir, s"res/${props.getString("pdf.script")}"),
-      outputFile = opts.outputFile(),
       datasetID = opts.datasetID(),
       isSample = opts.isSample(),
       fedora = new FedoraImpl(new FedoraCredentials(
@@ -100,6 +98,6 @@ object CommandLineOptions {
 
     log.debug(s"Using the following settings: $params")
 
-    params
+    (params, opts.outputFile())
   }
 }
