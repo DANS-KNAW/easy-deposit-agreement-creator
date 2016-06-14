@@ -55,6 +55,10 @@ class Command(datasetLoader: DatasetLoader,
       .run(outputStream)
   }
 
+  def createLicenseForBusinessLayer(emd: EasyMetadata, easyUser: EasyUser)(outputStream: OutputStream): Unit = {
+    createLicense(emd, easyUser)(outputStream).toBlocking.toList
+  }
+
   // used by Stage-Dataset; emd, depositorID and file details are known, audience titles and depositor data require querying from Fedora and LDAP
   def createLicense(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])(outputStream: OutputStream): Observable[Nothing] = {
     datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files)
