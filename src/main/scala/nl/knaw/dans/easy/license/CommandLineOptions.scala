@@ -95,9 +95,11 @@ object CommandLineOptions {
 
         LdapImpl(new InitialLdapContext(env, null))
       })
+    val outputFile = opts.outputFile()
 
     log.debug(s"Using the following settings: $params")
+    log.debug(s"Output will be written to ${outputFile.getAbsolutePath}")
 
-    (params, opts.outputFile())
+    (params, outputFile)
   }
 }
