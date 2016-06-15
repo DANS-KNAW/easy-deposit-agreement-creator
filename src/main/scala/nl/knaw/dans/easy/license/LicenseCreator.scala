@@ -92,12 +92,10 @@ object LicenseCreator {
   val log = LoggerFactory.getLogger(getClass)
 
   def apply(implicit parameters: Parameters) = {
-    val velocityProps = velocityProperties.fold(s => { log.error(s); new Properties() }, identity)
-
     new LicenseCreator(
       new DatasetLoaderImpl,
       new PlaceholderMapper(metadataTermsProperties),
-      new VelocityTemplateResolver(velocityProps),
+      new VelocityTemplateResolver(velocityProperties),
       new WeasyPrintPdfGenerator
     )
   }

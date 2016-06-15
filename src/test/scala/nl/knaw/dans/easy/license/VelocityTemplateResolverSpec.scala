@@ -30,11 +30,11 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
     false, null, null)
 
   before {
-    new File(getClass.getResource("/velocity/").toURI).copyDir(parameters.templateDir)
+    new File(getClass.getResource("/velocity/").toURI).copyDir(parameters.templateResourceDir)
   }
 
   after {
-    parameters.templateDir.deleteDirectory()
+    parameters.templateResourceDir.deleteDirectory()
   }
 
   override def afterAll = testDir.getParentFile.deleteDirectory()

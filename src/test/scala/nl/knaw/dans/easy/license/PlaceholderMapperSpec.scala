@@ -47,17 +47,17 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     false, fedora, null)
 
   before {
-    new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateDir)
+    new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateResourceDir)
   }
 
   after {
-    parameters.templateDir.deleteDirectory()
+    parameters.templateResourceDir.deleteDirectory()
   }
 
   override def afterAll = testDir.getParentFile.deleteDirectory()
 
   def testInstance = {
-    new PlaceholderMapper(new File(parameters.templateDir, "MetadataTestTerms.properties"))
+    new PlaceholderMapper(new File(parameters.templateResourceDir, "MetadataTestTerms.properties"))
   }
 
   def metadataItemMock(s: String): MetadataItem = {
@@ -146,7 +146,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "footerText" should "return the text in a file without its line endings" in {
-    testInstance.footerText(new File(parameters.templateDir, "FooterTextTest.txt")) shouldBe "hello\nworld"
+    testInstance.footerText(new File(parameters.templateResourceDir, "FooterTextTest.txt")) shouldBe "hello\nworld"
   }
 
   "getDate" should "return the first IsoDate from the list generated in the function when this list is not empty" in {

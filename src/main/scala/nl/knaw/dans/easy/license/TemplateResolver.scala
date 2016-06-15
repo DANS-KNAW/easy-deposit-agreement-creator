@@ -44,6 +44,8 @@ class VelocityTemplateResolver(properties: Properties)(implicit parameters: Para
   val velocityResources = new File(properties.getProperty("file.resource.loader.path"))
   val templateFileName = properties.getProperty("template.file.name")
 
+  log.debug(s"template folder: $velocityResources")
+
   val doc = new File(velocityResources, templateFileName)
   assert(doc.exists(), s"file does not exist - $doc")
 

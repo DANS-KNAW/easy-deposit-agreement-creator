@@ -44,30 +44,40 @@ package object license {
 
   val encoding = Charsets.UTF_8
   val checkSumNotCalculated = "------not-calculated------"
-  def velocityProperties(implicit parameters: Parameters): Either[String, Properties] = {
-    val propertiesFile = new File(parameters.templateDir, "/velocity-engine.properties")
 
-    loadProperties(propertiesFile)
-      .map(Right(_))
-      .getOrElse(Left(s"could not read the velocity properties in $propertiesFile"))
+  def velocityProperties(implicit parameters: Parameters): Properties = {
+    val p = new Properties
+    p.setProperty("runtime.references.strict", "true")
+    p.setProperty("file.resource.loader.path", templateDir.getAbsolutePath)
+    p.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute")
+    p.setProperty("template.file.name", "License.html")
+
+    p
   }
+
+  def templateDir(implicit parameters: Parameters) = {
+    new File(parameters.templateResourceDir, "/template")
+  }
+
   def dansLogoFile(implicit parameters: Parameters) = {
-    new File(parameters.templateDir, "/dans_logo.jpg")
-  }
-  def footerTextFile(implicit parameters: Parameters) = {
-    new File(parameters.templateDir, "/license_version.txt")
-  }
-  def metadataTermsProperties(implicit parameters: Parameters) = {
-    new File(parameters.templateDir, "/MetadataTerms.properties")
+    new File(parameters.templateResourceDir, "/dans_logo.jpg")
   }
 
-  case class Parameters(templateDir: File,
+  def footerTextFile(implicit parameters: Parameters) = {
+    new File(parameters.templateResourceDir, "/license_version.txt")
+  }
+
+  def metadataTermsProperties(implicit parameters: Parameters) = {
+    new File(parameters.templateResourceDir, "/MetadataTerms.properties")
+  }
+
+  case class Parameters(templateResourceDir: File,
                         pdfScript: File,
                         datasetID: DatasetID,
                         isSample: Boolean,
                         fedora: Fedora,
                         ldap: Ldap) {
-    override def toString: String = s"Parameters($templateDir, $pdfScript, $datasetID)"
+    override def toString: String = s"Parameters($templateResourceDir, $pdfScript, $datasetID, $isSample)"
   }
 
   object Version {

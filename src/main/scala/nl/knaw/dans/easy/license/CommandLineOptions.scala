@@ -75,7 +75,7 @@ object CommandLineOptions {
     val opts = new CommandLineOptions(args)
 
     val params = Parameters(
-      templateDir = new File(homeDir, "res/"),
+      templateResourceDir = new File(homeDir, "res/"),
       pdfScript = new File(homeDir, s"res/${props.getString("pdf.script")}"),
       datasetID = opts.datasetID(),
       isSample = opts.isSample(),
