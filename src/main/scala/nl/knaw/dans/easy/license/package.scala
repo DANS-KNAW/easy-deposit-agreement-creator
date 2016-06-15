@@ -45,7 +45,7 @@ package object license {
   val encoding = Charsets.UTF_8
   val checkSumNotCalculated = "------not-calculated------"
 
-  def velocityProperties(implicit parameters: Parameters): Properties = {
+  def velocityProperties(implicit parameters: BaseParameters): Properties = {
     val p = new Properties
     p.setProperty("runtime.references.strict", "true")
     p.setProperty("file.resource.loader.path", templateDir.getAbsolutePath)
@@ -55,19 +55,19 @@ package object license {
     p
   }
 
-  def templateDir(implicit parameters: Parameters) = {
+  def templateDir(implicit parameters: BaseParameters) = {
     new File(parameters.templateResourceDir, "/template")
   }
 
-  def dansLogoFile(implicit parameters: Parameters) = {
+  def dansLogoFile(implicit parameters: BaseParameters) = {
     new File(parameters.templateResourceDir, "/dans_logo.jpg")
   }
 
-  def footerTextFile(implicit parameters: Parameters) = {
+  def footerTextFile(implicit parameters: BaseParameters) = {
     new File(parameters.templateResourceDir, "/license_version.txt")
   }
 
-  def metadataTermsProperties(implicit parameters: Parameters) = {
+  def metadataTermsProperties(implicit parameters: BaseParameters) = {
     new File(parameters.templateResourceDir, "/MetadataTerms.properties")
   }
 

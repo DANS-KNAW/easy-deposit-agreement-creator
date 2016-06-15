@@ -33,7 +33,7 @@ import scala.collection.JavaConverters._
 import scala.language.{implicitConversions, postfixOps}
 import scala.util.Try
 
-class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: Parameters) {
+class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParameters) {
 
   type Table = ju.ArrayList[ju.Map[String, String]]
 

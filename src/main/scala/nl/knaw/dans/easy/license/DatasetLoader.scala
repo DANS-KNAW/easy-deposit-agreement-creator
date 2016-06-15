@@ -121,7 +121,7 @@ trait DatasetLoader {
   def getUserById(depositorID: DepositorID): Observable[EasyUser]
 }
 
-case class DatasetLoaderImpl(implicit parameters: Parameters) extends DatasetLoader {
+case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends DatasetLoader {
 
   val fedora = parameters.fedora
   val ldap = parameters.ldap

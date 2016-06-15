@@ -26,8 +26,7 @@ import scala.util.{Failure, Success}
 
 class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with BeforeAndAfterAll {
 
-  implicit val parameters = new Parameters(new File(testDir, "template"), null, null,
-    false, null, null)
+  implicit val parameters = new BaseParameters(new File(testDir, "template"), null, null, false)
 
   before {
     new File(getClass.getResource("/velocity/").toURI).copyDir(parameters.templateResourceDir)

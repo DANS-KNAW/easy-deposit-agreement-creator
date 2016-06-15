@@ -30,10 +30,10 @@ object Command {
     log.debug("Starting command line interface")
 
     try {
-      val (parameters, outputFile) = cmd.parse(args)
+      implicit val (parameters, outputFile) = cmd.parse(args)
 
       new FileOutputStream(outputFile)
-        .usedIn(LicenseCreator(parameters).createLicense)
+        .usedIn(CommandLineLicenseCreator(parameters).createLicense)
         .doOnCompleted(log.info(s"license saved at ${outputFile.getAbsolutePath}"))
         .doOnTerminate {
           // close LDAP at the end of the main

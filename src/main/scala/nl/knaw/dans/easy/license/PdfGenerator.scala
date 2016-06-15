@@ -26,7 +26,7 @@ trait PdfGenerator {
   def createPdf(input: InputStream, output: OutputStream): ProcessBuilder
 }
 
-class WeasyPrintPdfGenerator(implicit parameters: Parameters) extends PdfGenerator {
+class WeasyPrintPdfGenerator(implicit parameters: BaseParameters) extends PdfGenerator {
 
   val log = LoggerFactory.getLogger(getClass)
 

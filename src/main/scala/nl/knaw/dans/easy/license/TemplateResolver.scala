@@ -37,7 +37,7 @@ trait TemplateResolver {
     */
   def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding): Try[Unit]
 }
-class VelocityTemplateResolver(properties: Properties)(implicit parameters: Parameters) extends TemplateResolver {
+class VelocityTemplateResolver(properties: Properties)(implicit parameters: BaseParameters) extends TemplateResolver {
 
   val log = LoggerFactory.getLogger(getClass)
 
