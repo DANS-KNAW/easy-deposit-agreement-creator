@@ -166,10 +166,12 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     val (id3, title3) = ("id3", "title3")
     val audience = mock[EmdAudience]
 
-    (fedora.getDC(_: String)(_: InputStream => String)) expects (id1, *) returning Observable.just(title1)
-    (fedora.getDC(_: String)(_: InputStream => String)) expects (id2, *) returning Observable.just(title2)
-    (fedora.getDC(_: String)(_: InputStream => String)) expects (id3, *) returning Observable.just(title3)
-    audience.getValues _ expects () returning util.Arrays.asList(id1, id2, id3)
+    inSequence {
+      audience.getValues _ expects() returning util.Arrays.asList(id1, id2, id3)
+      (fedora.getDC(_: String)(_: InputStream => String)) expects(id1, *) returning Observable.just(title1)
+      (fedora.getDC(_: String)(_: InputStream => String)) expects(id2, *) returning Observable.just(title2)
+      (fedora.getDC(_: String)(_: InputStream => String)) expects(id3, *) returning Observable.just(title3)
+    }
 
     val loader = new DatasetLoaderImpl()
     val testObserver = TestSubscriber[String]()
