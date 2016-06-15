@@ -71,15 +71,6 @@ package object license {
     new File(parameters.templateResourceDir, "/MetadataTerms.properties")
   }
 
-  case class Parameters(templateResourceDir: File,
-                        pdfScript: File,
-                        datasetID: DatasetID,
-                        isSample: Boolean,
-                        fedora: Fedora,
-                        ldap: Ldap) {
-    override def toString: String = s"Parameters($templateResourceDir, $pdfScript, $datasetID, $isSample)"
-  }
-
   object Version {
     def apply(): String = {
       val props = new Properties()
