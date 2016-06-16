@@ -26,21 +26,27 @@ import rx.lang.scala.schedulers.IOScheduler
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
 
-case class EasyUser(userID: DepositorID,
-                    name: String,
+case class EasyUser(name: String,
                     organization: String,
                     address: String,
                     postalCode: String,
                     city: String,
                     country: String,
                     telephone: String,
-                    email: String)
+                    email: String) {
+
+  require(name != null, "'name' must be defined")
+  require(email != null, "'email' must be defined")
+}
 
 case class Dataset(datasetID: DatasetID,
                    emd: EasyMetadata,
                    easyUser: EasyUser,
                    audiences: Seq[AudienceTitle],
-                   fileItems: Seq[FileItem])
+                   fileItems: Seq[FileItem]) {
+
+  require(datasetID != null, "'datasetID' must be defined")
+}
 
 case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
 
@@ -194,7 +200,7 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
       val phone = getOrEmpty("telephonenumber")
       val mail = getOrEmpty("mail")
 
-      EasyUser(depositorID, name, org, addr, code, place, country, phone, mail)
+      EasyUser(name, org, addr, code, place, country, phone, mail)
     }).single
   }
 }
