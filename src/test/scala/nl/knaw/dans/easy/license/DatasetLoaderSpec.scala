@@ -26,6 +26,8 @@ import org.scalamock.scalatest.MockFactory
 import rx.lang.scala.Observable
 import rx.lang.scala.observers.TestSubscriber
 
+import scala.language.reflectiveCalls
+
 class DatasetLoaderSpec extends UnitSpec with MockFactory {
 
   trait MockEasyMetadata extends EasyMetadataImpl {
@@ -169,20 +171,29 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     val (id3, title3) = ("id3", "title3")
     val audience = mock[EmdAudience]
 
-    inSequence {
-      audience.getValues _ expects() returning util.Arrays.asList(id1, id2, id3)
-      (fedoraMock.getDC(_: String)(_: InputStream => String)) expects(id1, *) returning Observable.just(title1)
-      (fedoraMock.getDC(_: String)(_: InputStream => String)) expects(id2, *) returning Observable.just(title2)
-      (fedoraMock.getDC(_: String)(_: InputStream => String)) expects(id3, *) returning Observable.just(title3)
-    }
+    audience.getValues _ expects() returning util.Arrays.asList(id1, id2, id3)
 
-    val loader = new DatasetLoaderImpl()
+    // can't do mocking due to concurrency issues
+    val loader = new DatasetLoaderImpl() {
+
+      var counter = 0
+
+      override def getAudience(audienceID: AudienceID) = {
+        counter += 1
+        counter match {
+          case 1 => Observable.just(title1)
+          case 2 => Observable.just(title2)
+          case 3 => Observable.just(title3)
+          case _ => throw new IllegalStateException(s"Called this method too many times. audienceID = $audienceID")
+        }
+      }
+    }
     val testObserver = TestSubscriber[String]()
     loader.getAudiences(audience).subscribe(testObserver)
 
-    testObserver.awaitTerminalEvent()
     testObserver.assertValues(title1, title2, title3)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
+    loader.counter shouldBe 3
   }
 }
