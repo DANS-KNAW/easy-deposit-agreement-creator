@@ -44,6 +44,32 @@ class LicenseCreator(placeholderMapper: PlaceholderMapper,
       .flatten
   }
 }
+
+class LicenseCreatorWithDatasetLoader(datasetLoader: DatasetLoader,
+                                      placeholderMapper: PlaceholderMapper,
+                                      templateResolver: TemplateResolver,
+                                      pdfGenerator: PdfGenerator)
+                                     (implicit parameters: Parameters)
+  extends LicenseCreator(placeholderMapper, templateResolver, pdfGenerator)(parameters) {
+
+  // used for command line application
+  def createLicense(outputStream: OutputStream): Observable[Nothing] = {
+    datasetLoader.getDatasetById(parameters.datasetID)
+      .flatMap(createLicense(_)(outputStream).toObservable)
+      .filter(_ => false)
+      .asInstanceOf[Observable[Nothing]]
+  }
+
+  // used in Easy-Ingest-Flow
+  def createLicense(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])
+                   (outputStream: OutputStream): Observable[Nothing] = {
+    datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files)
+      .flatMap(createLicense(_)(outputStream).toObservable)
+      .filter(_ => false)
+      .asInstanceOf[Observable[Nothing]]
+  }
+}
+
 object LicenseCreator {
 
   def apply(implicit parameters: BaseParameters) = {
@@ -53,58 +79,9 @@ object LicenseCreator {
       new WeasyPrintPdfGenerator
     )
   }
-}
-
-abstract class AbstractLicenseCreator(placeholderMapper: PlaceholderMapper,
-                                      templateResolver: TemplateResolver,
-                                      pdfGenerator: PdfGenerator)
-                                     (implicit parameters: BaseParameters)
-  extends LicenseCreator(placeholderMapper, templateResolver, pdfGenerator)(parameters) {
-
-  def getDataset: Observable[Dataset]
-
-  def createLicense(outputStream: OutputStream): Observable[Nothing] = {
-    getDataset.flatMap(createLicense(_)(outputStream).toObservable)
-      .filter(_ => false) // discard all elements
-      .asInstanceOf[Observable[Nothing]]
-  }
-}
-
-class CommandLineLicenseCreator(datasetLoader: DatasetLoader,
-                                placeholderMapper: PlaceholderMapper,
-                                templateResolver: TemplateResolver,
-                                pdfGenerator: PdfGenerator)
-                               (implicit parameters: Parameters)
-  extends AbstractLicenseCreator(placeholderMapper, templateResolver, pdfGenerator)(parameters) {
-
-  def getDataset: Observable[Dataset] = datasetLoader.getDatasetById(parameters.datasetID)
-}
-object CommandLineLicenseCreator {
 
   def apply(implicit parameters: Parameters) = {
-    new CommandLineLicenseCreator(
-      new DatasetLoaderImpl,
-      new PlaceholderMapper(metadataTermsProperties),
-      new VelocityTemplateResolver(velocityProperties),
-      new WeasyPrintPdfGenerator
-    )
-  }
-}
-
-class StageDatasetLicenseCreator(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])
-                                (datasetLoader: DatasetLoader,
-                                 placeholderMapper: PlaceholderMapper,
-                                 templateResolver: TemplateResolver,
-                                 pdfGenerator: PdfGenerator)
-                                (implicit parameters: Parameters)
-  extends AbstractLicenseCreator(placeholderMapper, templateResolver, pdfGenerator)(parameters) {
-
-  def getDataset: Observable[Dataset] = datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files)
-}
-object StageDatasetLicenseCreator {
-
-  def apply(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])(implicit parameters: Parameters) = {
-    new CommandLineLicenseCreator(
+    new LicenseCreatorWithDatasetLoader(
       new DatasetLoaderImpl,
       new PlaceholderMapper(metadataTermsProperties),
       new VelocityTemplateResolver(velocityProperties),

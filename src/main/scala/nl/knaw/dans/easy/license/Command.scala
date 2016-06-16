@@ -33,7 +33,7 @@ object Command {
       implicit val (parameters, outputFile) = cmd.parse(args)
 
       new FileOutputStream(outputFile)
-        .usedIn(CommandLineLicenseCreator(parameters).createLicense)
+        .usedIn(LicenseCreator(parameters).createLicense)
         .doOnCompleted(log.info(s"license saved at ${outputFile.getAbsolutePath}"))
         .doOnTerminate {
           // close LDAP at the end of the main
