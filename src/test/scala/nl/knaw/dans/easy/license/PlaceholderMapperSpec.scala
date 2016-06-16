@@ -392,13 +392,11 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerm _ expects mediumTerm returning mediumItems
     emd.getTerm _ expects abstractTerm returning abstractItems
 
-    val expected = List(
-      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
-      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
-      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4, item5, item6").asJava
-    ).asJava
+    val result = testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234") shouldBe expected
+    result should contain (Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4, item5, item6").asJava)
+    result should contain (Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava)
+    result should contain (Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava)
   }
 
   "formatAudience" should "combine the audiences separated by <semicolon>" in {
@@ -476,12 +474,10 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, "")
     )
 
-    val expected = List(
-      Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava,
-      Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Known").asJava,
-      Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava
-    ).asJava
+    val result = testInstance.filesTable(input).asScala
 
-    testInstance.filesTable(input) shouldBe expected
+    result should contain (Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava)
+    result should contain (Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Known").asJava)
+    result should contain (Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava)
   }
 }

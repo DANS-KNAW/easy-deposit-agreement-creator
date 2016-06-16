@@ -30,12 +30,13 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+import scala.collection.SortedMap
 import scala.language.{implicitConversions, postfixOps}
 import scala.util.Try
 
 class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParameters) {
 
-  type Table = ju.ArrayList[ju.Map[String, String]]
+  type Table = ju.Collection[ju.Map[String, String]]
 
   val log = LoggerFactory.getLogger(getClass)
 
@@ -143,18 +144,22 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .filter { case (_, items) => items.nonEmpty }
       .map { case (term, items) =>
         val name = metadataNames.getProperty(term.getQualifiedName)
-        val value = term.getName match {
-          case Term.Name.AUDIENCE => formatAudience(audiences, datasetID)
+        val (n, value) = term.getName match {
+          case t@Term.Name.AUDIENCE => (t, formatAudience(audiences, datasetID))
           // head is safe as items cannot be empty at this point due to `filter` above
-          case Term.Name.ACCESSRIGHTS => formatDatasetAccessRights(items.head)
-          case _ => items.mkString(", ")
+          case t@Term.Name.ACCESSRIGHTS => (t, formatDatasetAccessRights(items.head))
+          case t => (t, items.mkString(", "))
         }
 
-        Map(MetadataKey -> name, MetadataValue -> value)
-          .map { case (k, v) => (k.keyword, v) }
-          .asJava
+        val map = Map(
+          MetadataKey -> name,
+          MetadataValue -> value
+        )
+
+        // keep the Term.Name around for sorting according to the Enum order
+        (n, map.keywordMapAsJava)
       }
-      .foldLeft(new Table)((list, map) => { list.add(map); list })
+      .sortedJavaCollection
   }
 
   def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
@@ -197,17 +202,27 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
 
   def filesTable(fileItems: Seq[FileItem]): Table = {
     fileItems
-      .map(fileItem =>
-        Map[KeywordMapping, String](
-          FilePath -> fileItem.path,
-          FileChecksum -> {
-            val cs = fileItem.checkSum
-            if (cs.isBlank || cs == "none") checkSumNotCalculated else cs
-          },
-          FileAccessibleTo -> formatFileAccessRights(fileItem.accessibleTo)
+      .map { case FileItem(path, accessibleTo, checkSum) =>
+        val map = Map(
+          FilePath -> path,
+          FileChecksum -> (if (checkSum.isBlank || checkSum == "none") checkSumNotCalculated else checkSum),
+          FileAccessibleTo -> formatFileAccessRights(accessibleTo)
         )
-      .map { case (k, v) => (k.keyword, v) }
-      .asJava)
-      .foldLeft(new Table)((list, map) => { list.add(map); list })
+
+        (path, map.keywordMapAsJava)
+      }
+      .sortedJavaCollection
+  }
+
+  implicit class KeywordMapToJavaMap[Keyword <: KeywordMapping](map: Map[Keyword, String]) {
+    def keywordMapAsJava: ju.Map[String, String] = map.map { case (k, v) => (k.keyword, v) }.asJava
+  }
+
+  implicit class SortedJavaCollection[T: Ordering, S](collection: Iterable[(T, S)]) {
+    def sortedJavaCollection: ju.Collection[S] = {
+      collection.foldLeft(SortedMap[T, S]())(_ + _)
+        .values
+        .asJavaCollection
+    }
   }
 }
