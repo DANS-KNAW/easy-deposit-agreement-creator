@@ -33,6 +33,6 @@ class WeasyPrintPdfGenerator(implicit parameters: BaseParameters) extends PdfGen
   def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
     log.debug("create pdf")
 
-    parameters.pdfScript.getAbsolutePath #< input #> output
+    pdfRunScript.getAbsolutePath #< input #> output
   }
 }

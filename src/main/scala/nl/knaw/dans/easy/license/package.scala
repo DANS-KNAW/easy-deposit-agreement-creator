@@ -71,6 +71,10 @@ package object license {
     new File(parameters.templateResourceDir, "/MetadataTerms.properties")
   }
 
+  def pdfRunScript(implicit parameters: BaseParameters) = {
+    new File(parameters.templateResourceDir, "/pdfgen.sh")
+  }
+
   object Version {
     def apply(): String = {
       val props = new Properties()

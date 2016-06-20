@@ -76,7 +76,6 @@ object CommandLineOptions {
 
     val params = Parameters(
       templateResourceDir = new File(homeDir, "res/"),
-      pdfScript = new File(homeDir, s"res/${props.getString("pdf.script")}"),
       datasetID = opts.datasetID(),
       isSample = opts.isSample(),
       fedora = new FedoraImpl(new FedoraCredentials(

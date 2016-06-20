@@ -20,7 +20,6 @@ import java.io.File
 // this class needs to be in a separate file rather than in package.scala because of interop with
 // java business layer.
 class BaseParameters(val templateResourceDir: File,
-                     val pdfScript: File,
                      val datasetID: DatasetID,
                      val isSample: Boolean)
 
@@ -30,9 +29,8 @@ trait DatabaseParameters {
 }
 
 case class Parameters(override val templateResourceDir: File,
-                      override val pdfScript: File,
                       override val datasetID: DatasetID,
                       override val isSample: Boolean,
                       fedora: Fedora,
                       ldap: Ldap)
-  extends BaseParameters(templateResourceDir, pdfScript, datasetID, isSample) with DatabaseParameters
+  extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters
