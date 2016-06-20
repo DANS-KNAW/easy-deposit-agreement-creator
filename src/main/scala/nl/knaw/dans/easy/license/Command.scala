@@ -35,6 +35,11 @@ object Command {
       new FileOutputStream(outputFile)
         .usedIn(LicenseCreator(parameters).createLicense)
         .doOnCompleted(log.info(s"license saved at ${outputFile.getAbsolutePath}"))
+        .doOnTerminate {
+          // close LDAP at the end of the main
+          log.debug("closing ldap")
+          parameters.ldap.close()
+        }
         .toBlocking
         .subscribe(
           _ => {},

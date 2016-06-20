@@ -58,11 +58,6 @@ class LicenseCreatorWithDatasetLoader(datasetLoader: DatasetLoader,
       .flatMap(createLicense(_)(outputStream).toObservable)
       .filter(_ => false)
       .asInstanceOf[Observable[Nothing]]
-      .doOnTerminate {
-        // close LDAP at the end of the main
-        log.debug("closing ldap")
-        parameters.ldap.close()
-      }
   }
 
   // used in Easy-Ingest-Flow
@@ -72,11 +67,6 @@ class LicenseCreatorWithDatasetLoader(datasetLoader: DatasetLoader,
       .flatMap(createLicense(_)(outputStream).toObservable)
       .filter(_ => false)
       .asInstanceOf[Observable[Nothing]]
-      .doOnTerminate {
-        // close LDAP at the end of the main
-        log.debug("closing ldap")
-        parameters.ldap.close()
-      }
   }
 }
 
