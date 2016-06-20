@@ -184,6 +184,8 @@ package object license {
       * @return an `Option` of the input string that indicates whether it is blank
       */
     def toOption = if (s.isBlank) Option.empty else Option(s)
+
+    def emptyIfBlank = s.toOption.getOrElse("")
   }
 
   implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {

@@ -35,7 +35,7 @@ class LicenseCreator(placeholderMapper: PlaceholderMapper,
       .use(templateOut => {
         log.info(s"""creating the license for dataset "${dataset.datasetID}"""")
         for {
-          placeholders <- placeholderMapper.datasetToPlaceholderMap(dataset)
+          placeholders <- placeholderMapper.datasetToPlaceholderMap(dataset.validate)
           _ <- templateResolver.createTemplate(templateOut, placeholders)
           pdfInput = new ByteArrayInputStream(templateOut.toByteArray)
           _ <- pdfInput.use(pdfGenerator.createPdf(_, outputStream).!)

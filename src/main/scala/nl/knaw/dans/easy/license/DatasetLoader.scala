@@ -26,6 +26,18 @@ import rx.lang.scala.schedulers.IOScheduler
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
 
+/**
+  * Data class for an Easy User. Notice that some fields are mandatory and cannot be null!
+  *
+  * @param name the user's name <b>(mandatory!)</b>
+  * @param organization the user's organisation
+  * @param address the user's address <b>(mandatory!)</b>
+  * @param postalCode the user's zipcode <b>(mandatory!)</b>
+  * @param city the user's city <b>(mandatory!)</b>
+  * @param country the user's country
+  * @param telephone the user's telephone
+  * @param email the user's email <b>(mandatory!)</b>
+  */
 case class EasyUser(name: String,
                     organization: String,
                     address: String,
@@ -36,6 +48,9 @@ case class EasyUser(name: String,
                     email: String) {
 
   require(name != null, "'name' must be defined")
+  require(address != null, "'address' must be defined")
+  require(postalCode != null, "'postalCode' must be defined")
+  require(city != null, "'city' must be defined")
   require(email != null, "'email' must be defined")
 }
 
@@ -46,6 +61,8 @@ case class Dataset(datasetID: DatasetID,
                    fileItems: Seq[FileItem]) {
 
   require(datasetID != null, "'datasetID' must be defined")
+
+  def validate: Dataset = DatasetValidator.validate(this)
 }
 
 case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
