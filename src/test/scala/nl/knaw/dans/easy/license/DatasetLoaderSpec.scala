@@ -47,7 +47,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   }
 
   "getUserById" should "query the user data from ldap for a given user id" in {
-    val user = new EasyUser("id", "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
+    val user = new EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.just(user)
 
     val loader = new DatasetLoaderImpl()
@@ -72,7 +72,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   }
 
   it should "fail with an IllegalArgumentException if the query to ldap yields more than one user data object" in {
-    val user1 = new EasyUser("id", "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
+    val user1 = new EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     val user2 = user1.copy(email = "mail2")
     (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.just(user1, user2)
 
@@ -88,7 +88,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   "getDatasetById" should "return the dataset corresponding to the given identifier" in {
     val id = "testID"
     val depID = "depID"
-    val user = new EasyUser(depID, "name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
+    val user = new EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     val audience = mock[EmdAudience]
     val audiences = Seq("aud1", "aud2")
     val files = Seq(

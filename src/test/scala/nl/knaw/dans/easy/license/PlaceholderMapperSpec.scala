@@ -175,7 +175,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "depositor" should "yield a map with depositor data" in {
-    val depositor = new EasyUser("uid", "name", "org", "addr", "postal", "city", "country", "tel", "mail")
+    val depositor = new EasyUser("name", "org", "addr", "postal", "city", "country", "tel", "mail")
 
     val res = testInstance.depositor(depositor)
 
