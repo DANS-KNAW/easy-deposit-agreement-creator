@@ -15,16 +15,41 @@
  */
 package nl.knaw.dans.easy.license
 
-import org.slf4j.LoggerFactory
+import java.io.FileOutputStream
+
 import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
+import org.slf4j.LoggerFactory
+import rx.schedulers.Schedulers
+
+import scala.language.postfixOps
 
 object Command {
   val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     log.debug("Starting command line interface")
-    val ps = cmd.parse(args)
 
-    // Here, pass the parameters to the main application logic (possibly to an Akka actor).
+    try {
+      implicit val (parameters, outputFile) = cmd.parse(args)
+
+      new FileOutputStream(outputFile)
+        .usedIn(LicenseCreator(parameters).createLicense)
+        .doOnCompleted(log.info(s"license saved at ${outputFile.getAbsolutePath}"))
+        .doOnTerminate {
+          // close LDAP at the end of the main
+          log.debug("closing ldap")
+          parameters.ldap.close()
+        }
+        .toBlocking
+        .subscribe(
+          _ => {},
+          e => log.error("An error was caught in main:", e),
+          () => log.debug("completed"))
+
+      Schedulers.shutdown()
+    }
+    catch {
+      case e: Throwable => log.error("An error was caught in main:", e)
+    }
   }
 }

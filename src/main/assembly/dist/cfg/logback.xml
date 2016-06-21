@@ -23,5 +23,5 @@
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>
-	<logger name="nl.knaw.dans.easy" level="info" />
+	<logger name="nl.knaw.dans.easy.license" level="info" />
 </configuration>

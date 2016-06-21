@@ -2,25 +2,53 @@ easy-license-creator
 ====================
 [![Build Status](https://travis-ci.org/DANS-KNAW/easy-license-creator.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-license-creator)
 
-<Remove this comment and extend the descriptions below>
-
+Create a license (pdf file) for a given dataset.
 
 SYNOPSIS
 --------
 
-    easy-license-creator params
+    easy-license-creator [ -s ] <datasetID> <license-file>
 
 
 DESCRIPTION
 -----------
 
-<Replace with a longer description of this module>
+A command line tool that creates a pdf document containing the license for a given dataset. The tool searches for a dataset that corresponds 
+to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the license.
 
+**Note:** the dataset needs to be in Fedora already. Newly created datasets (for example from `easy-split-multi-deposit`) need to be ingested 
+by EASY first before generating the license.
+
+The License Creator uses a template with placeholders. After replacing the placeholders with actual data, the template is converted into a PDF file.
+
+Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML 
+files that are specified in `src/main/assembly/dist/res/license/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` 
+are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
+
+Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool 
+requires to be installed before being used by `easy-license-creator`. In order to not having this installed on our computers while developing 
+on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. 
+During development we therefore require a different script than the one that is used in production. Follow the steps below:
+
+1. In `application.properties` set `pdf.script=localrun.sh`;
+2. In `localrun.sh` fill in the variables `USER_HOST` and `PRIVATE_KEY`.
+
+A `--sample` or `-s` flag can be added to the command line tool to signal that a 'sample license' needs to be created. This version of the license
+can be created when the DOI is not yet calculated. Also in the title of the license it is clearly indicated that this version is a *sample*.
 
 ARGUMENTS
 ---------
 
-<Replace with output from --help option on the command line>
+    Usage: easy-license-creator <datasetID> <license-file>
+    Options:
+    
+      -s, --sample    Indicates whether or not a sample license needs to be created
+          --help      Show help message
+          --version   Show version of this program
+    
+     trailing arguments:
+      dataset-id (required)     The ID of the dataset of which a license has to be created
+      license-file (required)   The file location where the license needs to be stored
 
 
 INSTALLATION AND CONFIGURATION
@@ -38,6 +66,15 @@ INSTALLATION AND CONFIGURATION
 
 General configuration settings can be set in `src/main/assembly/dist/cfg/appliation.properties` and logging can be configured
 in `src/main/assembly/dist/cfg/logback.xml`. The available settings are explained in comments in aforementioned files.
+
+
+**WeasyPrint** is installed according to the [installation page](http://weasyprint.readthedocs.io/en/latest/install.html) or via:
+
+```
+yum install redhat-rpm-config python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel weasyprint
+```
+
+After this, `weasyprint --help` is supposed to show the appropriate help page.
 
 
 BUILDING FROM SOURCE

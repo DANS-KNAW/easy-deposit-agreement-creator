@@ -1,0 +1,9 @@
+<p style="page-break-before: always" class="inline-header">List of all metadata provided for this dataset at $CurrentDateAndTime</p>
+<table>
+#foreach ($row in $MetadataTable)
+    <tr>
+        <td>$row.MetadataKey</td>
+        <td>$row.MetadataValue</td>
+    </tr>
+#end
+</table>

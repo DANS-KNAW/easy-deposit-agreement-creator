@@ -15,35 +15,90 @@
  */
 package nl.knaw.dans.easy.license
 
-import java.io.{File, PrintWriter}
-import java.net.URL
+import java.io.File
+import javax.naming.Context
+import javax.naming.ldap.InitialLdapContext
 
-import org.rogach.scallop.ScallopConf
+import com.yourmediashelf.fedora.client.FedoraCredentials
+import org.apache.commons.configuration.PropertiesConfiguration
+import org.rogach.scallop._
+import org.slf4j.LoggerFactory
 
-class CommandLineOptions (args: Array[String]) extends ScallopConf(args) {
-  printedName = "easy-license-creator";
-  val __________ = " " * printedName.size
+class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
+  
+  appendDefaultToDescription = true
+  editBuilder(_.setHelpWidth(110))
+
+  val fileMayNotExist = singleArgConverter(new File(_))
+
+  printedName = "easy-license-creator"
 
   version(s"$printedName v${Version()}")
   banner(s"""
-           |<Replace with one sentence describing the main task of this module>
+           |Create a license for the given datasetID. The license will be saved at the indicated location.
            |
            |Usage:
            |
-           |$printedName <synopsis of command line parameters>
-           |${__________} <...possibly continued here>
+           |$printedName [ -s ] <datasetID> <license-file>
            |
            |Options:
            |""".stripMargin)
-  //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = Some("Default value"))
-  footer("")
+
+  val datasetID = trailArg[DatasetID](name = "dataset-id",
+    descr = "The ID of the dataset of which a license has to be created")
+
+  val outputFile = trailArg[File](name = "license-file",
+    descr = "The file location where the license needs to be stored")(fileMayNotExist)
+
+  val isSample = opt[Boolean](name = "sample", short = 's', default = Option(false),
+    descr = "Indicates whether or not a sample license needs to be created")
+
+  verify()
 }
 
 object CommandLineOptions {
 
-  def parse(args: Array[String]): Parameters = {
+  val log = LoggerFactory.getLogger(getClass)
+
+  def parse(args: Array[String]): (Parameters, File) = {
+    log.debug("Loading application properties ...")
+    val homeDir = new File(System.getProperty("app.home"))
+    val props = {
+      val ps = new PropertiesConfiguration()
+      ps.setDelimiterParsingDisabled(true)
+      ps.load(new File(homeDir, "cfg/application.properties"))
+
+      ps
+    }
+
+    log.debug("Parsing command line ...")
     val opts = new CommandLineOptions(args)
-    // Fill Parameters with values from command line
-    Parameters()
+
+    val params = Parameters(
+      templateResourceDir = new File(homeDir, "res/"),
+      datasetID = opts.datasetID(),
+      isSample = opts.isSample(),
+      fedora = new FedoraImpl(new FedoraCredentials(
+        props.getString("fcrepo.url"),
+        props.getString("fcrepo.user"),
+        props.getString("fcrepo.password"))),
+      ldap = {
+        import java.{util => ju}
+
+        val env = new ju.Hashtable[String, String]
+        env.put(Context.PROVIDER_URL, props.getString("auth.ldap.url"))
+        env.put(Context.SECURITY_AUTHENTICATION, "simple")
+        env.put(Context.SECURITY_PRINCIPAL, props.getString("auth.ldap.user"))
+        env.put(Context.SECURITY_CREDENTIALS, props.getString("auth.ldap.password"))
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
+
+        LdapImpl(new InitialLdapContext(env, null))
+      })
+    val outputFile = opts.outputFile()
+
+    log.debug(s"Using the following settings: $params")
+    log.debug(s"Output will be written to ${outputFile.getAbsolutePath}")
+
+    (params, outputFile)
   }
 }

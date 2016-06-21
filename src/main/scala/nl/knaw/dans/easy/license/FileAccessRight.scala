@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license;
+package nl.knaw.dans.easy.license
 
-import org.scalamock.scalatest.MockFactory
-import org.scalatest._
+// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
+object FileAccessRight extends Enumeration {
+  type FileAccessRight = Value
 
-// Remove or add traits as needed <-- remove this comment
-class CommandSpec extends FlatSpec with Matchers with Inside with MockFactory with OneInstancePerTest {
+  val
+  ANONYMOUS,
+  KNOWN,
+  RESTRICTED_REQUEST,
+  RESTRICTED_GROUP,
+  NONE
+  = Value
 
+  def valueOf(s: String) = FileAccessRight.values.find(_.toString == s)
 }
