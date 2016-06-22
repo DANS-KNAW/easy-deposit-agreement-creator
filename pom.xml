@@ -25,7 +25,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>nl.knaw.dans.easy</groupId>
 	<artifactId>easy-license-creator</artifactId>
-	<version>1.x-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<name>EASY License Creator</name>
 	<url>https://github.com/DANS-KNAW/easy-license-creator</url>
 	<description>Create license file for EASY deposits</description>
@@ -35,7 +35,7 @@
 	</properties>
 	<scm>
 		<developerConnection>scm:git:https://github.com/DANS-KNAW/easy-license-creator</developerConnection>
-		<tag>HEAD</tag>
+		<tag>v1.0.1</tag>
 	</scm>
 	<dependencies>
 		<dependency>
