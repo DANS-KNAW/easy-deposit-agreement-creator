@@ -16,6 +16,9 @@
 package nl.knaw.dans.easy.license
 
 import java.io.File
+import javax.naming.ldap.LdapContext
+
+import com.yourmediashelf.fedora.client.FedoraClient
 
 // this class needs to be in a separate file rather than in package.scala because of interop with
 // java business layer.
@@ -31,6 +34,10 @@ trait DatabaseParameters {
 case class Parameters(override val templateResourceDir: File,
                       override val datasetID: DatasetID,
                       override val isSample: Boolean,
-                      fedora: Fedora,
-                      ldap: Ldap)
-  extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters
+                      private val fedoraClient: FedoraClient,
+                      private val ldapContext: LdapContext)
+  extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters {
+
+  val fedora = FedoraImpl(fedoraClient)
+  val ldap = LdapImpl(ldapContext)
+}

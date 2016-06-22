@@ -19,7 +19,7 @@ import java.io.File
 import javax.naming.Context
 import javax.naming.ldap.InitialLdapContext
 
-import com.yourmediashelf.fedora.client.FedoraCredentials
+import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.rogach.scallop._
 import org.slf4j.LoggerFactory
@@ -78,11 +78,11 @@ object CommandLineOptions {
       templateResourceDir = new File(homeDir, "res/"),
       datasetID = opts.datasetID(),
       isSample = opts.isSample(),
-      fedora = new FedoraImpl(new FedoraCredentials(
+      fedoraClient = new FedoraClient(new FedoraCredentials(
         props.getString("fcrepo.url"),
         props.getString("fcrepo.user"),
         props.getString("fcrepo.password"))),
-      ldap = {
+      ldapContext = {
         import java.{util => ju}
 
         val env = new ju.Hashtable[String, String]
@@ -92,7 +92,7 @@ object CommandLineOptions {
         env.put(Context.SECURITY_CREDENTIALS, props.getString("auth.ldap.password"))
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
 
-        LdapImpl(new InitialLdapContext(env, null))
+        new InitialLdapContext(env, null)
       })
     val outputFile = opts.outputFile()
 
