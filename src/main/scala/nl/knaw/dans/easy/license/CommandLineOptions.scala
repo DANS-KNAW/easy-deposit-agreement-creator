@@ -74,8 +74,8 @@ object CommandLineOptions {
     log.debug("Parsing command line ...")
     val opts = new CommandLineOptions(args)
 
-    val params = Parameters(
-      templateResourceDir = new File(homeDir, "res/"),
+    val params = new Parameters(
+      templateResourceDir = new File(props.getString("license.resources")),
       datasetID = opts.datasetID(),
       isSample = opts.isSample(),
       fedoraClient = new FedoraClient(new FedoraCredentials(

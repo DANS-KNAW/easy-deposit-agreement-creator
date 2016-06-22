@@ -34,10 +34,10 @@ trait DatabaseParameters {
 case class Parameters(override val templateResourceDir: File,
                       override val datasetID: DatasetID,
                       override val isSample: Boolean,
-                      private val fedoraClient: FedoraClient,
-                      private val ldapContext: LdapContext)
+                      fedora: Fedora,
+                      ldap: Ldap)
   extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters {
 
-  val fedora = FedoraImpl(fedoraClient)
-  val ldap = LdapImpl(ldapContext)
+  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapContext: LdapContext) =
+    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(ldapContext))
 }
