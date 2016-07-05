@@ -1,7 +1,7 @@
 # Functional Requirements License Creator
 
 ## Background
-At certain moments in time datasets require a new license. This is mainly when a dataset is first ingested (both via the front-end via `WebUI` or via the backend using `EASY-Ingest` and `EASY-Deposit`) or when something in the dataset's metadata changes (using one of the tools written for specific tasks). EASY-License-Creator facilitates the generation of a license according to a given dataset, but does *not* ingest the license into the database.
+At certain moments in time datasets require a new license. This is mainly when a dataset is first ingested (both via the front-end via `WebUI` or via the backend using `EASY-Ingest` and `EASY-Sword2`) or when something in the dataset's metadata changes (using one of the tools written for specific tasks). EASY-License-Creator facilitates the generation of a license according to a given dataset, but does *not* ingest the license into the database.
 
 ### Former version
 The main reason for creating this separate module is to replace the old license generator in the business logic, as this version turns out to not be particularly usable in the various modules that require the generation of a new license. The old generator takes the *dataset*, *depositor data* and an `OutputStream` to which the output is written as its arguments and returns `Unit`.
