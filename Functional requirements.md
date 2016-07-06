@@ -1,13 +1,23 @@
 # Functional Requirements License Creator
 
 ## Background
-At certain moments in time datasets require a new license. This is mainly when a dataset is first ingested (both via the front-end via `WebUI` or via the backend using `EASY-Ingest` and `EASY-Deposit`) or when something in the dataset's metadata changes (using one of the tools written for specific tasks). EASY-License-Creator facilitates the generation of a license according to a given dataset, but does *not* ingest the license into the database.
+At certain moments in time datasets require a new license. This is mainly when a dataset is first
+ingested (both via the front-end via `easy-webui` or via the backend using `easy-ingest` and
+`easy-sword2`) or when something in the dataset's metadata changes (using one of the tools written
+for specific tasks). EASY-License-Creator facilitates the generation of a license according to a
+given dataset, but does *not* ingest the license into the database.
 
 ### Former version
-The main reason for creating this separate module is to replace the old license generator in the business logic, as this version turns out to not be particularly usable in the various modules that require the generation of a new license. The old generator takes the *dataset*, *depositor data* and an `OutputStream` to which the output is written as its arguments and returns `Unit`.
+The main reason for creating this separate module is to replace the old license generator in the
+business logic, as this version turns out to not be particularly usable in the various modules that
+require the generation of a new license. The old generator takes the *dataset*, *depositor data*
+and an `OutputStream` to which the output is written as its arguments and returns `Unit`.
 
 ## New design
-The new design of the License Creator consists of (1) an API which can be called from within other modules that are dependents of this module and (2) a command line tool. In case the latter is used, we assume that the dataset as well as the depositor data are already present in EASY. Again notice that this command line tool is not intended to ingest the newly generated license into EASY!
+The new design of the License Creator consists of (1) an API which can be called from within other
+modules that are dependents of this module and (2) a command line tool. In case the latter is used,
+we assume that the dataset as well as the depositor data are already present in EASY. Again notice
+that this command line tool is not intended to ingest the newly generated license into EASY!
 
 The input and output of both parts of the License Creator are as follows:
   * *input (via command line):* dataset identifier, output file location
@@ -35,7 +45,8 @@ The input and output of both parts of the License Creator are as follows:
   * An explaination of the distinct access categories from the previous item.
 
 ## Resources
-The license is generated from a series of template files with placeholders. Using the resources listed below this module can resolve these placeholders and transform the whole text into a pdf.
+The license is generated from a series of template files with placeholders. Using the resources listed
+below this module can resolve these placeholders and transform the whole text into a pdf.
 
 ### Template files
   * `Appendix.html` - an appendix with more information about the CC0 access category
@@ -54,7 +65,8 @@ The license is generated from a series of template files with placeholders. Usin
   * *RiSearch* - this is part of Fedora and provides the relation between the dataset and the files.
 
 ### Required data in the template
-Besides the dataset's metadata and the list of files contained in the dataset, several other values are required in the creation of the license agreement.
+Besides the dataset's metadata and the list of files contained in the dataset, several other values
+are required in the creation of the license agreement.
 
 | Data | Used in | Stored in |
 |------|---------|-----------|
@@ -108,12 +120,26 @@ Besides the dataset's metadata and the list of files contained in the dataset, s
 * Every page has a footer with the license's version number as well as the page number
 
 ## Pdf generation
-The license is generated from an html template and converted to pdf by [Apache Velocity](http://velocity.apache.org/) and [WeasyPrint](http://weasyprint.org/) respectively. See the README on installation notes for WeasyPrint. 
+The license is generated from an html template and converted to pdf by
+[Apache Velocity](http://velocity.apache.org/) and [WeasyPrint](http://weasyprint.org/) respectively.
+See the README on installation notes for WeasyPrint. 
 
 ### Velocity
-Velocity is a Java library and it supposed to be used as such! If a placeholder in the template requires a list or map, it needs to be a `java.util.List` or `java.util.Map` instance. This requires some extra attention as the License Creator itself is written in Scala.
+Velocity is a Java library and it supposed to be used as such! If a placeholder in the template
+requires a list or map, it needs to be a `java.util.List` or `java.util.Map` instance. This requires
+some extra attention as the License Creator itself is written in Scala.
 
-Velocity does not complain or give an error message by default if certain placeholders cannot be resolved. This only happens when the property `runtime.references.strict = true` is set in the Velocity properties file. Besides that Velocity requires the path to the resources to be set using the property `file.resource.loader.path`. As an extra parameter we added `template.file.name`, holding the name of the file to be resolved by Velocity. This file is supposed to be present inside the `file.resource.loader.path` folder. All these parameters can are set in the `velocity-engine.properties` file in `src/main/assembly/dist/res/`.
+Velocity does not complain or give an error message by default if certain placeholders cannot be
+resolved. This only happens when the property `runtime.references.strict = true` is set in the
+Velocity properties file. Besides that Velocity requires the path to the resources to be set using
+the property `file.resource.loader.path`. As an extra parameter we added `template.file.name`,
+holding the name of the file to be resolved by Velocity. This file is supposed to be present inside
+the `file.resource.loader.path` folder. All these parameters can are set in the
+`velocity-engine.properties` file in `src/main/assembly/dist/res/`.
 
 ### WeasyPrint
-The transformation from html to pdf is done using the WeasyPrint command line tool. This tool is installed on the servers (*deasy*, *teasy* and *easy01*). For running it locally (during development) we recommend using the `localrun.sh` script. Indicate this in the `application.properties` located in `src/main/assembly/dist/cfg/` and fill in the `...` placeholders in the script.
+The transformation from html to pdf is done using the WeasyPrint command line tool. This tool is
+installed on the servers (*deasy*, *teasy* and *easy01*). For running it locally (during
+development) we recommend using the `localrun.sh` script. Indicate this in the
+`application.properties` located in `src/main/assembly/dist/cfg/` and fill in the `...`
+placeholders in the script.
