@@ -58,7 +58,7 @@ class VelocityTemplateResolver(properties: Properties)(implicit parameters: Base
   def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding) = {
     log.debug("resolve template placeholders")
 
-    new OutputStreamWriter(out).use(writer => {
+    new OutputStreamWriter(out, encoding).use(writer => {
       val context = new VelocityContext
       map.foreach { case (kw, o) => context.put(kw.keyword, o) }
 
