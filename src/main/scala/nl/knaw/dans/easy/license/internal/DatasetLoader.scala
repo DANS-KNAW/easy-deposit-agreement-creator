@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.license.internal
 
 import javax.naming.directory.Attributes
 
-import nl.knaw.dans.easy.license.DatabaseParameters
 import nl.knaw.dans.easy.license.internal.FileAccessRight.FileAccessRight
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl, EmdAudience}

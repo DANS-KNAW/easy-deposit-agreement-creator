@@ -20,7 +20,7 @@ import java.util
 import javax.naming.directory.Attributes
 
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
-import nl.knaw.dans.easy.license.{DatabaseParameters, UnitSpec}
+import nl.knaw.dans.easy.license.UnitSpec
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
 import org.scalamock.scalatest.MockFactory

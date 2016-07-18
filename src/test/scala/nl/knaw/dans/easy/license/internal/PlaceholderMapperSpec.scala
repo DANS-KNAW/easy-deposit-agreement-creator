@@ -19,7 +19,7 @@ import java.io.File
 import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
-import nl.knaw.dans.easy.license.{Parameters, UnitSpec}
+import nl.knaw.dans.easy.license.UnitSpec
 import nl.knaw.dans.pf.language.emd.Term.{Name, Namespace}
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}

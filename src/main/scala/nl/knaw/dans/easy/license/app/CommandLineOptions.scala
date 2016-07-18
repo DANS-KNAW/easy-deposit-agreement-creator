@@ -20,8 +20,7 @@ import javax.naming.Context
 import javax.naming.ldap.InitialLdapContext
 
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
-import nl.knaw.dans.easy.license.Parameters
-import nl.knaw.dans.easy.license.internal.{DatasetID, Version}
+import nl.knaw.dans.easy.license.internal.{DatasetID, Parameters, Version}
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.rogach.scallop._
 import org.slf4j.LoggerFactory

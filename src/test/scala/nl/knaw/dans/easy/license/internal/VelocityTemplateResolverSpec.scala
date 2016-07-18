@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.license.internal
 import java.io.{ByteArrayOutputStream, File}
 import java.util.Properties
 
-import nl.knaw.dans.easy.license.{BaseParameters, UnitSpec}
+import nl.knaw.dans.easy.license.UnitSpec
 import org.apache.velocity.exception.MethodInvocationException
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
