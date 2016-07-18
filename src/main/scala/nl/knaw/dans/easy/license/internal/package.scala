@@ -20,9 +20,10 @@ import java.nio.charset.Charset
 import java.util.Properties
 import javax.naming.NamingEnumeration
 
-import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
+import org.apache.commons.io.{Charsets, FileUtils}
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
+import resource.ManagedResource
 import rx.lang.scala.Notification.{OnCompleted, OnError, OnNext}
 import rx.lang.scala.{Notification, Observable}
 
@@ -202,16 +203,15 @@ package object internal {
     })
   }
 
-  implicit class CloseableResourceExtensions[T <: Closeable](val resource: T) extends AnyVal {
-    def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
-      Observable.using(resource)(observableFactory, t => { dispose(t); t.closeQuietly() }, disposeEagerly)
+  implicit class ReactiveResource[+T](val resource: ManagedResource[T]) extends AnyVal {
+    def observe: Observable[T] = {
+      try {
+        resource.acquireAndGet(Observable.just(_))
+      }
+      catch {
+        case e: Throwable => Observable.error(e)
+      }
     }
-
-    def use[S](f: T => S, dispose: T => Unit = _ => {}): Try[S] = {
-      Try(f(resource)).eventually(() => { dispose(resource); resource.closeQuietly() })
-    }
-
-    def closeQuietly() = IOUtils closeQuietly resource
   }
 
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
@@ -243,11 +243,12 @@ package object internal {
   }
 
   def loadProperties(file: File): Try[Properties] = {
-    new FileInputStream(file)
-      .use(fis => {
+    resource.Using.fileInputStream(file)
+      .map(fis => {
         val props = new Properties
         props.load(fis)
         props
       })
+      .tried
   }
 }

@@ -15,11 +15,8 @@
  */
 package nl.knaw.dans.easy.license.app
 
-import java.io.FileOutputStream
-
 import nl.knaw.dans.easy.license.LicenseCreator
 import nl.knaw.dans.easy.license.app.{CommandLineOptions => cmd}
-import nl.knaw.dans.easy.license.internal.CloseableResourceExtensions
 import org.slf4j.LoggerFactory
 import rx.schedulers.Schedulers
 
@@ -34,8 +31,9 @@ object Command {
     try {
       implicit val (parameters, outputFile) = cmd.parse(args)
 
-      new FileOutputStream(outputFile)
-        .usedIn(LicenseCreator(parameters).createLicense)
+      resource.Using.fileOutputStream(outputFile)
+        .map(LicenseCreator(parameters).createLicense)
+        .acquireAndGet(identity)
         .doOnCompleted(log.info(s"license saved at ${outputFile.getAbsolutePath}"))
         .doOnTerminate {
           // close LDAP at the end of the main

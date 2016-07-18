@@ -32,17 +32,17 @@ class LicenseCreator(placeholderMapper: PlaceholderMapper,
   val log = LoggerFactory.getLogger(getClass)
 
   def createLicense(dataset: Dataset)(outputStream: OutputStream): Try[Unit] = {
-    new ByteArrayOutputStream()
-      .use(templateOut => {
+    resource.managed(new ByteArrayOutputStream())
+      .map(templateOut => {
         log.info(s"""creating the license for dataset "${dataset.datasetID}"""")
         for {
           placeholders <- placeholderMapper.datasetToPlaceholderMap(dataset.validate)
           _ <- templateResolver.createTemplate(templateOut, placeholders)
           pdfInput = new ByteArrayInputStream(templateOut.toByteArray)
-          _ <- pdfInput.use(pdfGenerator.createPdf(_, outputStream).!)
+          _ <- resource.managed(pdfInput).map(pdfGenerator.createPdf(_, outputStream).!).tried
         } yield ()
       })
-      .flatten
+      .acquireAndGet(identity)
   }
 }
 

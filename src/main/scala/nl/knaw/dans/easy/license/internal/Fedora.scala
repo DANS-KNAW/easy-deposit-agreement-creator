@@ -104,10 +104,11 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
   def this(credentials: FedoraCredentials) = this(new FedoraClient(credentials))
 
   private def query[T](pid: String, datastreamID: String)(f: InputStream => T): Observable[T] = {
-    FedoraClient.getDatastreamDissemination(pid, datastreamID)
-      .execute(client)
-      .getEntityInputStream
-      .usedIn(f.andThen(Observable.just(_)))
+    resource.managed {
+      FedoraClient.getDatastreamDissemination(pid, datastreamID)
+        .execute(client)
+        .getEntityInputStream
+    }.map(f).observe
   }
 
   def getAMD[T](pid: DatasetID)(f: (InputStream) => T) = query(pid, "AMD")(f).single
@@ -126,11 +127,11 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
   }
 
   def queryRiSearch(query: String) = {
-    Observable.defer {
+    resource.managed {
       new RiSearch(query).lang("sparql").format("csv").execute(client)
         .getEntityInputStream
-        .usedIn(is => Observable.from(Source.fromInputStream(is)
-          .getLines().toIterable).drop(1).map(_.split("/").last))
     }
+      .map(is => Observable.from(Source.fromInputStream(is).getLines().toIterable).drop(1).map(_.split("/").last))
+      .acquireAndGet(identity)
   }
 }
