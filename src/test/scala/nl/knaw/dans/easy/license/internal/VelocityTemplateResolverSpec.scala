@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
 import java.io.{ByteArrayOutputStream, File}
 import java.util.Properties
 
+import nl.knaw.dans.easy.license.{BaseParameters, UnitSpec}
 import org.apache.velocity.exception.MethodInvocationException
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}

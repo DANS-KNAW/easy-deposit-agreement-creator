@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.app
 
 import java.io.File
 import javax.naming.Context
 import javax.naming.ldap.InitialLdapContext
 
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
+import nl.knaw.dans.easy.license.Parameters
+import nl.knaw.dans.easy.license.internal.{DatasetID, Version}
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.rogach.scallop._
 import org.slf4j.LoggerFactory

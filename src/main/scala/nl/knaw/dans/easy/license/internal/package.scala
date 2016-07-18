@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy
+package nl.knaw.dans.easy.license
 
 import java.io._
 import java.nio.charset.Charset
@@ -30,7 +30,7 @@ import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 
-package object license {
+package object internal {
 
   type DatasetID = String
   type DepositorID = String

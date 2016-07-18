@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
 import java.io.{File, OutputStream, OutputStreamWriter}
 import java.nio.charset.Charset
 import java.util.Properties
 
+import nl.knaw.dans.easy.license.BaseParameters
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory

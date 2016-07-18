@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
 import java.io.File
 import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
+import nl.knaw.dans.easy.license.{Parameters, UnitSpec}
 import nl.knaw.dans.pf.language.emd.Term.{Name, Namespace}
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}

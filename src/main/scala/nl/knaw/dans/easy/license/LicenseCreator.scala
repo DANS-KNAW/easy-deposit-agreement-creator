@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.license
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 
+import nl.knaw.dans.easy.license.internal._
 import nl.knaw.dans.pf.language.emd.EasyMetadata
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable

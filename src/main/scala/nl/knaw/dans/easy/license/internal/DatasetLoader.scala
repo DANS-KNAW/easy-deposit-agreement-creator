@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
 import javax.naming.directory.Attributes
 
-import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
+import nl.knaw.dans.easy.license.DatabaseParameters
+import nl.knaw.dans.easy.license.internal.FileAccessRight.FileAccessRight
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl, EmdAudience}
-import rx.lang.scala.{Observable, ObservableExtensions}
 import rx.lang.scala.schedulers.IOScheduler
+import rx.lang.scala.{Observable, ObservableExtensions}
 
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
@@ -174,7 +175,7 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
   private def getFileItem(filePid: FileID): Observable[FileItem] = {
     val pathAndAccessCategory = fedora.getFileMetadata(filePid)(is => {
       val xml = is.loadXML
-      (xml \\ "path" text,
+      ((xml \\ "path").text,
         FileAccessRight.valueOf(xml \\ "accessibleTo" text)
           .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $filePid")))
     }).subscribeOn(IOScheduler())

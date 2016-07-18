@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
-import java.io.{InputStream, OutputStream}
+import nl.knaw.dans.easy.license.UnitSpec
 
-import org.slf4j.LoggerFactory
+class DatasetValidatorSpec extends UnitSpec {
 
-import scala.sys.process._
+  "validate" should "replace null fields in easy-user with an empty string" in {
+    val depositor = EasyUser("foo", null, "addr", "zipcode", "ct", null, null, "bar")
+    val expected = EasyUser("foo", "", "addr", "zipcode", "ct", "", "", "bar")
 
-trait PdfGenerator {
-
-  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder
-}
-
-class WeasyPrintPdfGenerator(implicit parameters: BaseParameters) extends PdfGenerator {
-
-  val log = LoggerFactory.getLogger(getClass)
-
-  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
-    log.debug("create pdf")
-
-    pdfRunScript.getAbsolutePath #< input #> output
+    DatasetValidator.validate(depositor) shouldBe expected
   }
 }

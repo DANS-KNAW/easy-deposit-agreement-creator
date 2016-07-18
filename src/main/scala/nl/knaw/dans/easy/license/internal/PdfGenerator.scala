@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
-// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
-object FileAccessRight extends Enumeration {
-  type FileAccessRight = Value
+import java.io.{InputStream, OutputStream}
 
-  val
-  ANONYMOUS,
-  KNOWN,
-  RESTRICTED_REQUEST,
-  RESTRICTED_GROUP,
-  NONE
-  = Value
+import nl.knaw.dans.easy.license.BaseParameters
+import org.slf4j.LoggerFactory
 
-  def valueOf(s: String) = FileAccessRight.values.find(_.toString == s)
+import scala.sys.process._
+
+trait PdfGenerator {
+
+  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder
+}
+
+class WeasyPrintPdfGenerator(implicit parameters: BaseParameters) extends PdfGenerator {
+
+  val log = LoggerFactory.getLogger(getClass)
+
+  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
+    log.debug("create pdf")
+
+    pdfRunScript.getAbsolutePath #< input #> output
+  }
 }

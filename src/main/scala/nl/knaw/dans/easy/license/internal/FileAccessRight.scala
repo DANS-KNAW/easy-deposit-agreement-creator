@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
-class DatasetValidatorSpec extends UnitSpec {
+// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
+object FileAccessRight extends Enumeration {
+  type FileAccessRight = Value
 
-  "validate" should "replace null fields in easy-user with an empty string" in {
-    val depositor = new EasyUser("foo", null, "addr", "zipcode", "ct", null, null, "bar")
-    val expected = new EasyUser("foo", "", "addr", "zipcode", "ct", "", "", "bar")
+  val
+  ANONYMOUS,
+  KNOWN,
+  RESTRICTED_REQUEST,
+  RESTRICTED_GROUP,
+  NONE
+  = Value
 
-    DatasetValidator.validate(depositor) shouldBe expected
-  }
+  def valueOf(s: String) = FileAccessRight.values.find(_.toString == s)
 }
