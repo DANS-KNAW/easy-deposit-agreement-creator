@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.license.internal
 
 import java.io.{InputStream, OutputStream}
 
-import nl.knaw.dans.easy.license.BaseParameters
 import org.slf4j.LoggerFactory
 
 import scala.sys.process._
