@@ -33,9 +33,6 @@ import scala.xml.XML
 
 package object internal {
 
-  type DatasetID = String
-  type DepositorID = String
-
   type AudienceID = String
   type AudienceTitle = String
 

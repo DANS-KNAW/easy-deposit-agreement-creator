@@ -20,6 +20,7 @@ import java.io.InputStream
 import com.yourmediashelf.fedora.client.request.RiSearch
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
+import nl.knaw.dans.easy.license.DatasetID
 import rx.lang.scala.Observable
 
 import scala.io.Source

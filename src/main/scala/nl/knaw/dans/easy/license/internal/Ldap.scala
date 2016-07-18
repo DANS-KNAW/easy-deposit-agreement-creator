@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.license.internal
 import javax.naming.directory.{Attributes, SearchControls}
 import javax.naming.ldap.LdapContext
 
+import nl.knaw.dans.easy.license.DepositorID
 import rx.lang.scala.Observable
 
 trait Ldap extends AutoCloseable {

@@ -19,6 +19,7 @@ import java.io.File
 import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.FedoraClient
+import nl.knaw.dans.easy.license.DatasetID
 
 // this class needs to be in a separate file rather than in package.scala because of interop with
 // java business layer.

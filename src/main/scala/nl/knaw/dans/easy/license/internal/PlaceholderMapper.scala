@@ -21,7 +21,8 @@ import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
-import nl.knaw.dans.easy.license.internal.FileAccessRight._
+import nl.knaw.dans.easy.license.{DatasetID, FileAccessRight, FileItem}
+import nl.knaw.dans.easy.license.FileAccessRight._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
 import org.apache.commons.codec.binary.Base64

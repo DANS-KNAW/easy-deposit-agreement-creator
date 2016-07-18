@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy
 
-import java.io.File
-import javax.naming.ldap.LdapContext
+import nl.knaw.dans.easy.license.FileAccessRight._
 
-import com.yourmediashelf.fedora.client.FedoraClient
+package object license {
 
-object BaseParameters {
+  type DatasetID = String
+  type DepositorID = String
 
-  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean) = {
-    new internal.BaseParameters(templateResourceDir, datasetID, isSample)
-  }
-}
-
-object Parameters {
-
-  def apply(templateResourceDir: File,
-            datasetID: DatasetID,
-            isSample: Boolean,
-            fedoraClient: FedoraClient,
-            ldapContext: LdapContext) = {
-    new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapContext)
-  }
+  case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
 }
