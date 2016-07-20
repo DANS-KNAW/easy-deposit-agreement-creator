@@ -20,7 +20,7 @@ import java.nio.charset.Charset
 import java.util.Properties
 import javax.naming.NamingEnumeration
 
-import org.apache.commons.io.{Charsets, FileUtils}
+import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
 import rx.lang.scala.Notification.{OnCompleted, OnError, OnNext}
@@ -198,6 +198,12 @@ package object internal {
 //      }
 //    })
 //  }
+
+  implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
+    def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
+      Observable.using(resource)(observableFactory, t => { dispose(t); IOUtils.closeQuietly(t) }, disposeEagerly)
+    }
+  }
 
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
     def loadXML = XML load stream
