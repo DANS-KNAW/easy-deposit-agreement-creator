@@ -25,11 +25,10 @@ import rx.lang.scala.Observable
 trait Ldap extends AutoCloseable {
 
   /**
-    * Queries LDAP for the user data corresponding to the given `depositorID` and transforms it
-    * into an instance of type `T` using the function `f`.
+    * Queries LDAP for the user data corresponding to the given `depositorID`
     *
     * @param depositorID the identifier related to the depositor
-    * @return the instance of `T` wrapped in an `Observable`
+    * @return the result of the query in key-value pairs
     */
   def query(depositorID: DepositorID): Observable[Attributes]
 }
