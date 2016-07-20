@@ -205,18 +205,20 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
   }
 
   def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
-    ldap.query(depositorID)(implicit attrs => {
-      val name = getOrEmpty("displayname")
-      val org = getOrEmpty("o")
-      val addr = getOrEmpty("postaladdress")
-      val code = getOrEmpty("postalcode")
-      val place = getOrEmpty("l")
-      val country = getOrEmpty("st")
-      val phone = getOrEmpty("telephonenumber")
-      val mail = getOrEmpty("mail")
+    ldap.query(depositorID)
+      .map(implicit attrs => {
+        val name = getOrEmpty("displayname")
+        val org = getOrEmpty("o")
+        val addr = getOrEmpty("postaladdress")
+        val code = getOrEmpty("postalcode")
+        val place = getOrEmpty("l")
+        val country = getOrEmpty("st")
+        val phone = getOrEmpty("telephonenumber")
+        val mail = getOrEmpty("mail")
 
-      EasyUser(name, org, addr, code, place, country, phone, mail)
-    }).single
+        EasyUser(name, org, addr, code, place, country, phone, mail)
+      })
+      .single
   }
 }
 

@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.license.internal
 
 import java.io.InputStream
 import java.util
-import javax.naming.directory.Attributes
+import javax.naming.directory.BasicAttributes
 
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.license._
@@ -42,26 +42,53 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   val ldapMock = mock[Ldap]
   val emdMock = mock[MockEasyMetadata]
 
+  val (userAttributes, expectedUser) = {
+    val attrs = new BasicAttributes
+    attrs.put("displayname", "name")
+    attrs.put("o", "org")
+    attrs.put("postaladdress", "addr")
+    attrs.put("postalcode", "pc")
+    attrs.put("l", "city")
+    attrs.put("st", "cntr")
+    attrs.put("telephonenumber", "phone")
+    attrs.put("mail", "mail")
+
+    val user = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
+
+    (attrs, user)
+  }
+
   implicit val parameters = new DatabaseParameters {
     val fedora: Fedora = fedoraMock
     val ldap: Ldap = ldapMock
   }
 
   "getUserById" should "query the user data from ldap for a given user id" in {
-    val user = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.just(user)
+    ldapMock.query _ expects "testID" returning Observable.just(userAttributes)
 
     val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[EasyUser]()
     loader.getUserById("testID").subscribe(testObserver)
 
-    testObserver.assertValue(user)
+    testObserver.assertValue(expectedUser)
+    testObserver.assertNoErrors()
+    testObserver.assertCompleted()
+  }
+
+  it should "default to an empty String if the field is not available in the attributes" in {
+    ldapMock.query _ expects "testID" returning Observable.just(new BasicAttributes)
+
+    val loader = DatasetLoaderImpl()
+    val testObserver = TestSubscriber[EasyUser]()
+    loader.getUserById("testID").subscribe(testObserver)
+
+    testObserver.assertValue(EasyUser("", "", "", "", "", "", "", ""))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }
 
   it should "fail with a NoSuchElementException if the query to ldap doesn't yield any user data" in {
-    (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.empty
+    ldapMock.query _ expects "testID" returning Observable.empty
 
     val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[EasyUser]()
@@ -73,9 +100,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   }
 
   it should "fail with an IllegalArgumentException if the query to ldap yields more than one user data object" in {
-    val user1 = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val user2 = user1.copy(email = "mail2")
-    (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.just(user1, user2)
+    ldapMock.query _ expects "testID" returning Observable.just(userAttributes, userAttributes)
 
     val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[EasyUser]()

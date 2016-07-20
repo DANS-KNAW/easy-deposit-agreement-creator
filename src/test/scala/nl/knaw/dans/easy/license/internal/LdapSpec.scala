@@ -51,7 +51,7 @@ class LdapSpec extends UnitSpec with MockFactory {
 
     val ldap = LdapImpl(ctx)
     val testSubscriber = TestSubscriber[Attributes]
-    ldap.query(testDepositorID)(identity).subscribe(testSubscriber)
+    ldap.query(testDepositorID).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValues(attrs1, attrs2)
@@ -73,7 +73,7 @@ class LdapSpec extends UnitSpec with MockFactory {
 
     val ldap = LdapImpl(ctx)
     val testSubscriber = TestSubscriber[Attributes]
-    ldap.query(testDepositorID)(identity).subscribe(testSubscriber)
+    ldap.query(testDepositorID).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertNoValues()

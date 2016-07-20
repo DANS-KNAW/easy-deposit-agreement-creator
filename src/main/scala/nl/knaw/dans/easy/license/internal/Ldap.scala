@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.license.internal
 
+import javax.naming.NamingEnumeration
 import javax.naming.directory.{Attributes, SearchControls}
 import javax.naming.ldap.LdapContext
 
@@ -28,16 +29,24 @@ trait Ldap extends AutoCloseable {
     * into an instance of type `T` using the function `f`.
     *
     * @param depositorID the identifier related to the depositor
-    * @param f function that transforms an `Attributes` object to an instance of type `T`
-    * @tparam T the result type of the transformer function
     * @return the instance of `T` wrapped in an `Observable`
     */
-  def query[T](depositorID: DepositorID)(f: Attributes => T): Observable[T]
+  def query(depositorID: DepositorID): Observable[Attributes]
 }
 
 case class LdapImpl(ctx: LdapContext) extends Ldap {
 
-  def query[T](depositorID: DepositorID)(f: Attributes => T) = {
+  implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) {
+    def toObservable = Observable.from(new Iterable[T] {
+      def iterator = new Iterator[T] {
+        def hasNext = enum.hasMore
+
+        def next() = enum.next()
+      }
+    })
+  }
+
+  def query(depositorID: DepositorID) = {
     Observable.defer {
       val searchFilter = s"(&(objectClass=easyUser)(uid=$depositorID))"
       val searchControls = {
@@ -48,7 +57,7 @@ case class LdapImpl(ctx: LdapContext) extends Ldap {
 
       ctx.search("dc=dans,dc=knaw,dc=nl", searchFilter, searchControls)
         .toObservable
-        .map(f compose (_.getAttributes))
+        .map(_.getAttributes)
     }
   }
 

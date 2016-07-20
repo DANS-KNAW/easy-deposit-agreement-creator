@@ -189,15 +189,15 @@ package object internal {
     def emptyIfBlank = s.toOption.getOrElse("")
   }
 
-  implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {
-    def toObservable = Observable.from(new Iterable[T] {
-      def iterator = new Iterator[T] {
-        def hasNext = enum.hasMore
-
-        def next() = enum.next()
-      }
-    })
-  }
+//  implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {
+//    def toObservable = Observable.from(new Iterable[T] {
+//      def iterator = new Iterator[T] {
+//        def hasNext = enum.hasMore
+//
+//        def next() = enum.next()
+//      }
+//    })
+//  }
 
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
     def loadXML = XML load stream
