@@ -15,12 +15,8 @@
  */
 package nl.knaw.dans.easy
 
-import nl.knaw.dans.easy.license.FileAccessRight._
-
 package object license {
 
   type DatasetID = String
   type DepositorID = String
-
-  case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
 }

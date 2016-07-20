@@ -15,6 +15,10 @@
  */
 package nl.knaw.dans.easy.license
 
+import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
+
+case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
+
 // TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
 object FileAccessRight extends Enumeration {
   type FileAccessRight = Value
