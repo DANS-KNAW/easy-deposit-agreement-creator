@@ -23,7 +23,6 @@ import javax.naming.NamingEnumeration
 import org.apache.commons.io.{Charsets, FileUtils}
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
-import resource.ManagedResource
 import rx.lang.scala.Notification.{OnCompleted, OnError, OnNext}
 import rx.lang.scala.{Notification, Observable}
 
