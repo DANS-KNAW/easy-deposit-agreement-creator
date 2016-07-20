@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
 import java.io.File
 import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
+import nl.knaw.dans.easy.license.{FileAccessRight, FileItem, UnitSpec}
 import nl.knaw.dans.pf.language.emd.Term.{Name, Namespace}
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
@@ -43,7 +44,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   val rights = mock[EmdRights]
   val fedora = mock[Fedora]
 
-  implicit val parameters = new Parameters(new File(testDir, "placeholdermapper"), null, false, fedora, null)
+  implicit val parameters = Parameters(new File(testDir, "placeholdermapper"), null, false, fedora, null)
 
   before {
     new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateResourceDir)
@@ -106,7 +107,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "sampleHeader" should "yield a map of the date and title" in {
-    implicit val parameters = new Parameters(new File(testDir, "placeholdermapper"), null, true, fedora, null)
+    implicit val parameters = Parameters(new File(testDir, "placeholdermapper"), null, true, fedora, null)
     val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects () never()
@@ -125,7 +126,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "yield a map with default values if the actual values are null" in {
-    implicit val parameters = new Parameters(new File(testDir, "placeholdermapper"), null, true, fedora, null)
+    implicit val parameters = Parameters(new File(testDir, "placeholdermapper"), null, true, fedora, null)
 
     emd.getEmdIdentifier _ expects () never()
     ident.getDansManagedDoi _ expects () never()
@@ -172,7 +173,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "depositor" should "yield a map with depositor data" in {
-    val depositor = new EasyUser("name", "org", "addr", "postal", "city", "country", "tel", "mail")
+    val depositor = EasyUser("name", "org", "addr", "postal", "city", "country", "tel", "mail")
 
     val res = testInstance.depositor(depositor)
 

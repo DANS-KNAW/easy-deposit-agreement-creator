@@ -13,56 +13,88 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
-import java.io.InputStream
+import java.io.File
 import java.util
-import javax.naming.directory.Attributes
+import javax.naming.directory.BasicAttributes
 
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
-import nl.knaw.dans.pf.language.emd.Term.Name
+import nl.knaw.dans.easy.license._
 import nl.knaw.dans.pf.language.emd._
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import rx.lang.scala.Observable
 import rx.lang.scala.observers.TestSubscriber
 
+import scala.collection.JavaConverters._
 import scala.language.reflectiveCalls
 
-class DatasetLoaderSpec extends UnitSpec with MockFactory {
-
-  trait MockEasyMetadata extends EasyMetadataImpl {
-    override def toString(x: String, y: Name): String = ""
-    override def toString(x: String, y: Term): String = ""
-    override def toString(x: String, y: MDContainer): String = ""
-    override def toString(x: String): String = ""
-  }
+class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
 
   val fedoraMock = mock[Fedora]
   val ldapMock = mock[Ldap]
-  val emdMock = mock[MockEasyMetadata]
+
+  val (userAttributes, expectedUser) = {
+    val attrs = new BasicAttributes
+    attrs.put("displayname", "name")
+    attrs.put("o", "org")
+    attrs.put("postaladdress", "addr")
+    attrs.put("postalcode", "pc")
+    attrs.put("l", "city")
+    attrs.put("st", "cntr")
+    attrs.put("telephonenumber", "phone")
+    attrs.put("mail", "mail")
+
+    val user = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
+
+    (attrs, user)
+  }
 
   implicit val parameters = new DatabaseParameters {
     val fedora: Fedora = fedoraMock
     val ldap: Ldap = ldapMock
   }
 
-  "getUserById" should "query the user data from ldap for a given user id" in {
-    val user = new EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.just(user)
+  before {
+    new File(getClass.getResource("/datasetloader/").toURI).copyDir(new File(testDir, "datasetloader"))
+  }
 
-    val loader = new DatasetLoaderImpl()
+  after {
+    new File(testDir, "datasetloader").deleteDirectory()
+  }
+
+  override def afterAll = testDir.getParentFile.deleteDirectory()
+
+  "getUserById" should "query the user data from ldap for a given user id" in {
+    ldapMock.query _ expects "testID" returning Observable.just(userAttributes)
+
+    val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[EasyUser]()
     loader.getUserById("testID").subscribe(testObserver)
 
-    testObserver.assertValue(user)
+    testObserver.assertValue(expectedUser)
+    testObserver.assertNoErrors()
+    testObserver.assertCompleted()
+  }
+
+  it should "default to an empty String if the field is not available in the attributes" in {
+    ldapMock.query _ expects "testID" returning Observable.just(new BasicAttributes)
+
+    val loader = DatasetLoaderImpl()
+    val testObserver = TestSubscriber[EasyUser]()
+    loader.getUserById("testID").subscribe(testObserver)
+
+    testObserver.assertValue(EasyUser("", "", "", "", "", "", "", ""))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }
 
   it should "fail with a NoSuchElementException if the query to ldap doesn't yield any user data" in {
-    (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.empty
+    ldapMock.query _ expects "testID" returning Observable.empty
 
-    val loader = new DatasetLoaderImpl()
+    val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[EasyUser]()
     loader.getUserById("testID").subscribe(testObserver)
 
@@ -72,11 +104,9 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   }
 
   it should "fail with an IllegalArgumentException if the query to ldap yields more than one user data object" in {
-    val user1 = new EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val user2 = user1.copy(email = "mail2")
-    (ldapMock.query(_: DepositorID)(_: Attributes => EasyUser)) expects ("testID", *) returning Observable.just(user1, user2)
+    ldapMock.query _ expects "testID" returning Observable.just(userAttributes, userAttributes)
 
-    val loader = new DatasetLoaderImpl()
+    val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[EasyUser]()
     loader.getUserById("testID").subscribe(testObserver)
 
@@ -88,27 +118,27 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   "getDatasetById" should "return the dataset corresponding to the given identifier" in {
     val id = "testID"
     val depID = "depID"
-    val user = new EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val audience = mock[EmdAudience]
+    val user = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     val audiences = Seq("aud1", "aud2")
     val files = Seq(
-      new FileItem("path1", FileAccessRight.RESTRICTED_GROUP, "chs1"),
-      new FileItem("path2", FileAccessRight.KNOWN, "chs2")
+      FileItem("path1", FileAccessRight.RESTRICTED_GROUP, "chs1"),
+      FileItem("path2", FileAccessRight.KNOWN, "chs2")
     )
-    val expected = Dataset(id, emdMock, user, audiences, files)
 
-    (fedoraMock.getAMD(_: String)(_: InputStream => String)) expects (id, *) returning Observable.just(depID)
-    (fedoraMock.getEMD(_: String)(_: InputStream => EasyMetadata)) expects (id, *) returning Observable.just(emdMock)
-    emdMock.getEmdAudience _ expects () returning audience
+    val amdStream = IOUtils.toInputStream(<foo><depositorId>{depID}</depositorId></foo>.toString)
+    val emdStream = FileUtils.openInputStream(new File(testDir, "datasetloader/emd.xml"))
 
-    val loader = new DatasetLoaderImpl() {
+    fedoraMock.getAMD _ expects id returning Observable.just(amdStream)
+    fedoraMock.getEMD _ expects id returning Observable.just(emdStream)
+
+    val loader = new DatasetLoaderImpl {
       override def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
         if (depositorID == depID) Observable.just(user)
         else fail(s"not the correct depositorID, was $depositorID, should be $depID")
       }
 
       override def getAudiences(a: EmdAudience): Observable[AudienceTitle] = {
-        if (a == audience) Observable.from(audiences)
+        if (a.getDisciplines.asScala.map(_.getValue) == audiences) Observable.from(audiences)
         else fail("not the correct audiences")
       }
 
@@ -117,11 +147,15 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
         else fail(s"not the correct datasetID, was $did, should be $id")
       }
     }
-    val testObserver = TestSubscriber[Dataset]()
-    loader.getDatasetById(id).subscribe(testObserver)
+    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Seq[FileItem])]()
+    loader.getDatasetById(id)
+      // there is no equals defined for the emd, so I need to unpack here
+      .map { case Dataset(datasetID, emd, usr, titles, fileItems) =>
+        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr, titles, fileItems) }
+      .subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValue(expected)
+    testObserver.assertValue((id, Seq("descr foo bar"), user, audiences, files))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }
@@ -133,13 +167,21 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     val fi1@FileItem(path1, accTo1, chcksm1) = FileItem("path1", FileAccessRight.NONE, "chcksm1")
     val fi2@FileItem(path2, accTo2, chcksm2) = FileItem("path2", FileAccessRight.KNOWN, "chcksm2")
 
-    fedoraMock.queryRiSearch _ expects where[String](_ contains id) returning Observable.just(pid1, pid2)
-    (fedoraMock.getFileMetadata(_: String)(_: InputStream => (String, FileAccessRight.Value))) expects (pid1, *) returning Observable.just((path1, accTo1))
-    (fedoraMock.getFileMetadata(_: String)(_: InputStream => (String, FileAccessRight.Value))) expects (pid2, *) returning Observable.just((path2, accTo2))
-    (fedoraMock.getFile(_: String)(_: DatastreamProfile => String)) expects (pid1, *) returning Observable.just(chcksm1)
-    (fedoraMock.getFile(_: String)(_: DatastreamProfile => String)) expects (pid2, *) returning Observable.just(chcksm2)
+    val pa1 = IOUtils.toInputStream(<foo><path>{path1}</path><accessibleTo>{accTo1}</accessibleTo></foo>.toString)
+    val pa2 = IOUtils.toInputStream(<foo><path>{path2}</path><accessibleTo>{accTo2}</accessibleTo></foo>.toString)
 
-    val loader = new DatasetLoaderImpl()
+    val dp1 = mock[DatastreamProfile]
+    val dp2 = mock[DatastreamProfile]
+
+    dp1.getDsChecksum _ expects () returning chcksm1
+    dp2.getDsChecksum _ expects () returning chcksm2
+    fedoraMock.queryRiSearch _ expects where[String](_ contains id) returning Observable.just(pid1, pid2)
+    fedoraMock.getFileMetadata _ expects pid1 returning Observable.just(pa1)
+    fedoraMock.getFileMetadata _ expects pid2 returning Observable.just(pa2)
+    fedoraMock.getFile _ expects pid1 returning Observable.just(dp1)
+    fedoraMock.getFile _ expects pid2 returning Observable.just(dp2)
+
+    val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[Set[FileItem]]()
     // toSet such that concurrency thingies (order of results) do not matter
     loader.getFilesInDataset(id).toSet.subscribe(testObserver)
@@ -151,11 +193,12 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
   }
 
   "getAudience" should "search the title for each audienceID in the EmdAudience in Fedora" in {
+    val is = IOUtils.toInputStream(<foo><title>title1</title></foo>.toString)
     val (id1, title1) = ("id1", "title1")
 
-    (fedoraMock.getDC(_: String)(_: InputStream => String)) expects (id1, *) returning Observable.just(title1)
+    fedoraMock.getDC _ expects id1 returning Observable.just(is)
 
-    val loader = new DatasetLoaderImpl()
+    val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[String]()
     loader.getAudience(id1).subscribe(testObserver)
 
@@ -174,11 +217,12 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory {
     audience.getValues _ expects() returning util.Arrays.asList(id1, id2, id3)
 
     // can't do mocking due to concurrency issues
-    val loader = new DatasetLoaderImpl() {
+    val loader = new DatasetLoaderImpl {
 
       var counter = 0
 
-      override def getAudience(audienceID: AudienceID) = {
+      override def getAudience(audienceID: AudienceID) =
+      {
         counter += 1
         counter match {
           case 1 => Observable.just(title1)

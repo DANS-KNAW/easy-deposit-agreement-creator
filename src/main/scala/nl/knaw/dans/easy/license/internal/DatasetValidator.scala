@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
-class DatasetValidatorSpec extends UnitSpec {
+object DatasetValidator {
 
-  "validate" should "replace null fields in easy-user with an empty string" in {
-    val depositor = new EasyUser("foo", null, "addr", "zipcode", "ct", null, null, "bar")
-    val expected = new EasyUser("foo", "", "addr", "zipcode", "ct", "", "", "bar")
+  def validate(dataset: Dataset): Dataset = {
+    dataset.copy(easyUser = validate(dataset.easyUser))
+  }
 
-    DatasetValidator.validate(depositor) shouldBe expected
+  def validate(easyUser: EasyUser): EasyUser = {
+    easyUser.copy(
+      organization = easyUser.organization.emptyIfBlank,
+      country = easyUser.country.emptyIfBlank,
+      telephone = easyUser.telephone.emptyIfBlank
+    )
   }
 }

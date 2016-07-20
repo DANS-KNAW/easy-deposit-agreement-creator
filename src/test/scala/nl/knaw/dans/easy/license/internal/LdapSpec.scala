@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.internal
 
 import javax.naming.NamingEnumeration
 import javax.naming.directory.{Attributes, SearchControls, SearchResult}
 import javax.naming.ldap.LdapContext
 
+import nl.knaw.dans.easy.license.UnitSpec
 import org.scalamock.scalatest.MockFactory
 import rx.lang.scala.observers.TestSubscriber
 
@@ -48,9 +49,9 @@ class LdapSpec extends UnitSpec with MockFactory {
       result.next _ expects () returns new SearchResult("foobar2", null, attrs2)
     }
 
-    val ldap = new LdapImpl(ctx)
+    val ldap = LdapImpl(ctx)
     val testSubscriber = TestSubscriber[Attributes]
-    ldap.query(testDepositorID)(identity).subscribe(testSubscriber)
+    ldap.query(testDepositorID).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertValues(attrs1, attrs2)
@@ -70,9 +71,9 @@ class LdapSpec extends UnitSpec with MockFactory {
 
     result.hasMore _ expects () returns false once()
 
-    val ldap = new LdapImpl(ctx)
+    val ldap = LdapImpl(ctx)
     val testSubscriber = TestSubscriber[Attributes]
-    ldap.query(testDepositorID)(identity).subscribe(testSubscriber)
+    ldap.query(testDepositorID).subscribe(testSubscriber)
 
     testSubscriber.awaitTerminalEvent()
     testSubscriber.assertNoValues()

@@ -20,24 +20,20 @@ import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.FedoraClient
 
-// this class needs to be in a separate file rather than in package.scala because of interop with
-// java business layer.
-class BaseParameters(val templateResourceDir: File,
-                     val datasetID: DatasetID,
-                     val isSample: Boolean)
+object BaseParameters {
 
-trait DatabaseParameters {
-  val fedora: Fedora
-  val ldap: Ldap
+  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean) = {
+    new internal.BaseParameters(templateResourceDir, datasetID, isSample)
+  }
 }
 
-case class Parameters(override val templateResourceDir: File,
-                      override val datasetID: DatasetID,
-                      override val isSample: Boolean,
-                      fedora: Fedora,
-                      ldap: Ldap)
-  extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters {
+object Parameters {
 
-  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapContext: LdapContext) =
-    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(ldapContext))
+  def apply(templateResourceDir: File,
+            datasetID: DatasetID,
+            isSample: Boolean,
+            fedoraClient: FedoraClient,
+            ldapContext: LdapContext) = {
+    new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapContext)
+  }
 }

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.app
 
 import java.io.FileOutputStream
 
-import nl.knaw.dans.easy.license.{CommandLineOptions => cmd}
+import nl.knaw.dans.easy.license.LicenseCreator
+import nl.knaw.dans.easy.license.app.{CommandLineOptions => cmd}
+import nl.knaw.dans.easy.license.internal._
 import org.slf4j.LoggerFactory
 import rx.schedulers.Schedulers
 
