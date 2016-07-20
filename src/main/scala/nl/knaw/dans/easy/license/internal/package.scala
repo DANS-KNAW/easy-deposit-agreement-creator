@@ -200,17 +200,6 @@ package object internal {
     })
   }
 
-  implicit class ReactiveResource[+T](val resource: ManagedResource[T]) extends AnyVal {
-    def observe: Observable[T] = {
-      try {
-        resource.acquireAndGet(Observable.just(_))
-      }
-      catch {
-        case e: Throwable => Observable.error(e)
-      }
-    }
-  }
-
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
     def loadXML = XML load stream
   }

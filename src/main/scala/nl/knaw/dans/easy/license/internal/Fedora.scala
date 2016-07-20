@@ -21,6 +21,7 @@ import com.yourmediashelf.fedora.client.request.RiSearch
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.license.DatasetID
+import org.apache.commons.io.IOUtils
 import rx.lang.scala.Observable
 
 import scala.io.Source
@@ -105,11 +106,11 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
   def this(credentials: FedoraCredentials) = this(new FedoraClient(credentials))
 
   private def query[T](pid: String, datastreamID: String)(f: InputStream => T): Observable[T] = {
-    resource.managed {
+    Observable.using {
       FedoraClient.getDatastreamDissemination(pid, datastreamID)
         .execute(client)
         .getEntityInputStream
-    }.map(f).observe
+    }(f.andThen(Observable.just(_)), IOUtils.closeQuietly)
   }
 
   def getAMD[T](pid: DatasetID)(f: (InputStream) => T) = query(pid, "AMD")(f).single
