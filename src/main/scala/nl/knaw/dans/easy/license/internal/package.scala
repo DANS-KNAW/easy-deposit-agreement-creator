@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.license
 import java.io._
 import java.nio.charset.Charset
 import java.util.Properties
-import javax.naming.NamingEnumeration
 
 import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
 import org.apache.commons.lang.StringUtils
@@ -188,16 +187,6 @@ package object internal {
 
     def emptyIfBlank = s.toOption.getOrElse("")
   }
-
-//  implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) extends AnyVal {
-//    def toObservable = Observable.from(new Iterable[T] {
-//      def iterator = new Iterator[T] {
-//        def hasNext = enum.hasMore
-//
-//        def next() = enum.next()
-//      }
-//    })
-//  }
 
   implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
     def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
