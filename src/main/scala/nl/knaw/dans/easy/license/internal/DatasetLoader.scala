@@ -148,20 +148,25 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
   val ldap = parameters.ldap
 
   def getAudience(audienceID: AudienceID) = {
-    fedora.getDC(audienceID)(_.loadXML \\ "title" text).subscribeOn(IOScheduler())
+    fedora.getDC(audienceID)
+      .map(resource.managed(_).acquireAndGet(_.loadXML \\ "title" text))
+      .subscribeOn(IOScheduler())
   }
 
   def getDatasetById(datasetID: DatasetID) = {
-    val emdObs = fedora.getEMD(datasetID)(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal)
+    val emdObs = fedora.getEMD(datasetID)
+      .map(resource.managed(_).acquireAndGet(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal))
       .subscribeOn(IOScheduler())
-    val depositorObs = fedora.getAMD(datasetID)(_.loadXML \\ "depositorId" text)
+    val depositorObs = fedora.getAMD(datasetID)
+      .map(resource.managed(_).acquireAndGet(_.loadXML \\ "depositorId" text))
       .subscribeOn(IOScheduler())
       .flatMap(getUserById(_).subscribeOn(IOScheduler()))
 
     // publish because emd is used in multiple places here
     emdObs.publish(emd => {
-      emd.combineLatestWith(depositorObs) { (emdValue, depositorValue) =>
-        (audiences: Seq[AudienceTitle]) => (files: Seq[FileItem]) => Dataset(datasetID, emdValue, depositorValue, audiences, files)
+      emd.combineLatestWith(depositorObs) {
+        (emdValue, depositorValue) => (audiences: Seq[AudienceTitle]) => (files: Seq[FileItem]) =>
+          Dataset(datasetID, emdValue, depositorValue, audiences, files)
       }
         .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_(_))
         .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_(_))
@@ -170,14 +175,18 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
   }
 
   private def getFileItem(filePid: FileID): Observable[FileItem] = {
-    val pathAndAccessCategory = fedora.getFileMetadata(filePid)(is => {
-      val xml = is.loadXML
-      ((xml \\ "path").text,
-        FileAccessRight.valueOf(xml \\ "accessibleTo" text)
-          .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $filePid")))
-    }).subscribeOn(IOScheduler())
+    val pathAndAccessCategory = fedora.getFileMetadata(filePid)
+      .map(resource.managed(_).acquireAndGet(is => {
+        val xml = is.loadXML
+        val path = (xml \\ "path").text
+        val accTo = FileAccessRight.valueOf(xml \\ "accessibleTo" text)
+          .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $filePid"))
 
-    val checksums = fedora.getFile(filePid)(_.getDsChecksum).subscribeOn(IOScheduler())
+        (path, accTo)
+      }))
+      .subscribeOn(IOScheduler())
+
+    val checksums = fedora.getFile(filePid).map(_.getDsChecksum).subscribeOn(IOScheduler())
 
     pathAndAccessCategory
       .combineLatestWith(checksums) {

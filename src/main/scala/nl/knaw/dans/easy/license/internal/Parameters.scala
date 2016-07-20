@@ -41,4 +41,6 @@ case class Parameters(override val templateResourceDir: File,
 
   def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapContext: LdapContext) =
     this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(ldapContext))
+
+  override def toString = super.toString
 }
