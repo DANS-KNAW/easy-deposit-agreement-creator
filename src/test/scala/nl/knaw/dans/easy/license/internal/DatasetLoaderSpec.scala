@@ -99,7 +99,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     loader.getUserById("testID").subscribe(testObserver)
 
     testObserver.assertNoValues()
-    testObserver.assertError(classOf[NoSuchElementException])
+    testObserver.assertError(classOf[NoUserFoundException])
     testObserver.assertNotCompleted()
   }
 
@@ -111,7 +111,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     loader.getUserById("testID").subscribe(testObserver)
 
     testObserver.assertNoValues()
-    testObserver.assertError(classOf[IllegalArgumentException])
+    testObserver.assertError(classOf[MultipleUsersFoundException])
     testObserver.assertNotCompleted()
   }
 

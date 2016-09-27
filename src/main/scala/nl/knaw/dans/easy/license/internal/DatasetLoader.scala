@@ -171,6 +171,11 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
         .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_(_))
         .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_(_))
         .single
+        .onErrorResumeNext {
+          case e: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID))
+          case e: NoSuchElementException => Observable.error(NoDatasetFoundException(datasetID))
+          case e => Observable.error(e)
+        }
     })
   }
 
@@ -228,6 +233,11 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
         EasyUser(name, org, addr, code, place, country, phone, mail)
       })
       .single
+      .onErrorResumeNext {
+        case e: IllegalArgumentException => Observable.error(MultipleUsersFoundException(depositorID))
+        case e: NoSuchElementException => Observable.error(NoUserFoundException(depositorID))
+        case e => Observable.error(e)
+      }
   }
 }
 
