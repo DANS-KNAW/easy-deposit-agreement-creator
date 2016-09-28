@@ -102,9 +102,6 @@ package object internal {
       * If the modification operation fails, no indication is provided.
       *
       * @param destDir the new directory, must not be ``null``
-      * @throws NullPointerException if source or destination is ``null``
-      * @throws IOException          if source or destination is invalid
-      * @throws IOException          if an IO error occurs during copying
       */
     def copyDir(destDir: File) = FileUtils.copyDirectory(file, destDir)
 
@@ -124,14 +121,11 @@ package object internal {
       *
       * @param child the file to consider as the child.
       * @return true is the candidate leaf is under by the specified composite. False otherwise.
-      * @throws IOException if an IO error occurs while checking the files.
       */
     def directoryContains(child: File): Boolean = FileUtils.directoryContains(file, child)
 
     /**
       * Deletes a directory recursively.
-      *
-      * @throws IOException in case deletion is unsuccessful
       */
     def deleteDirectory() = FileUtils.deleteDirectory(file)
 
@@ -140,7 +134,6 @@ package object internal {
       * The file is always closed.
       *
       * @return the file contents, never ``null``
-      * @throws IOException in case of an I/O error
       */
     def read(encoding: Charset = Charsets.UTF_8) = FileUtils.readFileToString(file, encoding)
   }
@@ -175,14 +168,12 @@ package object internal {
   implicit class StringExtensions(val s: String) extends AnyVal {
     /**
       * Checks whether the `String` is blank
-      * (according to [[org.apache.commons.lang.StringUtils.isBlank]])
       *
       * @return
       */
     def isBlank = StringUtils.isBlank(s)
 
     /** Converts a `String` to an `Option[String]`. If the `String` is blank
-      * (according to [[org.apache.commons.lang.StringUtils.isBlank]])
       * the empty `Option` is returned, otherwise the `String` is returned
       * wrapped in an `Option`.
       *
