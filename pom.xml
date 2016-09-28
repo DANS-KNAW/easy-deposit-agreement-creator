@@ -31,7 +31,7 @@
 	<description>Create license file for EASY deposits</description>
     <inceptionYear>2016</inceptionYear>
 	<properties>
-		<main-class>nl.knaw.dans.easy.license.Command</main-class>
+		<main-class>nl.knaw.dans.easy.license.app.Command</main-class>
 	</properties>
 	<scm>
 		<developerConnection>scm:git:https://github.com/DANS-KNAW/easy-license-creator</developerConnection>
