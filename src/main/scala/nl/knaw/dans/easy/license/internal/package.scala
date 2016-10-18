@@ -56,7 +56,7 @@ package object internal {
   }
 
   def dansLogoFile(implicit parameters: BaseParameters) = {
-    new File(parameters.templateResourceDir, "/dans_logo.jpg")
+    new File(parameters.templateResourceDir, "/dans_logo.png")
   }
 
   def footerTextFile(implicit parameters: BaseParameters) = {
