@@ -51,7 +51,7 @@ below this module can resolve these placeholders and transform the whole text in
 ### Template files
   * `Appendix.html` - an appendix with more information about the CC0 access category
   * `Body.html` - the main content of the license agreement text
-  * `dans_logo.jpg` - the Dans logo to be displayed in the header of each page
+  * `dans_logo.png` - the Dans logo to be displayed in the header of each page
   * `Embargo.html` - an optional text in case the dataset is under embargo
   * `FileTable.html` - an overview of all the files in the dataset, showing the file path, checksum and access category
   * `License.html` - the main file in which all the other html files are merged together
