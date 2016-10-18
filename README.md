@@ -23,7 +23,7 @@ The License Creator uses a template with placeholders. After replacing the place
 
 Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML 
 files that are specified in `src/main/assembly/dist/res/license/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` 
-are required, namely `dans_logo.jpg`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
+are required, namely `dans_logo.png`, `license_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
 
 Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool 
 requires to be installed before being used by `easy-license-creator`. In order to not having this installed on our computers while developing 
