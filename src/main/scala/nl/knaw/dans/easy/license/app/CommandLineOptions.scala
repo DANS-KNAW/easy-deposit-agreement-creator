@@ -31,8 +31,6 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
 
-  val fileMayNotExist = singleArgConverter(new File(_))
-
   printedName = "easy-license-creator"
 
   version(s"$printedName v${Version()}")
@@ -41,7 +39,7 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |
            |Usage:
            |
-           |$printedName [ -s ] <datasetID> <license-file>
+           |$printedName [{--sample|-s}] <datasetID> <license-file>
            |
            |Options:
            |""".stripMargin)
@@ -50,7 +48,7 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
     descr = "The ID of the dataset of which a license has to be created")
 
   val outputFile = trailArg[File](name = "license-file",
-    descr = "The file location where the license needs to be stored")(fileMayNotExist)
+    descr = "The file location where the license needs to be stored")
 
   val isSample = opt[Boolean](name = "sample", short = 's', default = Option(false),
     descr = "Indicates whether or not a sample license needs to be created")
