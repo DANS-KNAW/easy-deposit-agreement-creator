@@ -52,8 +52,6 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
 
   val isSample = opt[Boolean](name = "sample", short = 's', default = Option(false),
     descr = "Indicates whether or not a sample license needs to be created")
-
-//  verify()
 }
 
 object CommandLineOptions {
