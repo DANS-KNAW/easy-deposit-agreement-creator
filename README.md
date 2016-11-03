@@ -39,16 +39,13 @@ can be created when the DOI is not yet calculated. Also in the title of the lice
 ARGUMENTS
 ---------
 
-    Usage: easy-license-creator <datasetID> <license-file>
-    Options:
+     -s, --sample    Indicates whether or not a sample license needs to be created
+         --help      Show help message
+         --version   Show version of this program
     
-      -s, --sample    Indicates whether or not a sample license needs to be created
-          --help      Show help message
-          --version   Show version of this program
-    
-     trailing arguments:
-      dataset-id (required)     The ID of the dataset of which a license has to be created
-      license-file (required)   The file location where the license needs to be stored
+    trailing arguments:
+     dataset-id (required)     The ID of the dataset of which a license has to be created
+     license-file (required)   The file location where the license needs to be stored
 
 
 INSTALLATION AND CONFIGURATION
