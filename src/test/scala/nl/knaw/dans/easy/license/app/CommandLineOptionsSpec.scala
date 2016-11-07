@@ -17,14 +17,15 @@ package nl.knaw.dans.easy.license.app
 
 import java.io.File
 
-import nl.knaw.dans.easy.license.UnitSpec
+import nl.knaw.dans.easy.license.{CLISpec, UnitSpec}
 
-class CommandLineOptionsSpec extends UnitSpec {
+class CommandLineOptionsSpec extends UnitSpec with CLISpec[CommandLineOptions] {
+
+  def cli(args: Array[String]) = new CommandLineOptions(args)
 
   "verify cli" should "succeed when given the correct parameters with short form for the opt" in {
     val args = "-s easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    val opts = new CommandLineOptions(args)
-    opts.verify()
+    val opts = verifiedCLI(args)
 
     opts.isSample() shouldBe true
     opts.datasetID() shouldBe "easy-dataset:1"
@@ -33,8 +34,7 @@ class CommandLineOptionsSpec extends UnitSpec {
 
   it should "succeed when given the correct parameters with long form for the opt" in {
     val args = "--sample easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    val opts = new CommandLineOptions(args)
-    opts.verify()
+    val opts = verifiedCLI(args)
 
     opts.isSample() shouldBe true
     opts.datasetID() shouldBe "easy-dataset:1"
@@ -43,8 +43,7 @@ class CommandLineOptionsSpec extends UnitSpec {
 
   it should "succeed when given the correct trailing parameters without giving the opt" in {
     val args = "easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    val opts = new CommandLineOptions(args)
-    opts.verify()
+    val opts = verifiedCLI(args)
 
     opts.isSample() shouldBe false
     opts.datasetID() shouldBe "easy-dataset:1"
@@ -53,20 +52,13 @@ class CommandLineOptionsSpec extends UnitSpec {
 
   it should "fail when the outputFile is missing" in {
     val args = "easy-dataset:1".split(" ")
+
     commandLineErrorMessage(args) should include ("license-file")
   }
 
   it should "fail when invalid arguments are given" in {
     val args = "--invalidArg easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    commandLineErrorMessage(args) should include ("invalidArg")
-  }
 
-  def commandLineErrorMessage(args: Array[String]): String = {
-    var errorMessage: String = ""
-    val opts = new CommandLineOptions(args) {
-      errorMessageHandler = (s: String) => errorMessage = s
-    }
-    opts.verify()
-    errorMessage
+    commandLineErrorMessage(args) should include ("invalidArg")
   }
 }
