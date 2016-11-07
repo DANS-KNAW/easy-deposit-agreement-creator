@@ -21,7 +21,7 @@ import nl.knaw.dans.easy.license.{CommandLineSpec, UnitSpec}
 
 class CommandLineOptionsSpec extends UnitSpec with CommandLineSpec[CommandLineOptions] {
 
-  def commandLineInterface(args: Array[String]) = new CommandLineOptions(args)
+  override def commandLineInterface(args: Array[String]) = new CommandLineOptions(args)
 
   "verify cli" should "succeed when given the correct parameters with short form for the opt" in {
     val args = "-s easy-dataset:1 src/test/resources/license.pdf".split(" ")
