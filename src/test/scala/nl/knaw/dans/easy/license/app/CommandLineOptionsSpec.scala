@@ -53,23 +53,20 @@ class CommandLineOptionsSpec extends UnitSpec {
 
   it should "fail when the outputFile is missing" in {
     val args = "easy-dataset:1".split(" ")
-    var errorMessage: String = ""
-    val opts = new CommandLineOptions(args) {
-      errorMessageHandler = (s: String) => errorMessage = s
-    }
-    opts.verify()
-
-    errorMessage should include ("license-file")
+    commandLineErrorMessage(args) should include ("license-file")
   }
 
   it should "fail when invalid arguments are given" in {
     val args = "--invalidArg easy-dataset:1 src/test/resources/license.pdf".split(" ")
+    commandLineErrorMessage(args) should include ("invalidArg")
+  }
+
+  def commandLineErrorMessage(args: Array[String]): String = {
     var errorMessage: String = ""
     val opts = new CommandLineOptions(args) {
       errorMessageHandler = (s: String) => errorMessage = s
     }
     opts.verify()
-
-    errorMessage should include ("invalidArg")
+    errorMessage
   }
 }
