@@ -17,15 +17,15 @@ package nl.knaw.dans.easy.license.app
 
 import java.io.File
 
-import nl.knaw.dans.easy.license.{CLISpec, UnitSpec}
+import nl.knaw.dans.easy.license.{CommandLineSpec, UnitSpec}
 
-class CommandLineOptionsSpec extends UnitSpec with CLISpec[CommandLineOptions] {
+class CommandLineOptionsSpec extends UnitSpec with CommandLineSpec[CommandLineOptions] {
 
-  def cli(args: Array[String]) = new CommandLineOptions(args)
+  def commandLineInterface(args: Array[String]) = new CommandLineOptions(args)
 
   "verify cli" should "succeed when given the correct parameters with short form for the opt" in {
     val args = "-s easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    val opts = verifiedCLI(args)
+    val opts = verifiedCommandLine(args)
 
     opts.isSample() shouldBe true
     opts.datasetID() shouldBe "easy-dataset:1"
@@ -34,7 +34,7 @@ class CommandLineOptionsSpec extends UnitSpec with CLISpec[CommandLineOptions] {
 
   it should "succeed when given the correct parameters with long form for the opt" in {
     val args = "--sample easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    val opts = verifiedCLI(args)
+    val opts = verifiedCommandLine(args)
 
     opts.isSample() shouldBe true
     opts.datasetID() shouldBe "easy-dataset:1"
@@ -43,7 +43,7 @@ class CommandLineOptionsSpec extends UnitSpec with CLISpec[CommandLineOptions] {
 
   it should "succeed when given the correct trailing parameters without giving the opt" in {
     val args = "easy-dataset:1 src/test/resources/license.pdf".split(" ")
-    val opts = verifiedCLI(args)
+    val opts = verifiedCommandLine(args)
 
     opts.isSample() shouldBe false
     opts.datasetID() shouldBe "easy-dataset:1"
