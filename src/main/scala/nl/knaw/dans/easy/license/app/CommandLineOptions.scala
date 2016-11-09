@@ -52,8 +52,6 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
 
   val isSample = opt[Boolean](name = "sample", short = 's', default = Option(false),
     descr = "Indicates whether or not a sample license needs to be created")
-
-  verify()
 }
 
 object CommandLineOptions {
@@ -73,6 +71,7 @@ object CommandLineOptions {
 
     log.debug("Parsing command line ...")
     val opts = new CommandLineOptions(args)
+    opts.verify()
 
     val params = new Parameters(
       templateResourceDir = new File(props.getString("license.resources")),
