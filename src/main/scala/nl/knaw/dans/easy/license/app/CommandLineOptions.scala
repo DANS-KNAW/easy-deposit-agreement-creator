@@ -60,17 +60,7 @@ object CommandLineOptions {
 
   val log = LoggerFactory.getLogger(getClass)
 
-  def parse(args: Array[String]): (Parameters, File) = {
-    log.debug("Loading application properties ...")
-    val homeDir = new File(System.getProperty("app.home"))
-    val props = {
-      val ps = new PropertiesConfiguration()
-      ps.setDelimiterParsingDisabled(true)
-      ps.load(new File(homeDir, "cfg/application.properties"))
-
-      ps
-    }
-
+  def parse(args: Array[String], props: PropertiesConfiguration): (Parameters, File) = {
     log.debug("Parsing command line ...")
     val opts = new CommandLineOptions(args)
 

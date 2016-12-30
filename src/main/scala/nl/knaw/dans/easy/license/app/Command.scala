@@ -25,14 +25,14 @@ import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
 
-object Command {
+object Command extends ApplicationSettings {
   val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     log.debug("Starting command line interface")
 
     try {
-      implicit val (parameters, outputFile) = cmd.parse(args)
+      implicit val (parameters, outputFile) = cmd.parse(args, props)
 
       new FileOutputStream(outputFile)
         .usedIn(LicenseCreator(parameters).createLicense)

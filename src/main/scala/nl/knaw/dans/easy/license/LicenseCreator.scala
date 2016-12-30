@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.license
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 
 import nl.knaw.dans.easy.license.internal._
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.pf.language.emd.EasyMetadata
 import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
@@ -27,11 +28,12 @@ import scala.util.Try
 class LicenseCreator(placeholderMapper: PlaceholderMapper,
                      templateResolver: TemplateResolver,
                      pdfGenerator: PdfGenerator)
-                    (implicit parameters: BaseParameters) {
+                    (implicit parameters: BaseParameters) extends DebugEnhancedLogging {
 
   val log = LoggerFactory.getLogger(getClass)
 
   def createLicense(dataset: Dataset)(outputStream: OutputStream): Try[Unit] = {
+    trace(dataset, outputStream)
     resource.managed(new ByteArrayOutputStream())
       .map(templateOut => {
         log.info(s"""creating the license for dataset "${dataset.datasetID}"""")
