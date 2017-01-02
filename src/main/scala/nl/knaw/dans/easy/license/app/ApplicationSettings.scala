@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+package nl.knaw.dans.easy.license.app
 
-import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
+import java.io.File
 
-case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
+import org.apache.commons.configuration.PropertiesConfiguration
 
-// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
-object FileAccessRight extends Enumeration {
-  type FileAccessRight = Value
+trait ApplicationSettings {
 
-  val
-  ANONYMOUS,
-  KNOWN,
-  RESTRICTED_REQUEST,
-  RESTRICTED_GROUP,
-  NONE
-  = Value
-
-  def valueOf(s: String): Option[FileAccessRight.Value] = FileAccessRight.values.find(_.toString == s)
+  val props: PropertiesConfiguration = {
+    val homeDir = new File(System.getProperty("app.home"))
+    val ps = new PropertiesConfiguration()
+    ps.setDelimiterParsingDisabled(true)
+    ps.load(new File(homeDir, "cfg/application.properties"))
+    ps
+  }
 }

@@ -27,7 +27,7 @@ import rx.lang.scala.{Notification, Observable}
 
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
-import scala.xml.XML
+import scala.xml.{Elem, XML}
 
 package object internal {
 
@@ -51,23 +51,23 @@ package object internal {
     p
   }
 
-  def templateDir(implicit parameters: BaseParameters) = {
+  def templateDir(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/template")
   }
 
-  def dansLogoFile(implicit parameters: BaseParameters) = {
+  def dansLogoFile(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/dans_logo.png")
   }
 
-  def footerTextFile(implicit parameters: BaseParameters) = {
+  def footerTextFile(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/license_version.txt")
   }
 
-  def metadataTermsProperties(implicit parameters: BaseParameters) = {
+  def metadataTermsProperties(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/MetadataTerms.properties")
   }
 
-  def pdfRunScript(implicit parameters: BaseParameters) = {
+  def pdfRunScript(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/pdfgen.sh")
   }
 
@@ -103,7 +103,7 @@ package object internal {
       *
       * @param destDir the new directory, must not be ``null``
       */
-    def copyDir(destDir: File) = FileUtils.copyDirectory(file, destDir)
+    def copyDir(destDir: File): Unit = FileUtils.copyDirectory(file, destDir)
 
     /**
       * Determines whether the ``parent`` directory contains the ``child`` element (a file or directory).
@@ -127,7 +127,7 @@ package object internal {
     /**
       * Deletes a directory recursively.
       */
-    def deleteDirectory() = FileUtils.deleteDirectory(file)
+    def deleteDirectory(): Unit = FileUtils.deleteDirectory(file)
 
     /**
       * Reads the contents of a file into a String using the default encoding for the VM.
@@ -135,7 +135,7 @@ package object internal {
       *
       * @return the file contents, never ``null``
       */
-    def read(encoding: Charset = Charsets.UTF_8) = FileUtils.readFileToString(file, encoding)
+    def read(encoding: Charset = Charsets.UTF_8): String = FileUtils.readFileToString(file, encoding)
   }
 
   implicit class TryExtensions[T](val t: Try[T]) extends AnyVal {
@@ -171,7 +171,7 @@ package object internal {
       *
       * @return
       */
-    def isBlank = StringUtils.isBlank(s)
+    def isBlank: Boolean = StringUtils.isBlank(s)
 
     /** Converts a `String` to an `Option[String]`. If the `String` is blank
       * the empty `Option` is returned, otherwise the `String` is returned
@@ -179,9 +179,9 @@ package object internal {
       *
       * @return an `Option` of the input string that indicates whether it is blank
       */
-    def toOption = if (s.isBlank) Option.empty else Option(s)
+    def toOption: Option[String] = if (s.isBlank) Option.empty else Option(s)
 
-    def emptyIfBlank = s.toOption.getOrElse("")
+    def emptyIfBlank: String = s.toOption.getOrElse("")
   }
 
   implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
@@ -191,12 +191,12 @@ package object internal {
   }
 
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
-    def loadXML = XML load stream
+    def loadXML: Elem = XML.load(stream)
   }
 
   // TODO not used here anymore, but useful for debugging purposed. Maybe we can migrate this to a EASY-Utils project?
   implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
-    def debugThreadName(s: String = "")(implicit logger: Logger) = {
+    def debugThreadName(s: String = "")(implicit logger: Logger): Observable[T] = {
 
       def notificationKind(notification: Notification[T]) = {
         notification match {
@@ -211,7 +211,7 @@ package object internal {
         .dematerialize
     }
 
-    def debug(s: String = "")(implicit logger: Logger) = {
+    def debug(s: String = "")(implicit logger: Logger): Observable[T] = {
       observable.materialize
         .doOnEach(x => logger.debug(s"$s: $x"))
         .dematerialize

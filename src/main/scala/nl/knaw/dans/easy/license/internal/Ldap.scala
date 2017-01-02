@@ -36,16 +36,16 @@ trait Ldap extends AutoCloseable {
 case class LdapImpl(ctx: LdapContext) extends Ldap {
 
   implicit class NamingEnumerationToObservable[T](val enum: NamingEnumeration[T]) {
-    def toObservable = Observable.from(new Iterable[T] {
+    def toObservable: Observable[T] = Observable.from(new Iterable[T] {
       def iterator = new Iterator[T] {
-        def hasNext = enum.hasMore
+        def hasNext: Boolean = enum.hasMore
 
-        def next() = enum.next()
+        def next(): T = enum.next()
       }
     })
   }
 
-  def query(depositorID: DepositorID) = {
+  def query(depositorID: DepositorID): Observable[Attributes] = {
     Observable.defer {
       val searchFilter = s"(&(objectClass=easyUser)(uid=$depositorID))"
       val searchControls = {
@@ -60,5 +60,5 @@ case class LdapImpl(ctx: LdapContext) extends Ldap {
     }
   }
 
-  def close() = ctx.close()
+  def close(): Unit = ctx.close()
 }

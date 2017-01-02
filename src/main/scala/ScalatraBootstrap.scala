@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.license
+import javax.servlet.ServletContext
 
-import nl.knaw.dans.easy.license.FileAccessRight.FileAccessRight
+import nl.knaw.dans.easy.license.app.{LicenseCreatorService, LicenseCreatorServlet}
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.scalatra.LifeCycle
 
-case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: String)
-
-// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
-object FileAccessRight extends Enumeration {
-  type FileAccessRight = Value
-
-  val
-  ANONYMOUS,
-  KNOWN,
-  RESTRICTED_REQUEST,
-  RESTRICTED_GROUP,
-  NONE
-  = Value
-
-  def valueOf(s: String): Option[FileAccessRight.Value] = FileAccessRight.values.find(_.toString == s)
+class ScalatraBootstrap extends LifeCycle with DebugEnhancedLogging {
+  override def init(context: ServletContext) {
+    trace(context)
+    context.mount(new LicenseCreatorServlet, "/")
+  }
 }

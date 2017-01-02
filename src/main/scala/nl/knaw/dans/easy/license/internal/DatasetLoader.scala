@@ -144,16 +144,16 @@ trait DatasetLoader {
 
 case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends DatasetLoader {
 
-  val fedora = parameters.fedora
-  val ldap = parameters.ldap
+  val fedora: Fedora = parameters.fedora
+  val ldap: Ldap = parameters.ldap
 
-  def getAudience(audienceID: AudienceID) = {
+  def getAudience(audienceID: AudienceID): Observable[String] = {
     fedora.getDC(audienceID)
       .map(resource.managed(_).acquireAndGet(_.loadXML \\ "title" text))
       .subscribeOn(IOScheduler())
   }
 
-  def getDatasetById(datasetID: DatasetID) = {
+  def getDatasetById(datasetID: DatasetID): Observable[Dataset] = {
     val emdObs = fedora.getEMD(datasetID)
       .map(resource.managed(_).acquireAndGet(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal))
       .subscribeOn(IOScheduler())
@@ -172,8 +172,8 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
         .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_(_))
         .single
         .onErrorResumeNext {
-          case e: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID))
-          case e: NoSuchElementException => Observable.error(NoDatasetFoundException(datasetID))
+          case _: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID))
+          case _: NoSuchElementException => Observable.error(NoDatasetFoundException(datasetID))
           case e => Observable.error(e)
         }
     })
@@ -234,8 +234,8 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
       })
       .single
       .onErrorResumeNext {
-        case e: IllegalArgumentException => Observable.error(MultipleUsersFoundException(depositorID))
-        case e: NoSuchElementException => Observable.error(NoUserFoundException(depositorID))
+        case _: IllegalArgumentException => Observable.error(MultipleUsersFoundException(depositorID))
+        case _: NoSuchElementException => Observable.error(NoUserFoundException(depositorID))
         case e => Observable.error(e)
       }
   }

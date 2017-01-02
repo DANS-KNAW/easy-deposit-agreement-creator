@@ -1,0 +1,11 @@
+[Unit]
+Description=EASY License Creator Service
+
+[Service]
+ExecStart=/opt/easy-license-creator/bin/easy-license-creator-service-start
+
+User=easy-license-creator
+Group=easy-license-creator
+
+[Install]
+WantedBy=multi-user.target
