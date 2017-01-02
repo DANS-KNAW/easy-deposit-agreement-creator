@@ -67,22 +67,19 @@ class LicenseCreatorService extends ApplicationSettings with DebugEnhancedLoggin
   }
 }
 
-object LicenseCreatorService extends DebugEnhancedLogging {
-
-  def main(args: Array[String]): Unit = {
-    val service = new LicenseCreatorService()
-    Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
-      override def run(): Unit = {
-        logger.info("Stopping service ...")
-        service.stop()
-        logger.info("Cleaning up ...")
-        service.destroy()
-        logger.info("Service stopped.")
-      }
-    })
-    service.start()
-    logger.info("Service started ...")
-  }
+object LicenseCreatorService extends App with DebugEnhancedLogging {
+  val service = new LicenseCreatorService()
+  Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
+    override def run(): Unit = {
+      logger.info("Stopping service ...")
+      service.stop()
+      logger.info("Cleaning up ...")
+      service.destroy()
+      logger.info("Service stopped.")
+    }
+  })
+  service.start()
+  logger.info("Service started ...")
 }
 
 class LicenseCreatorServlet extends ScalatraServlet with ApplicationSettings with DebugEnhancedLogging {
@@ -114,24 +111,23 @@ class LicenseCreatorServlet extends ScalatraServlet with ApplicationSettings wit
         new InitialLdapContext(env, null)
       })
 
+    var success = false // TODO: get rid of var
     val output = new ByteArrayOutputStream()
     output
       .usedIn(LicenseCreator(parameters).createLicense)
+      .doOnCompleted { success = true }
       .doOnTerminate {
         // close LDAP at the end of the main
         debug("closing ldap")
         parameters.ldap.close()
       }
-      .toBlocking // TODO not sure whether `toBlocking` is needed here
+      .toBlocking
       .subscribe(
         _ => {},
-        e => {
-          logger.error("An error was caught in main:", e)
-          InternalServerError(reason = e.getMessage)
-        },
-        () => {
-          debug("completed")
-          Ok(output.toByteArray)
-        })
+        e => logger.error("An error was caught in main:", e),
+        () => debug("completed"))
+
+    if(success) Ok(output.toByteArray)
+    else InternalServerError() // TODO: distinguish between server errors and client errors
   }
 }

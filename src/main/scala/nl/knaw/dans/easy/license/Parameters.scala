@@ -19,11 +19,11 @@ import java.io.File
 import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.FedoraClient
-import nl.knaw.dans.easy.license.internal.{BaseParameters, Parameters}
+import nl.knaw.dans.easy.license.internal.{BaseParameters => InternalBaseParams, Parameters => InternalParams}
 
 object BaseParameters {
 
-  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean): BaseParameters = {
+  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean): InternalBaseParams = {
     new internal.BaseParameters(templateResourceDir, datasetID, isSample)
   }
 }
@@ -34,7 +34,7 @@ object Parameters {
             datasetID: DatasetID,
             isSample: Boolean,
             fedoraClient: FedoraClient,
-            ldapContext: LdapContext): Parameters = {
+            ldapContext: LdapContext): InternalParams = {
     new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapContext)
   }
 }
