@@ -17,36 +17,35 @@ package nl.knaw.dans.easy.license.internal
 
 import java.io._
 import java.net.URLEncoder
+import java.util.Properties
 import java.{util => ju}
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
-import nl.knaw.dans.easy.license.{DatasetID, FileAccessRight, FileItem}
 import nl.knaw.dans.easy.license.FileAccessRight._
+import nl.knaw.dans.easy.license.{DatasetID, FileAccessRight, FileItem}
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
 import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.SortedMap
 import scala.language.{implicitConversions, postfixOps}
 import scala.util.Try
 
-class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParameters) {
+class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParameters) extends DebugEnhancedLogging {
 
   type Table = ju.Collection[ju.Map[String, String]]
 
-  val log = LoggerFactory.getLogger(getClass)
-
-  val metadataNames = loadProperties(metadataTermsFile)
-    .doOnError(e => log.error(s"could not read the metadata terms in $metadataTermsFile", e))
+  val metadataNames: Properties = loadProperties(metadataTermsFile)
+    .doOnError(e => logger.error(s"could not read the metadata terms in $metadataTermsFile", e))
     .getOrElse(new ju.Properties())
 
   def datasetToPlaceholderMap(dataset: Dataset): Try[PlaceholderMap] = {
-    log.debug("create placeholder map")
+    logger.debug("create placeholder map")
 
     val emd = dataset.emd
 
@@ -136,7 +135,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     )
   }
 
-  def currentDateAndTime = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
+  def currentDateAndTime: String = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
 
   def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
     emd.getTerms
@@ -166,7 +165,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
     Try(audiences.reduce(_ + "; " + _)) // may throw an UnsupportedOperationException
       .doOnError {
-        case e: UnsupportedOperationException => log.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
+        case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
       }
       .getOrElse("")
   }
@@ -185,7 +184,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         case FREELY_AVAILABLE                 => "Open Access"
         // @formatter:on
       }
-      .doOnError(e => log.warn("No available mapping; using acces category value directly"))
+      .doOnError(_ => logger.warn("No available mapping; using acces category value directly"))
       .getOrElse(item.toString)
   }
 

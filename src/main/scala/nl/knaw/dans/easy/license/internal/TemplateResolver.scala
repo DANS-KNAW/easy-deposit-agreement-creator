@@ -19,9 +19,9 @@ import java.io.{File, OutputStream, OutputStreamWriter}
 import java.nio.charset.Charset
 import java.util.Properties
 
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
-import org.slf4j.LoggerFactory
 
 import scala.util.Try
 
@@ -37,26 +37,24 @@ trait TemplateResolver {
     */
   def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding): Try[Unit]
 }
-class VelocityTemplateResolver(properties: Properties)(implicit parameters: BaseParameters) extends TemplateResolver {
-
-  val log = LoggerFactory.getLogger(getClass)
+class VelocityTemplateResolver(properties: Properties)(implicit parameters: BaseParameters) extends TemplateResolver with DebugEnhancedLogging {
 
   val velocityResources = new File(properties.getProperty("file.resource.loader.path"))
-  val templateFileName = properties.getProperty("template.file.name")
+  val templateFileName: String = properties.getProperty("template.file.name")
 
-  log.debug(s"template folder: $velocityResources")
+  logger.debug(s"template folder: $velocityResources")
 
   val doc = new File(velocityResources, templateFileName)
   assert(doc.exists(), s"file does not exist - $doc")
 
-  val engine = {
+  val engine: VelocityEngine = {
     val engine = new VelocityEngine(properties)
     engine.init()
     engine
   }
 
-  def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding) = {
-    log.debug("resolve template placeholders")
+  def createTemplate(out: OutputStream, map: PlaceholderMap, encoding: Charset = encoding): Try[Unit] = {
+    logger.debug("resolve template placeholders")
 
     resource.managed(new OutputStreamWriter(out, encoding))
       .map(writer => {

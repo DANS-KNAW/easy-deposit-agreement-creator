@@ -31,5 +31,5 @@ object FileAccessRight extends Enumeration {
   NONE
   = Value
 
-  def valueOf(s: String) = FileAccessRight.values.find(_.toString == s)
+  def valueOf(s: String): Option[FileAccessRight.Value] = FileAccessRight.values.find(_.toString == s)
 }

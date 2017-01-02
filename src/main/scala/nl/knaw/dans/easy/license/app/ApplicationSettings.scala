@@ -21,12 +21,11 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 trait ApplicationSettings {
 
-  val props = {
+  lazy val props: PropertiesConfiguration = {
     val homeDir = new File(System.getProperty("app.home"))
     val ps = new PropertiesConfiguration()
     ps.setDelimiterParsingDisabled(true)
     ps.load(new File(homeDir, "cfg/application.properties"))
     ps
   }
-
 }

@@ -22,9 +22,9 @@ import javax.naming.ldap.InitialLdapContext
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import nl.knaw.dans.easy.license.DatasetID
 import nl.knaw.dans.easy.license.internal.{Parameters, Version}
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.rogach.scallop._
-import org.slf4j.LoggerFactory
 
 class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
   
@@ -44,24 +44,22 @@ class CommandLineOptions(args: Array[String]) extends ScallopConf(args) {
            |Options:
            |""".stripMargin)
 
-  val datasetID = trailArg[DatasetID](name = "dataset-id",
+  val datasetID: ScallopOption[DatasetID] = trailArg(name = "dataset-id",
     descr = "The ID of the dataset of which a license has to be created")
 
-  val outputFile = trailArg[File](name = "license-file",
+  val outputFile: ScallopOption[File] = trailArg(name = "license-file",
     descr = "The file location where the license needs to be stored")
 
-  val isSample = opt[Boolean](name = "sample", short = 's', default = Option(false),
+  val isSample: ScallopOption[Boolean] = opt(name = "sample", short = 's', default = Option(false),
     descr = "Indicates whether or not a sample license needs to be created")
 
   verify()
 }
 
-object CommandLineOptions {
-
-  val log = LoggerFactory.getLogger(getClass)
+object CommandLineOptions extends DebugEnhancedLogging {
 
   def parse(args: Array[String], props: PropertiesConfiguration): (Parameters, File) = {
-    log.debug("Parsing command line ...")
+    logger.debug("Parsing command line ...")
     val opts = new CommandLineOptions(args)
 
     val params = new Parameters(
@@ -86,8 +84,8 @@ object CommandLineOptions {
       })
     val outputFile = opts.outputFile()
 
-    log.debug(s"Using the following settings: $params")
-    log.debug(s"Output will be written to ${outputFile.getAbsolutePath}")
+    logger.debug(s"Using the following settings: $params")
+    logger.debug(s"Output will be written to ${outputFile.getAbsolutePath}")
 
     (params, outputFile)
   }

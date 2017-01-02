@@ -88,13 +88,13 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
     }
   }
 
-  def getAMD(pid: DatasetID) = query(pid, "AMD").single
+  def getAMD(pid: DatasetID): Observable[InputStream] = query(pid, "AMD").single
 
-  def getDC(pid: DatasetID) = query(pid, "DC").single
+  def getDC(pid: DatasetID): Observable[InputStream] = query(pid, "DC").single
 
-  def getEMD(pid: DatasetID) = query(pid, "EMD").single
+  def getEMD(pid: DatasetID): Observable[InputStream] = query(pid, "EMD").single
 
-  def getFileMetadata(pid: FileID) = query(pid, "EASY_FILE_METADATA").single
+  def getFileMetadata(pid: FileID): Observable[InputStream] = query(pid, "EASY_FILE_METADATA").single
 
   def getFile(pid: FileID): Observable[DatastreamProfile] = {
     Observable.just(FedoraClient.getDatastream(pid, "EASY_FILE")
@@ -102,7 +102,7 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
       .getDatastreamProfile)
   }
 
-  def queryRiSearch(query: String) = {
+  def queryRiSearch(query: String): Observable[String] = {
     Observable.defer {
       new RiSearch(query).lang("sparql").format("csv").execute(client)
         .getEntityInputStream

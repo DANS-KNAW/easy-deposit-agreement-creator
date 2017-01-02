@@ -20,38 +20,37 @@ import java.io.FileOutputStream
 import nl.knaw.dans.easy.license.LicenseCreator
 import nl.knaw.dans.easy.license.app.{CommandLineOptions => cmd}
 import nl.knaw.dans.easy.license.internal._
-import org.slf4j.LoggerFactory
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import rx.schedulers.Schedulers
 
 import scala.language.postfixOps
 
-object Command extends ApplicationSettings {
-  val log = LoggerFactory.getLogger(getClass)
+object Command extends ApplicationSettings with DebugEnhancedLogging {
 
   def main(args: Array[String]): Unit = {
-    log.debug("Starting command line interface")
+    logger.debug("Starting command line interface")
 
     try {
       implicit val (parameters, outputFile) = cmd.parse(args, props)
 
       new FileOutputStream(outputFile)
         .usedIn(LicenseCreator(parameters).createLicense)
-        .doOnCompleted(log.info(s"license saved at ${outputFile.getAbsolutePath}"))
+        .doOnCompleted(logger.info(s"license saved at ${outputFile.getAbsolutePath}"))
         .doOnTerminate {
           // close LDAP at the end of the main
-          log.debug("closing ldap")
+          logger.debug("closing ldap")
           parameters.ldap.close()
         }
         .toBlocking
         .subscribe(
           _ => {},
-          e => log.error("An error was caught in main:", e),
-          () => log.debug("completed"))
+          e => logger.error("An error was caught in main:", e),
+          () => logger.debug("completed"))
 
       Schedulers.shutdown()
     }
     catch {
-      case e: Throwable => log.error("An error was caught in main:", e)
+      case e: Throwable => logger.error("An error was caught in main:", e)
     }
   }
 }

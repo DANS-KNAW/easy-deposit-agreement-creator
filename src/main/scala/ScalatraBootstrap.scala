@@ -22,6 +22,6 @@ import org.scalatra.LifeCycle
 class ScalatraBootstrap extends LifeCycle with DebugEnhancedLogging {
   override def init(context: ServletContext) {
     trace(context)
-    context mount (new LicenseCreatorServlet, "/")
+    context.mount(new LicenseCreatorServlet, "/")
   }
 }

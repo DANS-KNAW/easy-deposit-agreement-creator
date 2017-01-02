@@ -15,26 +15,24 @@
  */
 package nl.knaw.dans.easy.license.app
 
-import java.io.{ByteArrayOutputStream, File, FileOutputStream}
+import java.io.{ByteArrayOutputStream, File}
 import javax.naming.Context
 import javax.naming.ldap.InitialLdapContext
 
 import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import nl.knaw.dans.easy.license.LicenseCreator
-import nl.knaw.dans.easy.license.internal.Parameters
+import nl.knaw.dans.easy.license.internal.{Parameters, _}
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.eclipse.jetty.ajp.Ajp13SocketConnector
 import org.eclipse.jetty.server.Server
-import org.scalatra.servlet.ScalatraListener
 import org.eclipse.jetty.servlet.ServletContextHandler
+import org.scalatra.servlet.ScalatraListener
 import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import rx.schedulers.Schedulers
-import nl.knaw.dans.easy.license.internal._
 
 import scala.util.Try
 
 class LicenseCreatorService extends ApplicationSettings with DebugEnhancedLogging {
-  import logger._
 
   private val port = props.getInt("daemon.http.port")
   val server = new Server(port)
@@ -42,23 +40,23 @@ class LicenseCreatorService extends ApplicationSettings with DebugEnhancedLoggin
   context.addEventListener(new ScalatraListener())
 
   server.setHandler(context)
-  info(s"HTTP port is $port")
+  logger.info(s"HTTP port is $port")
 
   if (props.containsKey("daemon.ajp.port")) {
     val ajp = new Ajp13SocketConnector()
     val ajpPort = props.getInt("daemon.ajp.port")
     ajp.setPort(ajpPort)
     server.addConnector(ajp)
-    info(s"AJP port is $ajpPort")
+    logger.info(s"AJP port is $ajpPort")
   }
 
   def start(): Try[Unit] = Try {
-    info("Starting HTTP service ...")
+    logger.info("Starting HTTP service ...")
     server.start()
   }
 
   def stop(): Try[Unit] = Try {
-    info("Stopping HTTP service ...")
+    logger.info("Stopping HTTP service ...")
     server.stop()
     debug("Shutting down RX schedulers ...")
     Schedulers.shutdown()
@@ -69,20 +67,22 @@ class LicenseCreatorService extends ApplicationSettings with DebugEnhancedLoggin
   }
 }
 
-object LicenseCreatorService extends App with DebugEnhancedLogging {
-  import logger._
-  val service = new LicenseCreatorService()
-  Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
-    override def run(): Unit = {
-      info("Stopping service ...")
-      service.stop()
-      info("Cleaning up ...")
-      service.destroy()
-      info("Service stopped.")
-    }
-  })
-  service.start()
-  info("Service started ...")
+object LicenseCreatorService extends DebugEnhancedLogging {
+
+  def main(args: Array[String]): Unit = {
+    val service = new LicenseCreatorService()
+    Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
+      override def run(): Unit = {
+        logger.info("Stopping service ...")
+        service.stop()
+        logger.info("Cleaning up ...")
+        service.destroy()
+        logger.info("Service stopped.")
+      }
+    })
+    service.start()
+    logger.info("Service started ...")
+  }
 }
 
 class LicenseCreatorServlet extends ScalatraServlet with ApplicationSettings with DebugEnhancedLogging {
@@ -114,23 +114,24 @@ class LicenseCreatorServlet extends ScalatraServlet with ApplicationSettings wit
         new InitialLdapContext(env, null)
       })
 
-    var success = false // TODO: get rid of var
     val output = new ByteArrayOutputStream()
-      output
+    output
       .usedIn(LicenseCreator(parameters).createLicense)
-      .doOnCompleted { success = true }
       .doOnTerminate {
         // close LDAP at the end of the main
         debug("closing ldap")
         parameters.ldap.close()
       }
-      .toBlocking
+      .toBlocking // TODO not sure whether `toBlocking` is needed here
       .subscribe(
         _ => {},
-        e => logger.error("An error was caught in main:", e),
-        () => debug("completed"))
-
-    if(success) Ok(output.toByteArray)
-    else InternalServerError() // TODO: distinguish between server errors and client errors
+        e => {
+          logger.error("An error was caught in main:", e)
+          InternalServerError(reason = e.getMessage)
+        },
+        () => {
+          debug("completed")
+          Ok(output.toByteArray)
+        })
   }
 }
