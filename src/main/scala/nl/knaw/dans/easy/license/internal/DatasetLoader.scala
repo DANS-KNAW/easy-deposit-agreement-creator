@@ -17,11 +17,11 @@ package nl.knaw.dans.easy.license.internal
 
 import javax.naming.directory.Attributes
 
-import nl.knaw.dans.easy.license.{DatasetID, DepositorID, FileAccessRight, FileItem}
+import nl.knaw.dans.easy.license.{ DatasetID, DepositorID, FileAccessRight, FileItem }
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
-import nl.knaw.dans.pf.language.emd.{EasyMetadata, EasyMetadataImpl, EmdAudience}
+import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EasyMetadataImpl, EmdAudience }
 import rx.lang.scala.schedulers.IOScheduler
-import rx.lang.scala.{Observable, ObservableExtensions}
+import rx.lang.scala.{ Observable, ObservableExtensions }
 
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
