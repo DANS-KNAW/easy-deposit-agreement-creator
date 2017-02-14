@@ -10,7 +10,7 @@
 		class="ch.qos.logback.core.FileAppender">
 		<file>data/easy-license-creator.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>data/easy-bag-store.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>data/easy-license-creator.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<encoder>
