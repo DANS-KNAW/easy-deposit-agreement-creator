@@ -37,10 +37,10 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
     parameters.templateResourceDir.deleteDirectory()
   }
 
-  override def afterAll = testDir.getParentFile.deleteDirectory()
+  override def afterAll: Unit = testDir.getParentFile.deleteDirectory()
 
-  val keyword: KeywordMapping = new KeywordMapping { val keyword: String = "name" }
-  val testProperties = {
+  private val keyword: KeywordMapping = new KeywordMapping { val keyword: String = "name" }
+  private val testProperties = {
     val p = new Properties()
 
     p.setProperty("runtime.references.strict", "true")
@@ -50,7 +50,7 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
 
     p
   }
-  val testPropertiesFail = {
+  private val testPropertiesFail = {
     val p = new Properties()
 
     p.setProperty("runtime.references.strict", "true")
@@ -62,8 +62,6 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
   }
 
   "createTemplate" should """map the "name" keyword to "world" in the template and put the result in a file""" in {
-
-
     val templateCreator = new VelocityTemplateResolver(testProperties)
 
     val map: Map[KeywordMapping, Object] = Map(keyword -> "world")
