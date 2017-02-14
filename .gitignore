@@ -10,14 +10,21 @@ buildNumber.properties
 *~
 *.swp
 *.iml
+*.sc
 .idea/
 .DS_Store
 apphome.sh
-home/
-out/
+/home/
+/data/
+/data-*
 
 # Eclipse
 /.project
 /.settings
 /.classpath
 /.cache
+/NOTES.txt
+
+# Vagrant/Ansible
+*.retry
+.vagrant/
