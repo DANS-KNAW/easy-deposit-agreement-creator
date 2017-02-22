@@ -15,12 +15,21 @@
 # limitations under the License.
 #
 
+APPHOME=home
+TEMPDIR=data
 
-rm -fr home/
-cp -r src/main/assembly/dist home
-cp src/test/resources/debug-config/* home/cfg/
+rm -fr $APPHOME
+cp -r src/main/assembly/dist $APPHOME
+cp src/test/resources/debug-config/* $APPHOME/cfg/
+mv $APPHOME/cfg/pdfgen.sh $APPHOME/res/pdfgen.sh
 
-rm -fr out/
+if [ -e $TEMPDIR ]; then
+    mv $TEMPDIR $TEMPDIR-`date  +"%Y-%m-%d@%H:%M:%S"`
+fi
+
+mkdir -p $TEMPDIR
+touch $TEMPDIR/easy-license-creator.log
+chmod -R 777 $TEMPDIR
 
 echo "A fresh application home directory for debugging has been set up at home/"
 echo "Output and logging will go to out/"

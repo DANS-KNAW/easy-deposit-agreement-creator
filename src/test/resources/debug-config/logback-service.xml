@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration scan="true" scanPeriod="1 minute">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[%-5level] %logger{15} - %msg %n</pattern>
+        </encoder>
+    </appender>
+
     <appender name="FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>out/easy-ingest-flow.log</file>
+        <file>data/easy-license-creator.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>out/easy-ingest-flow.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>data/easy-license-creator.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>[%date{ISO8601}] %-5level %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="warn">
+    <root level="error">
         <appender-ref ref="FILE" />
+        <appender-ref ref="STDOUT" />
     </root>
     <logger name="nl.knaw.dans.easy" level="trace" />
 </configuration>

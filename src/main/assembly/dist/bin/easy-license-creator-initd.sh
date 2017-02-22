@@ -13,7 +13,7 @@
 
 NAME="easy-license-creator"
 EXEC="/usr/bin/jsvc"
-APPHOME="/opt/easy-license-creator"
+APPHOME="/usr/local/easy-license-creator"
 JAVA_HOME="/usr/lib/jvm/jre"
 CLASSPATH="$APPHOME/bin/$NAME.jar:`echo $APPHOME/lib/*.jar | sed 's/ /:/g'`"
 CLASS="nl.knaw.dans.easy.license.app.ServiceStarter"

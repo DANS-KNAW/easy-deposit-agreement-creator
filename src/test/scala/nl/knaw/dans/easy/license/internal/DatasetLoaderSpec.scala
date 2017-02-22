@@ -33,8 +33,8 @@ import scala.language.reflectiveCalls
 
 class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
 
-  val fedoraMock = mock[Fedora]
-  val ldapMock = mock[Ldap]
+  private val fedoraMock = mock[Fedora]
+  private val ldapMock = mock[Ldap]
 
   val (userAttributes, expectedUser) = {
     val attrs = new BasicAttributes
@@ -65,7 +65,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     new File(testDir, "datasetloader").deleteDirectory()
   }
 
-  override def afterAll = testDir.getParentFile.deleteDirectory()
+  override def afterAll: Unit = testDir.getParentFile.deleteDirectory()
 
   "getUserById" should "query the user data from ldap for a given user id" in {
     ldapMock.query _ expects "testID" returning Observable.just(userAttributes)
@@ -221,8 +221,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
 
       var counter = 0
 
-      override def getAudience(audienceID: AudienceID) =
-      {
+      override def getAudience(audienceID: AudienceID): Observable[AudienceID] = {
         counter += 1
         counter match {
           case 1 => Observable.just(title1)

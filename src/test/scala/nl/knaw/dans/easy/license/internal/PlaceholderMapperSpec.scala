@@ -16,18 +16,19 @@
 package nl.knaw.dans.easy.license.internal
 
 import java.io.File
-import java.{util => ju}
+import java.{ util => ju }
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
-import nl.knaw.dans.easy.license.{FileAccessRight, FileItem, UnitSpec}
-import nl.knaw.dans.pf.language.emd.Term.{Name, Namespace}
+import nl.knaw.dans.easy.license.{ FileAccessRight, FileItem, UnitSpec }
+import nl.knaw.dans.pf.language.emd.Term.{ Name, Namespace }
 import nl.knaw.dans.pf.language.emd._
-import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
+import nl.knaw.dans.pf.language.emd.types.{ IsoDate, MetadataItem }
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
 
 import scala.collection.JavaConverters._
+import scala.util.Success
 
 class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
 
@@ -38,13 +39,18 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     def toString(x: String): String = ""
   }
 
-  val emd = mock[MockEasyMetadata]
-  val ident = mock[EmdIdentifier]
-  val date = mock[EmdDate]
-  val rights = mock[EmdRights]
-  val fedora = mock[Fedora]
+  private val emd = mock[MockEasyMetadata]
+  private val ident = mock[EmdIdentifier]
+  private val date = mock[EmdDate]
+  private val rights = mock[EmdRights]
+  private val fedora = mock[Fedora]
 
-  implicit val parameters = Parameters(new File(testDir, "placeholdermapper"), null, false, fedora, null)
+  implicit val parameters = Parameters(
+    templateResourceDir = new File(testDir, "placeholdermapper"),
+    datasetID = null,
+    isSample = false,
+    fedora = fedora,
+    ldap = null)
 
   before {
     new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateResourceDir)
@@ -54,9 +60,9 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     parameters.templateResourceDir.deleteDirectory()
   }
 
-  override def afterAll = testDir.getParentFile.deleteDirectory()
+  override def afterAll: Unit = testDir.getParentFile.deleteDirectory()
 
-  def testInstance = {
+  def testInstance: PlaceholderMapper = {
     new PlaceholderMapper(new File(parameters.templateResourceDir, "MetadataTestTerms.properties"))
   }
 
@@ -64,7 +70,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     new MetadataItem {
       def getSchemeId = throw new NotImplementedError()
       def isComplete = throw new NotImplementedError()
-      override def toString = s
+      override def toString: String = s
     }
   }
 
@@ -77,15 +83,16 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     date.getEasDateSubmitted _ expects () returning dates
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = testInstance.header(emd)
-
-    res.get should contain (IsSample, false)
-    res.get should contain (DansManagedDoi, "12.3456/dans-ab7-cdef")
-    res.get should contain (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef")
-    res.get should contain (DateSubmitted, "1992-07-30")
-    res.get should contain (Title, "my preferred title")
-
-    res.get should have size 5
+    inside(testInstance.header(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (IsSample, false),
+          (DansManagedDoi, "12.3456/dans-ab7-cdef"),
+          (DansManagedEncodedDoi, "12.3456%2Fdans-ab7-cdef"),
+          (DateSubmitted, "1992-07-30"),
+          (Title, "my preferred title"))
+      }
+    }
   }
 
   it should "yield a map with default values if the actual values are null" in {
@@ -95,19 +102,25 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     date.getEasDateSubmitted _ expects () returning ju.Collections.emptyList()
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = testInstance.header(emd)
-
-    res.get should contain (IsSample, false)
-    res.get should contain (DansManagedDoi, "")
-    res.get should contain (DansManagedEncodedDoi, "")
-    res.get should contain (DateSubmitted, new IsoDate().toString)
-    res.get should contain (Title, "my preferred title")
-
-    res.get should have size 5
+    inside(testInstance.header(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (IsSample, false),
+          (DansManagedDoi, ""),
+          (DansManagedEncodedDoi, ""),
+          (DateSubmitted, new IsoDate().toString),
+          (Title, "my preferred title"))
+      }
+    }
   }
 
   "sampleHeader" should "yield a map of the date and title" in {
-    implicit val parameters = Parameters(new File(testDir, "placeholdermapper"), null, true, fedora, null)
+    implicit val parameters = Parameters(
+      templateResourceDir = new File(testDir, "placeholdermapper"),
+      datasetID = null,
+      isSample = true,
+      fedora = fedora,
+      ldap = null)
     val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects () never()
@@ -116,17 +129,23 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     date.getEasDateSubmitted _ expects () returning dates
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = testInstance.sampleHeader(emd)
-
-    res.get should contain (IsSample, true)
-    res.get should contain (DateSubmitted, "1992-07-30")
-    res.get should contain (Title, "my preferred title")
-
-    res.get should have size 3
+    inside(testInstance.sampleHeader(emd)) {
+      case Success(map) => map should {
+        have size 3 and contain allOf(
+          (IsSample, true),
+          (DateSubmitted, "1992-07-30"),
+          (Title, "my preferred title"))
+      }
+    }
   }
 
   it should "yield a map with default values if the actual values are null" in {
-    implicit val parameters = Parameters(new File(testDir, "placeholdermapper"), null, true, fedora, null)
+    implicit val parameters = Parameters(
+      templateResourceDir = new File(testDir, "placeholdermapper"),
+      datasetID = null,
+      isSample = true,
+      fedora = fedora,
+      ldap = null)
 
     emd.getEmdIdentifier _ expects () never()
     ident.getDansManagedDoi _ expects () never()
@@ -134,13 +153,14 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     date.getEasDateSubmitted _ expects () returning ju.Collections.emptyList()
     emd.getPreferredTitle _ expects () returning "my preferred title"
 
-    val res = testInstance.sampleHeader(emd)
-
-    res.get should contain (IsSample, true)
-    res.get should contain (DateSubmitted, new IsoDate().toString)
-    res.get should contain (Title, "my preferred title")
-
-    res.get should have size 3
+    inside(testInstance.sampleHeader(emd)) {
+      case Success(map) => map should {
+        have size 3 and contain allOf(
+          (IsSample, true),
+          (DateSubmitted, new IsoDate().toString),
+          (Title, "my preferred title"))
+      }
+    }
   }
 
   "footerText" should "return the text in a file without its line endings" in {
@@ -175,153 +195,161 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   "depositor" should "yield a map with depositor data" in {
     val depositor = EasyUser("name", "org", "addr", "postal", "city", "country", "tel", "mail")
 
-    val res = testInstance.depositor(depositor)
-
-    res should contain (DepositorName -> "name")
-    res should contain (DepositorOrganisation -> "org")
-    res should contain (DepositorAddress -> "addr")
-    res should contain (DepositorPostalCode -> "postal")
-    res should contain (DepositorCity -> "city")
-    res should contain (DepositorCountry -> "country")
-    res should contain (DepositorTelephone -> "tel")
-    res should contain (DepositorEmail -> "mail")
-
-    res should have size 8
+    testInstance.depositor(depositor) should {
+      have size 8 and contain allOf(
+        DepositorName -> "name",
+        DepositorOrganisation -> "org",
+        DepositorAddress -> "addr",
+        DepositorPostalCode -> "postal",
+        DepositorCity -> "city",
+        DepositorCountry -> "country",
+        DepositorTelephone -> "tel",
+        DepositorEmail -> "mail")
+    }
   }
 
   "accessRights" should "map an Open Access category to an OpenAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, true)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, true),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, false),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map an Anonymous Access category to an OpenAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ANONYMOUS_ACCESS
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, true)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, true),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, false),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map a Freely Available category to an OpenAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.FREELY_AVAILABLE
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, true)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, true),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, false),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map an Open Access For Registered Users category to an OpenAccessForRegisteredUsers keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, false)
-    res should contain (OpenAccessForRegisteredUsers, true)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, false),
+          (OpenAccessForRegisteredUsers, true),
+          (OtherAccess, false),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map a Group Access category to an RestrictGroup keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.GROUP_ACCESS
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, false)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, true)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, false),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, false),
+          (RestrictGroup, true),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map a Request Permission category to an RestrictRequest keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.REQUEST_PERMISSION
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, false)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, true)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, false),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, false),
+          (RestrictGroup, false),
+          (RestrictRequest, true))
+      }
+    }
   }
 
   it should "map an Access Elsewhere category to an OtherAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.ACCESS_ELSEWHERE
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, false)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, true)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, false),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, true),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map a No Access category to an OtherAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.NO_ACCESS
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, false)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, true)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, false),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, true),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   it should "map a null value to an OpenAccess keyword" in {
     emd.getEmdRights _ expects () returning rights
     rights.getAccessCategory _ expects () returning AccessCategory.OPEN_ACCESS
 
-    val res = testInstance.datasetAccessCategory(emd).get
-
-    res should contain (OpenAccess, true)
-    res should contain (OpenAccessForRegisteredUsers, false)
-    res should contain (OtherAccess, false)
-    res should contain (RestrictGroup, false)
-    res should contain (RestrictRequest, false)
-
-    res should have size 5
+    inside(testInstance.datasetAccessCategory(emd)) {
+      case Success(map) => map should {
+        have size 5 and contain allOf(
+          (OpenAccess, true),
+          (OpenAccessForRegisteredUsers, false),
+          (OtherAccess, false),
+          (RestrictGroup, false),
+          (RestrictRequest, false))
+      }
+    }
   }
 
   "embargo" should "give the embargo keyword mappings with UnderEmbargo=true when there is an embargo" in {
@@ -331,12 +359,11 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning dates
 
-    val res = testInstance.embargo(emd)
-
-    res should contain (UnderEmbargo, true)
-    res should contain (DateAvailable, nextYear.toString("YYYY-MM-dd"))
-
-    res should have size 2
+    testInstance.embargo(emd) should {
+      have size 2 and contain allOf(
+        (UnderEmbargo, true),
+        (DateAvailable, nextYear.toString("YYYY-MM-dd")))
+    }
   }
 
   it should "give the embargo keyword mappings with UnderEmbargo=false when there is no embargo" in {
@@ -345,24 +372,24 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning dates
 
-    val res = testInstance.embargo(emd)
-
-    res should contain (UnderEmbargo, false)
-    res should contain (DateAvailable, "1992-07-30")
-
-    res should have size 2
+    testInstance.embargo(emd) should {
+      have size 2 and contain allOf (
+        (UnderEmbargo, false),
+        (DateAvailable, "1992-07-30")
+      )
+    }
   }
 
   it should "give the embargo keyword mappings with UnderEmbargo=false when no DateAvailable is available" in {
     emd.getEmdDate _ expects () returning date
     date.getEasAvailable _ expects () returning ju.Collections.emptyList()
 
-    val res = testInstance.embargo(emd)
-
-    res should contain (UnderEmbargo, false)
-    res should contain (DateAvailable, "")
-
-    res should have size 2
+    testInstance.embargo(emd) should {
+      have size 2 and contain allOf (
+        (UnderEmbargo, false),
+        (DateAvailable, "")
+      )
+    }
   }
 
   "metadataTable" should "give a mapping for the metadata elements in the dataset" in {
@@ -390,11 +417,11 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerm _ expects mediumTerm returning mediumItems
     emd.getTerm _ expects abstractTerm returning abstractItems
 
-    val result = testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala
-
-    result should contain (Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4, item5, item6").asJava)
-    result should contain (Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava)
-    result should contain (Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava)
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain allOf (
+      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4, item5, item6").asJava,
+      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
+      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava
+    )
   }
 
   "formatAudience" should "combine the audiences separated by <semicolon>" in {
@@ -472,10 +499,10 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, "")
     )
 
-    val result = testInstance.filesTable(input).asScala
-
-    result should contain (Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava)
-    result should contain (Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Known").asJava)
-    result should contain (Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava)
+    testInstance.filesTable(input).asScala should contain allOf (
+      Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava,
+      Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Known").asJava,
+      Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava
+    )
   }
 }

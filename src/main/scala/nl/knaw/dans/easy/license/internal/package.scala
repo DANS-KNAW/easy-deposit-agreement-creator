@@ -71,10 +71,10 @@ package object internal {
     new File(parameters.templateResourceDir, "/pdfgen.sh")
   }
 
-  case class MultipleDatasetsFoundException(datasetID: DatasetID) extends Exception(s"Found more than one dataset with id: '$datasetID'")
-  case class NoDatasetFoundException(datasetID: DatasetID) extends Exception(s"Could not find dataset with id: '$datasetID")
-  case class MultipleUsersFoundException(depositorID: DepositorID) extends Exception(s"Found more than one depositor with id: '$depositorID'")
-  case class NoUserFoundException(depositorID: DepositorID) extends Exception(s"Could not find depositor with id: '$depositorID'")
+  case class MultipleDatasetsFoundException(datasetID: DatasetID, cause: Exception) extends Exception(s"Found more than one dataset with id: '$datasetID'", cause)
+  case class NoDatasetFoundException(datasetID: DatasetID, cause: Exception) extends Exception(s"Could not find dataset with id: '$datasetID", cause)
+  case class MultipleUsersFoundException(depositorID: DepositorID, cause: Exception) extends Exception(s"Found more than one depositor with id: '$depositorID'", cause)
+  case class NoUserFoundException(depositorID: DepositorID, cause: Exception) extends Exception(s"Could not find depositor with id: '$depositorID'", cause)
 
   object Version {
     def apply(): String = {

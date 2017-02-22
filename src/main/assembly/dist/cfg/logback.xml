@@ -8,18 +8,16 @@
 	</appender>
 	<appender name="FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>/var/log/easy-license-creator/easy-license-creator.log</file>
+		<file>${user.home}/easy-license-creator.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<!-- daily rollover -->
-			<fileNamePattern>/var/log/easy-license-creator/easy-license-creator.%d{yyyy-MM-dd}.log</fileNamePattern>
-			<!-- keep 30 days' worth of history -->
+			<fileNamePattern>${user.home}/easy-license-creator.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<encoder>
 			<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
 		</encoder>
 	</appender>
-	<root level="warn">
+	<root level="error">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>
