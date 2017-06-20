@@ -32,6 +32,7 @@
     <inceptionYear>2016</inceptionYear>
 	<properties>
 		<main-class>nl.knaw.dans.easy.license.app.Command</main-class>
+		<easy.emd.version>3.0</easy.emd.version>
 	</properties>
 	<scm>
 		<developerConnection>scm:git:https://github.com/DANS-KNAW/easy-license-creator</developerConnection>
@@ -69,8 +70,7 @@
 		<dependency>
 			<groupId>nl.knaw.dans.easy</groupId>
 			<artifactId>emd</artifactId>
-			<version>3.0
-</version>
+			<version>${easy.emd.version}</version>
 		</dependency>
         <!-- Avoid warnings in build log -->
         <dependency>
