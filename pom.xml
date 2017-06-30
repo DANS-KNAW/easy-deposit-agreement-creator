@@ -69,8 +69,7 @@
 		<dependency>
 			<groupId>nl.knaw.dans.easy</groupId>
 			<artifactId>emd</artifactId>
-			<version>3.0
-</version>
+			<version>3.0</version>
 		</dependency>
         <!-- Avoid warnings in build log -->
         <dependency>
@@ -114,10 +113,6 @@
         <dependency>
             <groupId>org.scalatra</groupId>
             <artifactId>scalatra-scalate_2.11</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-ajp</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>

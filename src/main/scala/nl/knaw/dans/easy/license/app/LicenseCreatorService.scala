@@ -23,7 +23,6 @@ import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import nl.knaw.dans.easy.license.LicenseCreator
 import nl.knaw.dans.easy.license.internal.{Parameters, _}
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.eclipse.jetty.ajp.Ajp13SocketConnector
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.scalatra.servlet.ScalatraListener
@@ -41,14 +40,6 @@ class LicenseCreatorService extends ApplicationSettings with DebugEnhancedLoggin
 
   server.setHandler(context)
   logger.info(s"HTTP port is $port")
-
-  if (props.containsKey("daemon.ajp.port")) {
-    val ajp = new Ajp13SocketConnector()
-    val ajpPort = props.getInt("daemon.ajp.port")
-    ajp.setPort(ajpPort)
-    server.addConnector(ajp)
-    logger.info(s"AJP port is $ajpPort")
-  }
 
   def start(): Try[Unit] = Try {
     logger.info("Starting HTTP service ...")
