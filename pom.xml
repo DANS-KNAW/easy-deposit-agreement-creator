@@ -17,112 +17,142 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
 	<parent>
 		<groupId>nl.knaw.dans.shared</groupId>
 		<artifactId>dans-scala-prototype</artifactId>
-		<version>1.39</version>
+		<version>1.47</version>
 	</parent>
-	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>nl.knaw.dans.easy</groupId>
 	<artifactId>easy-license-creator</artifactId>
 	<version>1.x-SNAPSHOT</version>
+
 	<name>EASY License Creator</name>
 	<url>https://github.com/DANS-KNAW/easy-license-creator</url>
 	<description>Create license file for EASY deposits</description>
-    <inceptionYear>2016</inceptionYear>
+	<inceptionYear>2016</inceptionYear>
+
 	<properties>
 		<main-class>nl.knaw.dans.easy.license.app.Command</main-class>
 	</properties>
+
 	<scm>
 		<developerConnection>scm:git:https://github.com/DANS-KNAW/easy-license-creator</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
+
 	<dependencies>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.scala-lang.modules</groupId>
-			<artifactId>scala-xml_2.11</artifactId>
-		</dependency>
+		<!-- testing -->
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_2.11</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.scalamock</groupId>
-            <artifactId>scalamock-scalatest-support_2.11</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.rogach</groupId>
-            <artifactId>scallop_2.11</artifactId>
-        </dependency>
 		<dependency>
-			<groupId>commons-configuration</groupId>
-			<artifactId>commons-configuration</artifactId>
+			<groupId>org.scalamock</groupId>
+			<artifactId>scalamock-scalatest-support_2.11</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
+			<groupId>org.scalatra</groupId>
+			<artifactId>scalatra-scalatest_2.11</artifactId>
+			<version>2.5.0</version>
+			<scope>test</scope>
 		</dependency>
+
+		<!-- Scala utils -->
 		<dependency>
-			<groupId>nl.knaw.dans.easy</groupId>
-			<artifactId>emd</artifactId>
-			<version>3.0</version>
-		</dependency>
-        <!-- Avoid warnings in build log -->
-        <dependency>
-            <groupId>org.joda</groupId>
-            <artifactId>joda-convert</artifactId>
-        </dependency>
-		<dependency>
-			<groupId>io.reactivex</groupId>
-			<artifactId>rxscala_2.11</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.yourmediashelf.fedora.client</groupId>
-			<artifactId>fedora-client-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.velocity</groupId>
-			<artifactId>velocity</artifactId>
-			<version>1.7</version>
+			<groupId>org.scala-lang.modules</groupId>
+			<artifactId>scala-xml_2.11</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.jsuereth</groupId>
 			<artifactId>scala-arm_2.11</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.rogach</groupId>
+			<artifactId>scallop_2.11</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>nl.knaw.dans.lib</groupId>
 			<artifactId>dans-scala-lib</artifactId>
+			<version>1.2</version>
 		</dependency>
+
+		<!-- EASY -->
+		<dependency>
+			<groupId>nl.knaw.dans.easy</groupId>
+			<artifactId>emd</artifactId>
+			<version>3.0</version>
+		</dependency>
+
+		<!-- Apache -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-daemon</groupId>
+			<artifactId>commons-daemon</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+			<version>1.7</version>
+		</dependency>
+
+		<!-- service -->
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
+			<version>9.4.6.v20170531</version>
 		</dependency>
-        <dependency>
-            <groupId>org.scalatra</groupId>
-            <artifactId>scalatra_2.11</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scalatra</groupId>
-            <artifactId>scalatra-scalate_2.11</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-daemon</groupId>
-            <artifactId>commons-daemon</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlet</artifactId>
+			<version>9.4.6.v20170531</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scalatra</groupId>
+			<artifactId>scalatra_2.11</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
+		<!-- logging -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.1.7</version>
+		</dependency>
+
+		<!-- joda -->
+		<!-- this dependency is here only to avoid warnings in build log -->
+		<dependency>
+			<groupId>org.joda</groupId>
+			<artifactId>joda-convert</artifactId>
+		</dependency>
+
+		<!-- reactive programming -->
+		<dependency>
+			<groupId>io.reactivex</groupId>
+			<artifactId>rxscala_2.11</artifactId>
+		</dependency>
+
+		<!-- fedora -->
+		<dependency>
+			<groupId>com.yourmediashelf.fedora.client</groupId>
+			<artifactId>fedora-client-core</artifactId>
+		</dependency>
 	</dependencies>
+
 	<repositories>
 		<repository>
 			<id>DANS</id>
@@ -132,6 +162,7 @@
 			<url>http://maven.dans.knaw.nl/</url>
 		</repository>
 	</repositories>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -157,6 +188,7 @@
             </plugin>
 		</plugins>
 	</build>
+
     <profiles>
         <profile>
             <id>command</id>
