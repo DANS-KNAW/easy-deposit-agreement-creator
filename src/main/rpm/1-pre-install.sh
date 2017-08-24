@@ -16,11 +16,13 @@
 #
 
 
-ARGS=$@
-APPHOME=home
-. apphome.sh
+#include <service.sh>
 
-mvn exec:java -Pservice \
-              -Dapp.home=$APPHOME \
-              -Dlogback.configurationFile=$APPHOME/cfg/logback-service.xml \
-              -Dexec.args="$ARGS"
+NUMBER_OF_INSTALLATIONS=$1
+MODULE_NAME=easy-license-creator
+PHASE="PRE-INSTALL"
+
+echo "$PHASE: START (Number of current installations: $NUMBER_OF_INSTALLATIONS)"
+service_stop $MODULE_NAME $NUMBER_OF_INSTALLATIONS
+service_create_module_user $MODULE_NAME
+echo "$PHASE: DONE"

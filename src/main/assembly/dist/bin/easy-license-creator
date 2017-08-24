@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
 
-BINPATH=`command readlink -f $0 2> /dev/null || command grealpath $0 2> /dev/null`
+BINPATH=`readlink -f $0`
 APPHOME=`dirname \`dirname $BINPATH \``
-if [ -f $HOME/logback.xml ]
-then
-    LOGCONFIG=$HOME/logback.xml
+MODULE=`basename $APPHOME`
+LOGBACK_HOME=$HOME/logback.xml
+LOGBACK_RPM=/etc/opt/dans.knaw.nl/$MODULE/logback.xml
+LOGBACK_APPHOME=$APPHOME/cfg/logback.xml
+
+if [ -f $LOGBACK_HOME ]; then
+    LOGBACK_CFG=$LOGBACK_HOME
+elif [ -f $LOGBACK_RPM ]; then
+    LOGBACK_CFG=$LOGBACK_RPM
 else
-    LOGCONFIG=$APPHOME/cfg/logback.xml
+    LOGBACK_CFG=$LOGBACK_APPHOME
 fi
 
-java -Dlogback.configurationFile=$LOGCONFIG \
+LC_ALL=en_US.UTF-8 \
+java -Dlogback.configurationFile=$LOGBACK_CFG \
      -Dapp.home=$APPHOME \
-     -jar $APPHOME/bin/easy-license-creator.jar $@
+     -jar $APPHOME/bin/$MODULE.jar $@

@@ -15,23 +15,12 @@
 # limitations under the License.
 #
 
-APPHOME=home
-TEMPDIR=data
 
-rm -fr $APPHOME
-cp -r src/main/assembly/dist $APPHOME
-cp src/test/resources/debug-config/* $APPHOME/cfg/
-mv $APPHOME/cfg/pdfgen.sh $APPHOME/res/pdfgen.sh
+#include <service.sh>
 
-if [ -e $TEMPDIR ]; then
-    mv $TEMPDIR $TEMPDIR-`date  +"%Y-%m-%d@%H:%M:%S"`
-fi
+MODULE_NAME=easy-license-creator
+PHASE="POST-TRANS"
 
-mkdir -p $TEMPDIR
-touch $TEMPDIR/easy-license-creator.log
-chmod -R 777 $TEMPDIR
-
-echo "A fresh application home directory for debugging has been set up at home/"
-echo "Output and logging will go to out/"
-echo "Add the following VM options to your run configuration to use these directories during debugging:"
-echo "-Dapp.home=home/ -Dlogback.configurationFile=home/cfg/logback.xml"
+echo "$PHASE: START"
+service_restart $MODULE_NAME
+echo "$PHASE: DONE"
