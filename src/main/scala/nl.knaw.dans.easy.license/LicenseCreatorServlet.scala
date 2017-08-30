@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.license
 
 import java.io.ByteArrayOutputStream
 
-import nl.knaw.dans.easy.license.internal.{ Parameters, _ }
+import nl.knaw.dans.easy.license.internal.{ Parameters => Params, _ }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatra._
 
@@ -29,7 +29,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
   post("/create") {
     contentType = "application/pdf"
 
-    val parameters = new Parameters(
+    val parameters = new Params(
       templateResourceDir = app.templateResourceDir,
       datasetID = params("datasetId"),
       isSample = false,

@@ -15,6 +15,11 @@
  */
 package nl.knaw.dans.easy
 
+import java.io.Closeable
+
+import org.apache.commons.io.IOUtils
+import rx.lang.scala.Observable
+
 import scala.util.{ Failure, Success, Try }
 
 package object license {
@@ -22,6 +27,7 @@ package object license {
   type DatasetID = String
   type DepositorID = String
 
+  // TODO copied from easy-bag-store
   implicit class TryExtensions2[T](val t: Try[T]) extends AnyVal {
     // TODO candidate for dans-scala-lib
     def unsafeGetOrThrow: T = {
@@ -31,4 +37,11 @@ package object license {
       }
     }
   }
+
+  implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
+    def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
+      Observable.using(resource)(observableFactory, t => { dispose(t); IOUtils.closeQuietly(t) }, disposeEagerly)
+    }
+  }
+
 }

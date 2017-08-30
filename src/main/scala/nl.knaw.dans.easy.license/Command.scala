@@ -24,7 +24,6 @@ import resource._
 import scala.language.reflectiveCalls
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
-import internal._
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
@@ -36,14 +35,10 @@ object Command extends App with DebugEnhancedLogging {
   val app = new LicenseCreatorApp(configuration)
 
   managed(app)
-    .acquireAndGet(app => {
-      for {
-        msg <- runSubcommand(app)
-      } yield msg
-    })
-//    .doIfSuccess(msg => println(s"OK: $msg"))
-//    .doIfFailure { case e => logger.error(e.getMessage, e) }
-//    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
+    .acquireAndGet(runSubcommand)
+    .doIfSuccess(msg => println(s"OK: $msg"))
+    .doIfFailure { case e => logger.error(e.getMessage, e) }
+    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
 
 
   private def runSubcommand(app: LicenseCreatorApp): Try[FeedBackMessage] = {
