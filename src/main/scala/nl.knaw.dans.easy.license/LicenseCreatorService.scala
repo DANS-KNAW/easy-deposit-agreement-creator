@@ -26,21 +26,25 @@ import org.scalatra.servlet.ScalatraListener
 import scala.util.Try
 
 class LicenseCreatorService(serverPort: Int, app: LicenseCreatorApp) extends DebugEnhancedLogging {
+
   import logger._
 
-  private val server = new Server(serverPort)
-  private val context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS)
-  context.addEventListener(new ScalatraListener() {
-    override def probeForCycleClass(classLoader: ClassLoader): (String, LifeCycle) = {
-      ("anonymous", new LifeCycle {
-        override def init(context: ServletContext): Unit = {
-          context.mount(new LicenseCreatorServlet(app), "/")
-        }
+  private val server =
+    new Server(serverPort) {
+      setHandler(new ServletContextHandler(ServletContextHandler.NO_SESSIONS) {
+        addEventListener(new ScalatraListener() {
+          override def probeForCycleClass(classLoader: ClassLoader): (String, LifeCycle) = {
+            ("anonymous", new LifeCycle {
+              override def init(context: ServletContext): Unit = {
+                context.mount(new LicenseCreatorServlet(app), "/")
+              }
+            })
+          }
+        })
       })
     }
-  })
-  server.setHandler(context)
-  info(s"HTTP port is ${serverPort}")
+  
+  info(s"HTTP port is $serverPort")
 
   def start(): Try[Unit] = Try {
     info("Starting service...")
