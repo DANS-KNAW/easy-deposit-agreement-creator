@@ -1,0 +1,14 @@
+[Unit]
+Description=EASY Example Module Service
+
+[Service]
+ExecStart=/bin/java \
+   -Dlogback.configurationFile=/etc/opt/dans.knaw.nl/easy-license-creator/logback-service.xml \
+   -Dapp.home=/opt/dans.knaw.nl/easy-license-creator \
+   -jar /opt/dans.knaw.nl/easy-license-creator/bin/easy-license-creator.jar run-service
+
+User=easy-license-creator
+Group=easy-license-creator
+
+[Install]
+WantedBy=multi-user.target

@@ -184,12 +184,6 @@ package object internal {
     def emptyIfBlank: String = s.toOption.getOrElse("")
   }
 
-  implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
-    def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
-      Observable.using(resource)(observableFactory, t => { dispose(t); IOUtils.closeQuietly(t) }, disposeEagerly)
-    }
-  }
-
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
     def loadXML: Elem = XML.load(stream)
   }

@@ -22,6 +22,7 @@ import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.license.DatasetID
 import rx.lang.scala.Observable
+import nl.knaw.dans.easy.license._
 
 import scala.io.Source
 
