@@ -36,11 +36,9 @@ object Configuration {
 
     new Configuration(
       version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
-      properties = {
-        val ps = new PropertiesConfiguration()
-        ps.setDelimiterParsingDisabled(true)
-        ps.load(cfgPath.resolve("application.properties").toFile)
-        ps
+      properties = new PropertiesConfiguration() {
+        setDelimiterParsingDisabled(true)
+        load(cfgPath.resolve("application.properties").toFile)
       }
     )
   }
