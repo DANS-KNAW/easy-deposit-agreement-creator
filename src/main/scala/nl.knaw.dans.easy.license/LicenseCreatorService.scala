@@ -43,7 +43,7 @@ class LicenseCreatorService(serverPort: Int, app: LicenseCreatorApp) extends Deb
         })
       })
     }
-  
+
   info(s"HTTP port is $serverPort")
 
   def start(): Try[Unit] = Try {
