@@ -34,6 +34,7 @@ object Command extends App with DebugEnhancedLogging {
     verify()
   }
   val app = new LicenseCreatorApp(configuration)
+
   managed(app)
     .acquireAndGet(app => {
       for {
@@ -43,6 +44,7 @@ object Command extends App with DebugEnhancedLogging {
 //    .doIfSuccess(msg => println(s"OK: $msg"))
 //    .doIfFailure { case e => logger.error(e.getMessage, e) }
 //    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
+
 
   private def runSubcommand(app: LicenseCreatorApp): Try[FeedBackMessage] = {
     commandLine.subcommand
