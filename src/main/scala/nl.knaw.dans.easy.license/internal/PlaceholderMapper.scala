@@ -17,30 +17,29 @@ package nl.knaw.dans.easy.license.internal
 
 import java.io._
 import java.net.URLEncoder
-import java.util.Properties
-import java.{util => ju}
+import java.{ util => ju }
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
 import nl.knaw.dans.easy.license.FileAccessRight._
-import nl.knaw.dans.easy.license.{DatasetID, FileAccessRight, FileItem}
+import nl.knaw.dans.easy.license.{ DatasetID, FileAccessRight, FileItem }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import nl.knaw.dans.pf.language.emd.types.{IsoDate, MetadataItem}
-import nl.knaw.dans.pf.language.emd.{EasyMetadata, EmdDate, Term}
+import nl.knaw.dans.pf.language.emd.types._
+import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EmdDate, Term }
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 
 import scala.collection.JavaConverters._
 import scala.collection.SortedMap
-import scala.language.{implicitConversions, postfixOps}
+import scala.language.{ implicitConversions, postfixOps }
 import scala.util.Try
 
 class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParameters) extends DebugEnhancedLogging {
 
   type Table = ju.Collection[ju.Map[String, String]]
 
-  val metadataNames: Properties = loadProperties(metadataTermsFile)
+  val metadataNames: ju.Properties = loadProperties(metadataTermsFile)
     .doOnError(e => logger.error(s"could not read the metadata terms in $metadataTermsFile", e))
     .getOrElse(new ju.Properties())
 
@@ -50,7 +49,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     val emd = dataset.emd
 
     for {
-      headerMap <- if (parameters.isSample) sampleHeader(emd) else header(emd)
+      headerMap <- if (parameters.isSample) sampleHeader(emd)
+                   else header(emd)
       dansLogo = DansLogo -> encodeImage(dansLogoFile)
       footer = FooterText -> footerText(footerTextFile)
       depositorMap = depositor(dataset.easyUser)
@@ -58,7 +58,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       embargoMap = embargo(emd)
       dateTime = CurrentDateAndTime -> currentDateAndTime
       metadata = MetadataTable -> metadataTable(emd, dataset.audiences, dataset.datasetID)
-      files@(_, table) = FileTable -> filesTable(dataset.fileItems)
+      files @ (_, table) = FileTable -> filesTable(dataset.fileItems)
       hasFiles = HasFiles -> boolean2Boolean(!table.isEmpty)
     } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime + metadata + files + hasFiles
   }
@@ -138,18 +138,28 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   def currentDateAndTime: String = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
 
   def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
+    val newLine = "<br/>"
     emd.getTerms
       .asScala
       .map(term => (term, emd.getTerm(term).asScala))
       .filter { case (_, items) => items.nonEmpty }
-      .map { case (term, items) =>
-        val name = metadataNames.getProperty(term.getQualifiedName)
-        val (n, value) = term.getName match {
-          case t@Term.Name.AUDIENCE => (t, formatAudience(audiences, datasetID))
-          // head is safe as items cannot be empty at this point due to `filter` above
-          case t@Term.Name.ACCESSRIGHTS => (t, formatDatasetAccessRights(items.head))
-          case t => (t, items.mkString(", "))
-        }
+      .groupBy { case (term, _) => metadataNames.getProperty(term.getQualifiedName) }
+      .map { case (name, termsAndItems) =>
+        val (term, value) = termsAndItems.map { case (t, items) =>
+          val value = t.getName match {
+            case Term.Name.AUDIENCE => formatAudience(audiences, datasetID)
+            // head is safe as items cannot be empty at this point due to `filter` above
+            case Term.Name.ACCESSRIGHTS => formatDatasetAccessRights(items.head)
+            case Term.Name.SPATIAL =>
+              items.collect {
+                case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
+                case s: BasicString => s.getValue
+              }.mkString(newLine * 2)
+            case _ => items.mkString(newLine)
+          }
+
+          t.getName -> value
+        }.reduce[(Term.Name, String)] { case ((t1, s1), (t2, s2)) if t1 == t2 => (t1, s1 + newLine * 2 + s2) }
 
         val map = Map(
           MetadataKey -> name,
@@ -157,7 +167,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         )
 
         // keep the Term.Name around for sorting according to the Enum order
-        (n, map.keywordMapAsJava)
+        term -> map.keywordMapAsJava
       }
       .sortedJavaCollection
   }
@@ -165,15 +175,15 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
     Try(audiences.reduce(_ + "; " + _)) // may throw an UnsupportedOperationException
       .doOnError {
-        case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
-      }
+      case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
+    }
       .getOrElse("")
   }
 
   def formatDatasetAccessRights(item: MetadataItem): String = {
     Try(AccessCategory.valueOf(item.toString)) // may throw an IllegalArgumentException
       .map {
-        // @formatter:off
+      // @formatter:off
         case ANONYMOUS_ACCESS                 => "Anonymous"
         case OPEN_ACCESS                      => "Open Access"
         case OPEN_ACCESS_FOR_REGISTERED_USERS => "Open access for registered users"
@@ -183,9 +193,59 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         case NO_ACCESS                        => "Other"
         case FREELY_AVAILABLE                 => "Open Access"
         // @formatter:on
-      }
+    }
       .doOnError(_ => logger.warn("No available mapping; using acces category value directly"))
       .getOrElse(item.toString)
+  }
+
+  def formatEasSpatial(spatial: Spatial): String = {
+    trace(spatial)
+    val place = Option(spatial.getPlace).flatMap(_.getValue.toOption)
+    lazy val point = Option(spatial.getPoint).map(formatPoint)
+    lazy val box = Option(spatial.getBox).map(formatBox)
+    lazy val polygon = Option(spatial.getPolygon).map(formatPolygon)
+    lazy val s = point orElse box orElse polygon
+
+    place.map(p => s.map(s"$p\n" +)).getOrElse(s).getOrElse("")
+  }
+
+  private def formatPoint(point: Spatial.Point): String = {
+    trace(point)
+    val scheme = Option(point.getScheme).map("scheme = " + _ + ", ").getOrElse("")
+    val x = s"x = ${ point.getX }"
+    val y = s"y = ${ point.getY }"
+
+    // note: no space between $scheme and $x:
+    // if $scheme is defined, it will do the space after it by itself;
+    // if $scheme is not defined, it doesn't require the extra space.
+    s"<b>Point</b>: $scheme$x, $y"
+  }
+
+  private def formatBox(box: Spatial.Box): String = {
+    trace(box)
+    val scheme = Option(box.getScheme).map("scheme = " + _ + ", ").getOrElse("")
+    val north = s"north = ${ box.getNorth }"
+    val east = s"east = ${ box.getEast }"
+    val south = s"south = ${ box.getSouth }"
+    val west = s"west = ${ box.getWest }"
+
+    s"<b>Box:</b> $scheme$north, $east, $south, $west"
+  }
+
+  private def formatPolygon(polygon: Spatial.Polygon): String = {
+    trace(polygon)
+    val space = "\u00A0" * 4
+    val scheme = Option(polygon.getScheme).map(s"${ space }scheme = " + _ + "\n").getOrElse("")
+
+    def formatPart(start: String)(part: PolygonPart): String = {
+      s"""$space<i>$start:</i>
+         |${ s"$space$space${ part.getPlace }" }
+         |${ part.getPoints.asScala.map(point => s"$space${ space }Point: x = ${ point.getX }, y = ${ point.getY }").mkString("\n") }""".stripMargin
+    }
+
+    s"""<b>Polygon:</b>
+       |$scheme${ formatPart(s"Exterior")(polygon.getExterior) }
+       |${ polygon.getInterior.asScala.map(formatPart(s"Interior")).mkString("\n") }""".stripMargin
   }
 
   def formatFileAccessRights(accessRight: FileAccessRight.Value): String = {
@@ -205,7 +265,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .map { case FileItem(path, accessibleTo, checkSum) =>
         val map = Map(
           FilePath -> path,
-          FileChecksum -> (if (checkSum.isBlank || checkSum == "none") checkSumNotCalculated else checkSum),
+          FileChecksum -> (if (checkSum.isBlank || checkSum == "none") checkSumNotCalculated
+                           else checkSum),
           FileAccessibleTo -> formatFileAccessRights(accessibleTo)
         )
 

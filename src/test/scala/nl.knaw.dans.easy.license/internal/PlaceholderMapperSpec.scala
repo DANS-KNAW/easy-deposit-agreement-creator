@@ -45,7 +45,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   private val rights = mock[EmdRights]
   private val fedora = mock[Fedora]
 
-  implicit val parameters = Parameters(
+  implicit val parameters: Parameters = Parameters(
     templateResourceDir = new File(testDir, "placeholdermapper"),
     datasetID = null,
     isSample = false,
@@ -115,7 +115,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "sampleHeader" should "yield a map of the date and title" in {
-    implicit val parameters = Parameters(
+    implicit val parameters: Parameters = Parameters(
       templateResourceDir = new File(testDir, "placeholdermapper"),
       datasetID = null,
       isSample = true,
@@ -140,7 +140,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "yield a map with default values if the actual values are null" in {
-    implicit val parameters = Parameters(
+    implicit val parameters: Parameters = Parameters(
       templateResourceDir = new File(testDir, "placeholdermapper"),
       datasetID = null,
       isSample = true,
@@ -418,7 +418,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerm _ expects abstractTerm returning abstractItems
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain allOf (
-      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4, item5, item6").asJava,
+      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
       Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
       Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava
     )
