@@ -145,38 +145,44 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .filter { case (_, items) => items.nonEmpty }
       .groupBy { case (term, _) => metadataNames.getProperty(term.getQualifiedName) }
       .map { case (name, termsAndItems) =>
-        val (term, value) = termsAndItems.map { case (t, items) =>
-          val value = t.getName match {
-            case Term.Name.AUDIENCE => formatAudience(audiences, datasetID)
-            // head is safe as items cannot be empty at this point due to `filter` above
-            case Term.Name.ACCESSRIGHTS => formatDatasetAccessRights(items.head)
-            case Term.Name.SPATIAL =>
-              items.collect {
-                case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
-                case s: BasicString => s.getValue
-              }.mkString(newLine * 2)
-            case _ => items.mkString(newLine)
-          }
-
-          t.getName -> value
+        val (termName, value) = termsAndItems.map {
+          case (t, _) if t.getName == Term.Name.AUDIENCE =>
+            t.getName -> formatAudience(audiences, datasetID)
+          case (t, items) if t.getName == Term.Name.ACCESSRIGHTS =>
+            t.getName -> formatDatasetAccessRights(items.head)
+          case (t, items) if t.getName == Term.Name.SPATIAL =>
+            t.getName -> items.collect {
+              case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
+              case s: BasicString => s.getValue
+            }.mkString(newLine * 2)
+          case (t, items) if t.getName == Term.Name.LICENSE =>
+            t.getName -> items.map {
+              case s: BasicString if s.getValue == "accept" => "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+              case s => s.toString
+            }.mkString(newLine)
+          case (t, items) if t.getName == Term.Name.RELATION =>
+            t.getName -> items.map {
+              case r: Relation => formatRelation(r)
+              case s => s.toString
+            }.mkString(newLine)
+          case (t, items) => t.getName -> items.mkString(newLine)
         }.reduce[(Term.Name, String)] { case ((t1, s1), (t2, s2)) if t1 == t2 => (t1, s1 + newLine * 2 + s2) }
 
-        val map = Map(
+        // keep the Term.Name around for sorting according to the Enum order
+        termName -> Map(
           MetadataKey -> name,
           MetadataValue -> value
-        )
-
-        // keep the Term.Name around for sorting according to the Enum order
-        term -> map.keywordMapAsJava
+        ).keywordMapAsJava
       }
       .sortedJavaCollection
   }
 
   def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
-    Try(audiences.reduce(_ + "; " + _)) // may throw an UnsupportedOperationException
+    // may throw an UnsupportedOperationException
+    Try(audiences.reduce(_ + "; " + _))
       .doOnError {
-      case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
-    }
+        case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
+      }
       .getOrElse("")
   }
 
@@ -199,7 +205,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   def formatEasSpatial(spatial: Spatial): String = {
-    trace(spatial)
     val place = Option(spatial.getPlace).flatMap(_.getValue.toOption)
     lazy val point = Option(spatial.getPoint).map(formatPoint)
     lazy val box = Option(spatial.getBox).map(formatBox)
@@ -210,7 +215,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   private def formatPoint(point: Spatial.Point): String = {
-    trace(point)
     val scheme = Option(point.getScheme).map("scheme = " + _ + ", ").getOrElse("")
     val x = s"x = ${ point.getX }"
     val y = s"y = ${ point.getY }"
@@ -222,7 +226,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   private def formatBox(box: Spatial.Box): String = {
-    trace(box)
     val scheme = Option(box.getScheme).map("scheme = " + _ + ", ").getOrElse("")
     val north = s"north = ${ box.getNorth }"
     val east = s"east = ${ box.getEast }"
@@ -233,7 +236,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   private def formatPolygon(polygon: Spatial.Polygon): String = {
-    trace(polygon)
     val space = "\u00A0" * 4
     val scheme = Option(polygon.getScheme).map(s"${ space }scheme = " + _ + "\n").getOrElse("")
 
@@ -246,6 +248,15 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     s"""<b>Polygon:</b>
        |$scheme${ formatPart(s"Exterior")(polygon.getExterior) }
        |${ polygon.getInterior.asScala.map(formatPart(s"Interior")).mkString("\n") }""".stripMargin
+  }
+
+  private def formatRelation(relation: Relation): String = {
+    val title = Option(relation.getSubjectTitle).flatMap(_.getValue.toOption.map("title = " +))
+    val url = Option(relation.getSubjectLink).map("url = " +)
+
+    title.map(t => url.fold(t)(u => s"$t, $u"))
+      .orElse(url)
+      .getOrElse("")
   }
 
   def formatFileAccessRights(accessRight: FileAccessRight.Value): String = {
