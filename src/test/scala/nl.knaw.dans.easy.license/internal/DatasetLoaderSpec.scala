@@ -16,15 +16,15 @@
 package nl.knaw.dans.easy.license.internal
 
 import java.io.File
+import java.sql.{ Connection, PreparedStatement, ResultSet }
 import java.util
 import javax.naming.directory.BasicAttributes
 
-import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.license._
 import nl.knaw.dans.pf.language.emd._
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
 import rx.lang.scala.Observable
 import rx.lang.scala.observers.TestSubscriber
 
@@ -35,6 +35,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
 
   private val fedoraMock = mock[Fedora]
   private val ldapMock = mock[Ldap]
+  private val fsrdbMock = mock[Connection]
 
   val (userAttributes, expectedUser) = {
     val attrs = new BasicAttributes
@@ -52,9 +53,10 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     (attrs, user)
   }
 
-  implicit val parameters = new DatabaseParameters {
-    val fedora: Fedora = fedoraMock
-    val ldap: Ldap = ldapMock
+  implicit val parameters: DatabaseParameters = new DatabaseParameters {
+    override val fedora: Fedora = fedoraMock
+    override val ldap: Ldap = ldapMock
+    override val fsrdb: Connection = fsrdbMock
   }
 
   before {
@@ -165,29 +167,36 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     val pid1 = "pid1"
     val pid2 = "pid2"
     val fi1@FileItem(path1, accTo1, chcksm1) = FileItem("path1", FileAccessRight.NONE, "chcksm1")
-    val fi2@FileItem(path2, accTo2, chcksm2) = FileItem("path2", FileAccessRight.KNOWN, "chcksm2")
+    val fi2@FileItem(path2, accTo2, _) = FileItem("path2", FileAccessRight.KNOWN, null)
 
-    val pa1 = IOUtils.toInputStream(<foo><path>{path1}</path><accessibleTo>{accTo1}</accessibleTo></foo>.toString)
-    val pa2 = IOUtils.toInputStream(<foo><path>{path2}</path><accessibleTo>{accTo2}</accessibleTo></foo>.toString)
+    val mockedPrepStatement = mock[PreparedStatement]
+    val mockedResultSet = mock[ResultSet]
 
-    val dp1 = mock[DatastreamProfile]
-    val dp2 = mock[DatastreamProfile]
-
-    dp1.getDsChecksum _ expects () returning chcksm1
-    dp2.getDsChecksum _ expects () returning chcksm2
-    fedoraMock.queryRiSearch _ expects where[String](_ contains id) returning Observable.just(pid1, pid2)
-    fedoraMock.getFileMetadata _ expects pid1 returning Observable.just(pa1)
-    fedoraMock.getFileMetadata _ expects pid2 returning Observable.just(pa2)
-    fedoraMock.getFile _ expects pid1 returning Observable.just(dp1)
-    fedoraMock.getFile _ expects pid2 returning Observable.just(dp2)
+    inSequence {
+      (fsrdbMock.prepareStatement(_: String)) expects "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ?;" returning mockedPrepStatement
+      mockedPrepStatement.setString _ expects(1, id)
+      mockedPrepStatement.executeQuery _ expects() returning mockedResultSet
+      mockedResultSet.next _ expects() returning true
+      (mockedResultSet.getString(_: String)) expects "pid" returning pid1
+      (mockedResultSet.getString(_: String)) expects "path" returning path1
+      (mockedResultSet.getString(_: String)) expects "sha1checksum" returning chcksm1
+      (mockedResultSet.getString(_: String)) expects "accessible_to" returning accTo1.toString
+      mockedResultSet.next _ expects() returning true
+      (mockedResultSet.getString(_: String)) expects "pid" returning pid2
+      (mockedResultSet.getString(_: String)) expects "path" returning path2
+      (mockedResultSet.getString(_: String)) expects "sha1checksum" returning "null"
+      (mockedResultSet.getString(_: String)) expects "accessible_to" returning accTo2.toString
+      mockedResultSet.next _ expects() returning false
+      mockedResultSet.close _ expects ()
+      mockedPrepStatement.close _ expects ()
+    }
 
     val loader = DatasetLoaderImpl()
     val testObserver = TestSubscriber[Set[FileItem]]()
-    // toSet such that concurrency thingies (order of results) do not matter
     loader.getFilesInDataset(id).toSet.subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValues(Set(fi1, fi2))
+    testObserver.assertValue(Set(fi1, fi2))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }

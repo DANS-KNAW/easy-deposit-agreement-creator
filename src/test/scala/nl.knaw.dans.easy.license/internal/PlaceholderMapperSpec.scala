@@ -43,14 +43,14 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   private val ident = mock[EmdIdentifier]
   private val date = mock[EmdDate]
   private val rights = mock[EmdRights]
-  private val fedora = mock[Fedora]
 
   implicit val parameters: Parameters = Parameters(
     templateResourceDir = new File(testDir, "placeholdermapper"),
     datasetID = null,
     isSample = false,
-    fedora = fedora,
-    ldap = null)
+    fedora = null,
+    ldap = null,
+    fsrdb = null)
 
   before {
     new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateResourceDir)
@@ -119,8 +119,9 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       templateResourceDir = new File(testDir, "placeholdermapper"),
       datasetID = null,
       isSample = true,
-      fedora = fedora,
-      ldap = null)
+      fedora = null,
+      ldap = null,
+      fsrdb = null)
     val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects () never()
@@ -144,8 +145,9 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       templateResourceDir = new File(testDir, "placeholdermapper"),
       datasetID = null,
       isSample = true,
-      fedora = fedora,
-      ldap = null)
+      fedora = null,
+      ldap = null,
+      fsrdb = null)
 
     emd.getEmdIdentifier _ expects () never()
     ident.getDansManagedDoi _ expects () never()

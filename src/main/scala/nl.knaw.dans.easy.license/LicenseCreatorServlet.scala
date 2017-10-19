@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.license
 
 import java.io.ByteArrayOutputStream
 
-import nl.knaw.dans.easy.license.internal.{ Parameters => Params, _ }
+import nl.knaw.dans.easy.license.internal.{ Parameters => Params }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatra._
 
@@ -34,7 +34,8 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
       datasetID = params("datasetId"),
       isSample = false,
       fedoraClient = app.fedoraClient,
-      ldapContext = app.ldapContext)
+      ldapContext = app.ldapContext,
+      fsrdb = app.fsrbd)
 
     var success = false // TODO: get rid of var
     val output = new ByteArrayOutputStream()

@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.license.internal
 
+import java.sql.Connection
 import javax.naming.directory.Attributes
 
 import nl.knaw.dans.easy.license.{ DatasetID, DepositorID, FileAccessRight, FileItem }
@@ -145,8 +146,9 @@ trait DatasetLoader {
 
 case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends DatasetLoader {
 
-  val fedora: Fedora = parameters.fedora
-  val ldap: Ldap = parameters.ldap
+  private val fedora: Fedora = parameters.fedora
+  private val ldap: Ldap = parameters.ldap
+  private val fsrdb: Connection = parameters.fsrdb
 
   def getAudience(audienceID: AudienceID): Observable[String] = {
     fedora.getDC(audienceID)
@@ -180,35 +182,34 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
     })
   }
 
-  private def getFileItem(filePid: FileID): Observable[FileItem] = {
-    val pathAndAccessCategory = fedora.getFileMetadata(filePid)
-      .map(resource.managed(_).acquireAndGet(is => {
-        val xml = is.loadXML
-        val path = (xml \\ "path").text
-        val accTo = FileAccessRight.valueOf(xml \\ "accessibleTo" text)
-          .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $filePid"))
-
-        (path, accTo)
-      }))
-      .subscribeOn(IOScheduler())
-
-    val checksums = fedora.getFile(filePid).map(_.getDsChecksum).subscribeOn(IOScheduler())
-
-    pathAndAccessCategory
-      .combineLatestWith(checksums) {
-        case ((p, ac), cs) => FileItem(p, ac, cs)
-      }
-  }
-
   def getFilesInDataset(datasetID: DatasetID): Observable[FileItem] = {
-    val query = "PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> " +
-      "PREFIX fmodel: <info:fedora/fedora-system:def/model#> " +
-      s"SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetID> . " +
-      "?s fmodel:hasModel <info:fedora/easy-model:EDM1FILE>}"
+    Class.forName("org.postgresql.Driver")
+    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ?;"
+    Observable.using(fsrdb.prepareStatement(query))(
+      prepStatement => {
+        prepStatement.setString(1, datasetID)
 
-    fedora.queryRiSearch(query)
-      .subscribeOn(IOScheduler())
-      .flatMap(getFileItem)
+        Observable.using(prepStatement.executeQuery())(
+          resultSet => Observable.defer(Observable.just(resultSet.next()))
+            .repeat
+            .takeWhile(b => b)
+            .map(_ => {
+              val pid = resultSet.getString("pid")
+              val path = resultSet.getString("path")
+              val sha1checksum = resultSet.getString("sha1checksum")
+              val accessibleTo = FileAccessRight.valueOf(resultSet.getString("accessible_to"))
+                .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $pid"))
+
+              // TODO make checksum optional
+              FileItem(path, accessibleTo, if (sha1checksum == "null") null else sha1checksum)
+            }),
+          _.close(),
+          disposeEagerly = true
+        )
+      },
+      _.close(),
+      disposeEagerly = true
+    )
   }
 
   private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {
