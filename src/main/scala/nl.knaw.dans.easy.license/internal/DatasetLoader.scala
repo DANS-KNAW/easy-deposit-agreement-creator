@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.license.internal
 
+import java.sql.SQLException
 import javax.naming.directory.Attributes
 
 import nl.knaw.dans.easy.license.{ DatasetID, DepositorID, FileAccessRight, FileItem }
@@ -59,7 +60,8 @@ case class Dataset(datasetID: DatasetID,
                    emd: EasyMetadata,
                    easyUser: EasyUser,
                    audiences: Seq[AudienceTitle],
-                   fileItems: Seq[FileItem]) {
+                   fileItems: Seq[FileItem],
+                   filesLimited: Boolean) {
 
   require(datasetID != null, "'datasetID' must be defined")
 
@@ -94,22 +96,6 @@ trait DatasetLoader {
   def getDatasetById(datasetID: DatasetID): Observable[Dataset]
 
   /**
-    * Create a `Dataset` based on the given `datasetID`, `emd` and `easyUser`, while querying for
-    * the audience titles and the files belonging to the dataset.
-    *
-    * @param datasetID the identifier of the dataset
-    * @param emd the `EasyMetadata` of the dataset
-    * @param easyUser the depositor of the dataset
-    * @return the dataset corresponding to `datasetID`
-    */
-  def getDataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser): Observable[Dataset] = {
-    val audiences = getAudiences(emd.getEmdAudience).toSeq
-    val files = getFilesInDataset(datasetID).toSeq
-
-    audiences.combineLatestWith(files)(Dataset(datasetID, emd, easyUser, _, _))
-  }
-
-  /**
     * Create a `Dataset` based on the given `datasetID`, `emd`, `depositorID` and `files`, while
     * querying for the audience titles and the depositor data.
     *
@@ -119,11 +105,15 @@ trait DatasetLoader {
     * @param files the files belonging to the dataset
     * @return the dataset corresponding to `datasetID`
     */
-  def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem]): Observable[Dataset] = {
+  def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem], fileLimit: Int): Observable[Dataset] = {
     val audiences = getAudiences(emd.getEmdAudience).toSeq
     val easyUser = getUserById(depositorID)
+    val filesWereLimited = countFiles(datasetID).map(fileLimit <)
 
-    easyUser.combineLatestWith(audiences)(Dataset(datasetID, emd, _, _, files))
+    easyUser.combineLatest(audiences)
+      .combineLatestWith(filesWereLimited) {
+        case ((user, auds), limited) => Dataset(datasetID, emd, user, auds, files, limited)
+      }
   }
 
   /**
@@ -133,6 +123,14 @@ trait DatasetLoader {
     * @return the files corresponding to the dataset with identifier `datasetID`
     */
   def getFilesInDataset(datasetID: DatasetID): Observable[FileItem]
+
+  /**
+   * Return the number of files corresponding to the dataset with identifier `datasetID`
+   *
+   * @param datasetID the identifier of the dataset
+   * @return the number of files corresponding to the dataset with identifier `datasetID`
+   */
+  def countFiles(datasetID: DatasetID): Observable[Int]
 
   /**
     * Queries the user data given a `depositorID`
@@ -163,11 +161,12 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
     // publish because emd is used in multiple places here
     emdObs.publish(emd => {
       emd.combineLatestWith(depositorObs) {
-        (emdValue, depositorValue) => (audiences: Seq[AudienceTitle]) => (files: Seq[FileItem]) =>
-          Dataset(datasetID, emdValue, depositorValue, audiences, files)
+        (emdValue, depositorValue) => (audiences: Seq[AudienceTitle]) => (files: Seq[FileItem]) => (limited: Boolean) =>
+          Dataset(datasetID, emdValue, depositorValue, audiences, files, limited)
       }
         .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_(_))
         .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_(_))
+        .combineLatestWith(countFiles(datasetID).map(parameters.fileLimit <))(_(_))
         .single
         .onErrorResumeNext {
           case e: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID, e))
@@ -179,16 +178,16 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
 
   def getFilesInDataset(datasetID: DatasetID): Observable[FileItem] = {
     Class.forName("org.postgresql.Driver")
-    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ? ORDER BY pid;"
+    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ? ORDER BY pid LIMIT ?;"
     Observable.using(parameters.fsrdb.prepareStatement(query))(
       prepStatement => {
         prepStatement.setString(1, datasetID)
+        prepStatement.setInt(2, parameters.fileLimit)
 
         Observable.using(prepStatement.executeQuery())(
           resultSet => Observable.defer(Observable.just(resultSet.next()))
             .repeat
             .takeWhile(b => b)
-            .take(parameters.fileLimit)
             .map(_ => {
               val pid = resultSet.getString("pid")
               val path = resultSet.getString("path")
@@ -199,6 +198,29 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
               // TODO make checksum optional
               FileItem(path, accessibleTo, if (sha1checksum == "null") null else sha1checksum)
             }),
+          _.close(),
+          disposeEagerly = true
+        )
+      },
+      _.close(),
+      disposeEagerly = true
+    )
+  }
+
+  def countFiles(datasetID: DatasetID): Observable[Int] = {
+    Class.forName("org.postgresql.Driver")
+    val query = "SELECT COUNT(pid) FROM easy_files WHERE dataset_sid = ?;"
+    Observable.using(parameters.fsrdb.prepareStatement(query))(
+      prepStatement => {
+        prepStatement.setString(1, datasetID)
+
+        Observable.using(prepStatement.executeQuery())(
+          resultSet => {
+            if (resultSet.next())
+              Observable.just(resultSet.getInt("count"))
+            else
+              Observable.error(new SQLException(s"unable to count the number of files in dataset $datasetID"))
+          },
           _.close(),
           disposeEagerly = true
         )

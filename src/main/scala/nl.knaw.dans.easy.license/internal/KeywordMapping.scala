@@ -68,4 +68,5 @@ case object FileAccessibleTo             extends KeywordMapping { val keyword = 
 
 // file limit
 case object LimitFiles                   extends KeywordMapping { val keyword = "limitFiles" }
+case object ShouldLimitFiles             extends KeywordMapping { val keyword = "shouldLimitFiles" }
 // @formatter:on

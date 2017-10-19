@@ -63,7 +63,7 @@ class LicenseCreatorWithDatasetLoader(datasetLoader: DatasetLoader,
   // used in Easy-Ingest-Flow
   def createLicense(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])
                    (outputStream: OutputStream): Observable[Nothing] = {
-    datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files)
+    datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files, parameters.fileLimit)
       .flatMap(createLicense(_)(outputStream).toObservable)
       .filter(_ => false)
       .asInstanceOf[Observable[Nothing]]

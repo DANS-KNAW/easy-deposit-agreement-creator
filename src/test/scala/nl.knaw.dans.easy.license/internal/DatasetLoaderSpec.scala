@@ -149,16 +149,20 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
         if (did == id) Observable.from(files)
         else fail(s"not the correct datasetID, was $did, should be $id")
       }
+
+      override def countFiles(datasetID: DatasetID): Observable[Int] = {
+        Observable.just(3)
+      }
     }
-    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Seq[FileItem])]()
+    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Seq[FileItem], Boolean)]()
     loader.getDatasetById(id)
       // there is no equals defined for the emd, so I need to unpack here
-      .map { case Dataset(datasetID, emd, usr, titles, fileItems) =>
-        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr, titles, fileItems) }
+      .map { case Dataset(datasetID, emd, usr, titles, fileItems, allFilesListed) =>
+        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr, titles, fileItems, allFilesListed) }
       .subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValue((id, Seq("descr foo bar"), user, audiences, files))
+    testObserver.assertValue((id, Seq("descr foo bar"), user, audiences, files, true))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }
@@ -174,8 +178,9 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     val mockedResultSet = mock[ResultSet]
 
     inSequence {
-      (fsrdbMock.prepareStatement(_: String)) expects "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ?;" returning mockedPrepStatement
+      (fsrdbMock.prepareStatement(_: String)) expects * returning mockedPrepStatement
       mockedPrepStatement.setString _ expects(1, id)
+      mockedPrepStatement.setString _ expects(2, "2")
       mockedPrepStatement.executeQuery _ expects() returning mockedResultSet
       mockedResultSet.next _ expects() returning true
       (mockedResultSet.getString(_: String)) expects "pid" returning pid1
@@ -187,8 +192,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
       (mockedResultSet.getString(_: String)) expects "path" returning path2
       (mockedResultSet.getString(_: String)) expects "sha1checksum" returning "null"
       (mockedResultSet.getString(_: String)) expects "accessible_to" returning accTo2.toString
-      // no more calls to the resultSet because of the cut-off limit set to 2 for this test
-      mockedResultSet.next _ expects() returning true never()
+      mockedResultSet.next _ expects() returning false
       mockedResultSet.close _ expects()
       mockedPrepStatement.close _ expects()
     }
@@ -199,6 +203,33 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
 
     testObserver.awaitTerminalEvent()
     testObserver.assertValue(Set(fi1, fi2))
+    testObserver.assertNoErrors()
+    testObserver.assertCompleted()
+  }
+
+  "countFiles" should "return the number of files contained in the dataset corresponding to the given datasetID" in {
+    val id = "testID"
+    val fileCount = 500
+
+    val mockedPrepStatement = mock[PreparedStatement]
+    val mockedResultSet = mock[ResultSet]
+
+    inSequence {
+      (fsrdbMock.prepareStatement(_: String)) expects * returning mockedPrepStatement
+      mockedPrepStatement.setString _ expects(1, id)
+      mockedPrepStatement.executeQuery _ expects() returning mockedResultSet
+      mockedResultSet.next _ expects() returning true
+      (mockedResultSet.getInt(_: String)) expects "count" returning fileCount
+      mockedResultSet.close _ expects()
+      mockedPrepStatement.close _ expects()
+    }
+
+    val loader = DatasetLoaderImpl()
+    val testObserver = TestSubscriber[Int]()
+    loader.countFiles(id).subscribe(testObserver)
+
+    testObserver.awaitTerminalEvent()
+    testObserver.assertValue(fileCount)
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }
