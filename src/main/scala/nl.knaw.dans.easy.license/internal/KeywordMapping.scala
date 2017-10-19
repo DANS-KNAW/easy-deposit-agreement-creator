@@ -65,4 +65,7 @@ case object FileTable                    extends KeywordMapping { val keyword = 
 case object FilePath                     extends KeywordMapping { val keyword = "FilePath" }
 case object FileChecksum                 extends KeywordMapping { val keyword = "FileChecksum" }
 case object FileAccessibleTo             extends KeywordMapping { val keyword = "FileAccessibleTo" }
+
+// file limit
+case object LimitFiles                   extends KeywordMapping { val keyword = "limitFiles" }
 // @formatter:on
