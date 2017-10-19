@@ -32,6 +32,7 @@ trait DatabaseParameters {
   val fedora: Fedora
   val ldap: Ldap
   val fsrdb: Connection
+  val fileLimit: Int
 }
 
 case class Parameters(override val templateResourceDir: File,
@@ -39,11 +40,12 @@ case class Parameters(override val templateResourceDir: File,
                       override val isSample: Boolean,
                       fedora: Fedora,
                       ldap: Ldap,
-                      fsrdb: Connection)
+                      fsrdb: Connection,
+                      fileLimit: Int)
   extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters {
 
-  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapContext: LdapContext, fsrdb: (String, String, String)) = {
-    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(ldapContext), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3))
+  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapContext: LdapContext, fsrdb: (String, String, String), fileLimit: Int) = {
+    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(ldapContext), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3), fileLimit)
   }
 
   override def toString: String = super.toString

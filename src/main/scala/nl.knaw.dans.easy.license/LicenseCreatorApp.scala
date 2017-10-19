@@ -32,6 +32,7 @@ class LicenseCreatorApp(configuration: Configuration) extends AutoCloseable {
     configuration.properties.getString("fsrdb.db-connection-url"),
     configuration.properties.getString("fsrdb.db-connection-username"),
     configuration.properties.getString("fsrdb.db-connection-password"))
+  val fileLimit: Int = configuration.properties.getInt("license.fileLimit")
   val ldapContext: InitialLdapContext = {
     import java.{ util => ju }
 

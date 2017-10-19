@@ -35,7 +35,8 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
       isSample = false,
       fedoraClient = app.fedoraClient,
       ldapContext = app.ldapContext,
-      fsrdb = app.fsrbd)
+      fsrdb = app.fsrbd,
+      fileLimit = app.fileLimit)
 
     var success = false // TODO: get rid of var
     val output = new ByteArrayOutputStream()

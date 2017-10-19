@@ -57,6 +57,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     override val fedora: Fedora = fedoraMock
     override val ldap: Ldap = ldapMock
     override val fsrdb: Connection = fsrdbMock
+    override val fileLimit: Int = 2
   }
 
   before {
@@ -166,8 +167,8 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     val id = "testID"
     val pid1 = "pid1"
     val pid2 = "pid2"
-    val fi1@FileItem(path1, accTo1, chcksm1) = FileItem("path1", FileAccessRight.NONE, "chcksm1")
-    val fi2@FileItem(path2, accTo2, _) = FileItem("path2", FileAccessRight.KNOWN, null)
+    val fi1 @ FileItem(path1, accTo1, chcksm1) = FileItem("path1", FileAccessRight.NONE, "chcksm1")
+    val fi2 @ FileItem(path2, accTo2, _) = FileItem("path2", FileAccessRight.KNOWN, null)
 
     val mockedPrepStatement = mock[PreparedStatement]
     val mockedResultSet = mock[ResultSet]
@@ -186,9 +187,10 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
       (mockedResultSet.getString(_: String)) expects "path" returning path2
       (mockedResultSet.getString(_: String)) expects "sha1checksum" returning "null"
       (mockedResultSet.getString(_: String)) expects "accessible_to" returning accTo2.toString
-      mockedResultSet.next _ expects() returning false
-      mockedResultSet.close _ expects ()
-      mockedPrepStatement.close _ expects ()
+      // no more calls to the resultSet because of the cut-off limit set to 2 for this test
+      mockedResultSet.next _ expects() returning true never()
+      mockedResultSet.close _ expects()
+      mockedPrepStatement.close _ expects()
     }
 
     val loader = DatasetLoaderImpl()

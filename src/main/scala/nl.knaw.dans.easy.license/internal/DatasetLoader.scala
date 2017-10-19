@@ -15,7 +15,6 @@
  */
 package nl.knaw.dans.easy.license.internal
 
-import java.sql.Connection
 import javax.naming.directory.Attributes
 
 import nl.knaw.dans.easy.license.{ DatasetID, DepositorID, FileAccessRight, FileItem }
@@ -146,21 +145,17 @@ trait DatasetLoader {
 
 case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends DatasetLoader {
 
-  private val fedora: Fedora = parameters.fedora
-  private val ldap: Ldap = parameters.ldap
-  private val fsrdb: Connection = parameters.fsrdb
-
   def getAudience(audienceID: AudienceID): Observable[String] = {
-    fedora.getDC(audienceID)
+    parameters.fedora.getDC(audienceID)
       .map(resource.managed(_).acquireAndGet(_.loadXML \\ "title" text))
       .subscribeOn(IOScheduler())
   }
 
   def getDatasetById(datasetID: DatasetID): Observable[Dataset] = {
-    val emdObs = fedora.getEMD(datasetID)
+    val emdObs = parameters.fedora.getEMD(datasetID)
       .map(resource.managed(_).acquireAndGet(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal))
       .subscribeOn(IOScheduler())
-    val depositorObs = fedora.getAMD(datasetID)
+    val depositorObs = parameters.fedora.getAMD(datasetID)
       .map(resource.managed(_).acquireAndGet(_.loadXML \\ "depositorId" text))
       .subscribeOn(IOScheduler())
       .flatMap(getUserById(_).subscribeOn(IOScheduler()))
@@ -184,8 +179,8 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
 
   def getFilesInDataset(datasetID: DatasetID): Observable[FileItem] = {
     Class.forName("org.postgresql.Driver")
-    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ?;"
-    Observable.using(fsrdb.prepareStatement(query))(
+    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ? ORDER BY pid;"
+    Observable.using(parameters.fsrdb.prepareStatement(query))(
       prepStatement => {
         prepStatement.setString(1, datasetID)
 
@@ -193,6 +188,7 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
           resultSet => Observable.defer(Observable.just(resultSet.next()))
             .repeat
             .takeWhile(b => b)
+            .take(parameters.fileLimit)
             .map(_ => {
               val pid = resultSet.getString("pid")
               val path = resultSet.getString("path")
@@ -221,7 +217,8 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
   }
 
   def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
-    ldap.query(depositorID)
+    parameters.ldap
+      .query(depositorID)
       .map(implicit attrs => {
         val name = getOrEmpty("displayname")
         val org = getOrEmpty("o")
