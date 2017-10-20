@@ -180,7 +180,7 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     inSequence {
       (fsrdbMock.prepareStatement(_: String)) expects * returning mockedPrepStatement
       mockedPrepStatement.setString _ expects(1, id)
-      mockedPrepStatement.setString _ expects(2, "2")
+      mockedPrepStatement.setInt _ expects(2, 2)
       mockedPrepStatement.executeQuery _ expects() returning mockedResultSet
       mockedResultSet.next _ expects() returning true
       (mockedResultSet.getString(_: String)) expects "pid" returning pid1
