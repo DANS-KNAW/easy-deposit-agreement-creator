@@ -195,8 +195,7 @@ case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends Da
               val accessibleTo = FileAccessRight.valueOf(resultSet.getString("accessible_to"))
                 .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $pid"))
 
-              // TODO make checksum optional
-              FileItem(path, accessibleTo, if (sha1checksum == "null") null else sha1checksum)
+              FileItem(path, accessibleTo, if (sha1checksum == "null") None else Some(sha1checksum))
             }),
           _.close(),
           disposeEagerly = true

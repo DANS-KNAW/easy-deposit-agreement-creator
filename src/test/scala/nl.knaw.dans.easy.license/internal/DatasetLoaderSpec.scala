@@ -124,8 +124,8 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     val user = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
     val audiences = Seq("aud1", "aud2")
     val files = Seq(
-      FileItem("path1", FileAccessRight.RESTRICTED_GROUP, "chs1"),
-      FileItem("path2", FileAccessRight.KNOWN, "chs2")
+      FileItem("path1", FileAccessRight.RESTRICTED_GROUP, Some("chs1")),
+      FileItem("path2", FileAccessRight.KNOWN, Some("chs2"))
     )
 
     val amdStream = IOUtils.toInputStream(<foo><depositorId>{depID}</depositorId></foo>.toString)
@@ -171,8 +171,8 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     val id = "testID"
     val pid1 = "pid1"
     val pid2 = "pid2"
-    val fi1 @ FileItem(path1, accTo1, chcksm1) = FileItem("path1", FileAccessRight.NONE, "chcksm1")
-    val fi2 @ FileItem(path2, accTo2, _) = FileItem("path2", FileAccessRight.KNOWN, null)
+    val fi1 @ FileItem(path1, accTo1, Some(chcksm1)) = FileItem("path1", FileAccessRight.NONE, Some("chcksm1"))
+    val fi2 @ FileItem(path2, accTo2, _) = FileItem("path2", FileAccessRight.KNOWN, None)
 
     val mockedPrepStatement = mock[PreparedStatement]
     val mockedResultSet = mock[ResultSet]

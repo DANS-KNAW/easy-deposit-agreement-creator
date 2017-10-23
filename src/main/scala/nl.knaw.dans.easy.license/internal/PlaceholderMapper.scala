@@ -278,8 +278,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .map { case FileItem(path, accessibleTo, checkSum) =>
         val map = Map(
           FilePath -> path,
-          FileChecksum -> (if (checkSum.isBlank || checkSum == "none") checkSumNotCalculated
-                           else checkSum),
+          FileChecksum -> checkSum.filterNot(_.isBlank).filterNot("none" ==).getOrElse(checkSumNotCalculated),
           FileAccessibleTo -> formatFileAccessRights(accessibleTo)
         )
 

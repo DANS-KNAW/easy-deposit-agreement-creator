@@ -499,9 +499,9 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
   "filesTable" should "give a mapping of files and checksums in the dataset" in {
     val input = Seq(
-      FileItem("ABC", FileAccessRight.ANONYMOUS, "123"),
-      FileItem("DEF", FileAccessRight.KNOWN, "none"),
-      FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, "")
+      FileItem("ABC", FileAccessRight.ANONYMOUS, Some("123")),
+      FileItem("DEF", FileAccessRight.KNOWN, Some("none")),
+      FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, Some(""))
     )
 
     testInstance.filesTable(input).asScala should contain allOf (
