@@ -32,7 +32,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
     val parameters = new Params(
       templateResourceDir = app.templateResourceDir,
       datasetID = params("datasetId"),
-      isSample = false,
+      isSample = params.get("sample").fold(false)(_.toBoolean),
       fedoraClient = app.fedoraClient,
       ldapContext = app.ldapContext,
       fsrdb = app.fsrbd,
