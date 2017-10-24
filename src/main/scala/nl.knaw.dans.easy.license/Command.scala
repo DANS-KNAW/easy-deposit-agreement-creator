@@ -54,7 +54,7 @@ object Command extends App with DebugEnhancedLogging {
           isSample = commandLine.isSample(),
           fedoraClient = app.fedoraClient,
           ldapContext = app.ldapContext,
-          fsrdb = app.fsrbd,
+          fsrdb = app.fsrdb,
           fileLimit = app.fileLimit)
         val outputFile = commandLine.outputFile()
 

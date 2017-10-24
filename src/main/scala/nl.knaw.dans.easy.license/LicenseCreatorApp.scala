@@ -28,7 +28,7 @@ class LicenseCreatorApp(configuration: Configuration) extends AutoCloseable {
     configuration.properties.getString("fcrepo.url"),
     configuration.properties.getString("fcrepo.user"),
     configuration.properties.getString("fcrepo.password")))
-  val fsrbd: (String, String, String) = (
+  val fsrdb: (String, String, String) = (
     configuration.properties.getString("fsrdb.db-connection-url"),
     configuration.properties.getString("fsrdb.db-connection-username"),
     configuration.properties.getString("fsrdb.db-connection-password"))

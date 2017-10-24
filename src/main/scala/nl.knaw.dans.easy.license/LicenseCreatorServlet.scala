@@ -35,7 +35,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
       isSample = params.get("sample").fold(false)(_.toBoolean),
       fedoraClient = app.fedoraClient,
       ldapContext = app.ldapContext,
-      fsrdb = app.fsrbd,
+      fsrdb = app.fsrdb,
       fileLimit = app.fileLimit)
 
     var success = false // TODO: get rid of var
