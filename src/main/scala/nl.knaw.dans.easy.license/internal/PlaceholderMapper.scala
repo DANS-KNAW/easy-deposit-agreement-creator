@@ -60,7 +60,9 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       metadata = MetadataTable -> metadataTable(emd, dataset.audiences, dataset.datasetID)
       files @ (_, table) = FileTable -> filesTable(dataset.fileItems)
       hasFiles = HasFiles -> boolean2Boolean(!table.isEmpty)
-    } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime + metadata + files + hasFiles
+      limitFiles = LimitFiles -> parameters.fileLimit.toString
+      shouldLimitFiles = ShouldLimitFiles -> boolean2Boolean(dataset.filesLimited)
+    } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime + metadata + files + hasFiles + limitFiles + shouldLimitFiles
   }
 
   def header(emd: EasyMetadata): Try[PlaceholderMap] = Try {
@@ -276,8 +278,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .map { case FileItem(path, accessibleTo, checkSum) =>
         val map = Map(
           FilePath -> path,
-          FileChecksum -> (if (checkSum.isBlank || checkSum == "none") checkSumNotCalculated
-                           else checkSum),
+          FileChecksum -> checkSum.filterNot(_.isBlank).filterNot("none" ==).getOrElse(checkSumNotCalculated),
           FileAccessibleTo -> formatFileAccessRights(accessibleTo)
         )
 

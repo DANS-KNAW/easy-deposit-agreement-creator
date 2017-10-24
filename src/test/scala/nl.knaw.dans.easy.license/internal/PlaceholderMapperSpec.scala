@@ -43,14 +43,15 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   private val ident = mock[EmdIdentifier]
   private val date = mock[EmdDate]
   private val rights = mock[EmdRights]
-  private val fedora = mock[Fedora]
 
   implicit val parameters: Parameters = Parameters(
     templateResourceDir = new File(testDir, "placeholdermapper"),
     datasetID = null,
     isSample = false,
-    fedora = fedora,
-    ldap = null)
+    fedora = null,
+    ldap = null,
+    fsrdb = null,
+    fileLimit = 3)
 
   before {
     new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateResourceDir)
@@ -119,8 +120,10 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       templateResourceDir = new File(testDir, "placeholdermapper"),
       datasetID = null,
       isSample = true,
-      fedora = fedora,
-      ldap = null)
+      fedora = null,
+      ldap = null,
+      fsrdb = null,
+      fileLimit = 3)
     val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects () never()
@@ -144,8 +147,10 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       templateResourceDir = new File(testDir, "placeholdermapper"),
       datasetID = null,
       isSample = true,
-      fedora = fedora,
-      ldap = null)
+      fedora = null,
+      ldap = null,
+      fsrdb = null,
+      fileLimit = 3)
 
     emd.getEmdIdentifier _ expects () never()
     ident.getDansManagedDoi _ expects () never()
@@ -494,9 +499,9 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
   "filesTable" should "give a mapping of files and checksums in the dataset" in {
     val input = Seq(
-      FileItem("ABC", FileAccessRight.ANONYMOUS, "123"),
-      FileItem("DEF", FileAccessRight.KNOWN, "none"),
-      FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, "")
+      FileItem("ABC", FileAccessRight.ANONYMOUS, Some("123")),
+      FileItem("DEF", FileAccessRight.KNOWN, Some("none")),
+      FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, Some(""))
     )
 
     testInstance.filesTable(input).asScala should contain allOf (

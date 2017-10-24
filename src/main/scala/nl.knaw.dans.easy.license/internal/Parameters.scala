@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.license.internal
 
 import java.io.File
+import java.sql.{ Connection, DriverManager }
 import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.FedoraClient
@@ -25,22 +26,28 @@ import nl.knaw.dans.easy.license.DatasetID
 // java business layer.
 class BaseParameters(val templateResourceDir: File,
                      val datasetID: DatasetID,
-                     val isSample: Boolean)
+                     val isSample: Boolean,
+                     val fileLimit: Int)
 
 trait DatabaseParameters {
   val fedora: Fedora
   val ldap: Ldap
+  val fsrdb: Connection
+  val fileLimit: Int
 }
 
 case class Parameters(override val templateResourceDir: File,
                       override val datasetID: DatasetID,
                       override val isSample: Boolean,
+                      override val fileLimit: Int,
                       fedora: Fedora,
-                      ldap: Ldap)
-  extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters {
+                      ldap: Ldap,
+                      fsrdb: Connection)
+  extends BaseParameters(templateResourceDir, datasetID, isSample, fileLimit) with DatabaseParameters {
 
-  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapContext: LdapContext) =
-    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(ldapContext))
+  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fileLimit: Int, fedoraClient: FedoraClient, ldapContext: LdapContext, fsrdb: (String, String, String)) = {
+    this(templateResourceDir, datasetID, isSample, fileLimit, FedoraImpl(fedoraClient), LdapImpl(ldapContext), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3))
+  }
 
   override def toString: String = super.toString
 }

@@ -23,8 +23,8 @@ import nl.knaw.dans.easy.license.internal.{BaseParameters => InternalBaseParams,
 
 object BaseParameters {
 
-  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean): InternalBaseParams = {
-    new internal.BaseParameters(templateResourceDir, datasetID, isSample)
+  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fileLimit: Int): InternalBaseParams = {
+    new internal.BaseParameters(templateResourceDir, datasetID, isSample, fileLimit)
   }
 }
 
@@ -33,8 +33,10 @@ object Parameters {
   def apply(templateResourceDir: File,
             datasetID: DatasetID,
             isSample: Boolean,
+            fileLimit: Int,
             fedoraClient: FedoraClient,
-            ldapContext: LdapContext): InternalParams = {
-    new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapContext)
+            ldapContext: LdapContext,
+            fsrdb: (String, String, String)): InternalParams = {
+    new internal.Parameters(templateResourceDir, datasetID, isSample, fileLimit, fedoraClient, ldapContext, fsrdb)
   }
 }

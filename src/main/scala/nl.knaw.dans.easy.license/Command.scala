@@ -53,7 +53,9 @@ object Command extends App with DebugEnhancedLogging {
           datasetID = commandLine.datasetID(),
           isSample = commandLine.isSample(),
           fedoraClient = app.fedoraClient,
-          ldapContext = app.ldapContext)
+          ldapContext = app.ldapContext,
+          fsrdb = app.fsrbd,
+          fileLimit = app.fileLimit)
         val outputFile = commandLine.outputFile()
 
         logger.debug(s"Using the following settings: $params")
