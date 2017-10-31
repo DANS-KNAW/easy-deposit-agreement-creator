@@ -22,7 +22,7 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-prototype</artifactId>
-        <version>1.56</version>
+        <version>1.60</version>
     </parent>
 
     <groupId>nl.knaw.dans.easy</groupId>
@@ -37,6 +37,7 @@
     <properties>
         <main-class>nl.knaw.dans.easy.license.Command</main-class>
         <easy.emd.version>3.7.1</easy.emd.version>
+        <rpm-replace-configuration>true</rpm-replace-configuration>
     </properties>
 
     <scm>
