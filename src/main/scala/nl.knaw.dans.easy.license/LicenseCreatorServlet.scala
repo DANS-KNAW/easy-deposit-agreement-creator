@@ -42,7 +42,10 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
     val output = new ByteArrayOutputStream()
     output
       .usedIn(LicenseCreator(parameters).createLicense)
-      .doOnCompleted { success = true }
+      .doOnCompleted {
+        parameters.fsrdb.close()
+        success = true
+      }
       .toBlocking
       .subscribe(
         _ => {},
