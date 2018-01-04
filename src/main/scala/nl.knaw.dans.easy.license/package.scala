@@ -27,21 +27,9 @@ package object license {
   type DatasetID = String
   type DepositorID = String
 
-  // TODO copied from easy-bag-store
-  implicit class TryExtensions2[T](val t: Try[T]) extends AnyVal {
-    // TODO candidate for dans-scala-lib
-    def unsafeGetOrThrow: T = {
-      t match {
-        case Success(value) => value
-        case Failure(throwable) => throw throwable
-      }
-    }
-  }
-
   implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
     def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
       Observable.using(resource)(observableFactory, t => { dispose(t); IOUtils.closeQuietly(t) }, disposeEagerly)
     }
   }
-
 }

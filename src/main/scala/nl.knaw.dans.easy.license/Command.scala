@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.license
 
 import java.io.FileOutputStream
+import java.nio.file.Paths
 
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -28,7 +29,7 @@ import scala.util.{ Failure, Success, Try }
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
 
-  val configuration = Configuration()
+  val configuration = Configuration(Paths.get(System.getProperty("app.home")))
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
