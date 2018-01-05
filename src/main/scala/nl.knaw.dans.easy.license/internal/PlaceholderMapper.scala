@@ -23,6 +23,8 @@ import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
 import nl.knaw.dans.easy.license.FileAccessRight._
 import nl.knaw.dans.easy.license.{ DatasetID, FileAccessRight, FileItem }
+import nl.knaw.dans.lib.string.StringExtensions
+import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.pf.language.emd.types._
 import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EmdDate, Term }
@@ -40,7 +42,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   type Table = ju.Collection[ju.Map[String, String]]
 
   val metadataNames: ju.Properties = loadProperties(metadataTermsFile)
-    .doOnError(e => logger.error(s"could not read the metadata terms in $metadataTermsFile", e))
+    .doIfFailure { case e => logger.error(s"could not read the metadata terms in $metadataTermsFile", e) }
     .getOrElse(new ju.Properties())
 
   def datasetToPlaceholderMap(dataset: Dataset): Try[PlaceholderMap] = {
@@ -182,7 +184,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
     // may throw an UnsupportedOperationException
     Try(audiences.reduce(_ + "; " + _))
-      .doOnError {
+      .doIfFailure {
         case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
       }
       .getOrElse("")
@@ -202,7 +204,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         case FREELY_AVAILABLE                 => "Open Access"
         // @formatter:on
     }
-      .doOnError(_ => logger.warn("No available mapping; using acces category value directly"))
+      .doIfFailure { case _ => logger.warn("No available mapping; using acces category value directly") }
       .getOrElse(item.toString)
   }
 

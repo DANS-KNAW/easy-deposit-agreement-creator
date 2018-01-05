@@ -21,6 +21,7 @@ import nl.knaw.dans.easy.license.internal._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.pf.language.emd.EasyMetadata
 import rx.lang.scala.Observable
+import rx.lang.scala.TryToObservable
 
 import scala.util.Try
 

@@ -19,15 +19,14 @@ import java.io._
 import java.nio.charset.Charset
 import java.util.Properties
 
-import org.apache.commons.io.{Charsets, FileUtils, IOUtils}
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.io.{ Charsets, FileUtils }
 import org.slf4j.Logger
-import rx.lang.scala.Notification.{OnCompleted, OnError, OnNext}
-import rx.lang.scala.{Notification, Observable}
+import rx.lang.scala.Notification.{ OnCompleted, OnError, OnNext }
+import rx.lang.scala.{ Notification, Observable }
 
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
-import scala.xml.{Elem, XML}
+import scala.util.Try
+import scala.xml.{ Elem, XML }
 
 package object internal {
 
@@ -136,52 +135,6 @@ package object internal {
       * @return the file contents, never ``null``
       */
     def read(encoding: Charset = Charsets.UTF_8): String = FileUtils.readFileToString(file, encoding)
-  }
-
-  implicit class TryExtensions[T](val t: Try[T]) extends AnyVal {
-    def doOnError(f: Throwable => Unit): Try[T] = {
-      t match {
-        case Failure(e) => Try { f(e); throw e }
-        case x => x
-      }
-    }
-
-    def doOnSuccess(f: T => Unit): Try[T] = {
-      t match {
-        case Success(x) => Try { f(x); x }
-        case e => e
-      }
-    }
-
-    def eventually[Ignore](effect: () => Ignore): Try[T] = {
-      t.doOnSuccess(_ => effect()).doOnError(_ => effect())
-    }
-
-    def toObservable: Observable[T] = {
-      t match {
-        case Success(x) => Observable.just(x)
-        case Failure(e) => Observable.error(e)
-      }
-    }
-  }
-
-  implicit class StringExtensions(val s: String) extends AnyVal {
-    /**
-      * Checks whether the `String` is blank
-      *
-      * @return
-      */
-    def isBlank: Boolean = StringUtils.isBlank(s)
-
-    /** Converts a `String` to an `Option[String]`. If the `String` is blank
-      * the empty `Option` is returned, otherwise the `String` is returned
-      * wrapped in an `Option`.
-      *
-      * @return an `Option` of the input string that indicates whether it is blank
-      */
-    def toOption: Option[String] = if (s.isBlank) Option.empty else Option(s)
-
-    def emptyIfBlank: String = s.toOption.getOrElse("")
   }
 
   implicit class InputStreamExtensions(val stream: InputStream) extends AnyVal {
