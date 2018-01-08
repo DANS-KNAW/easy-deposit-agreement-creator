@@ -141,7 +141,7 @@ trait DatasetLoader {
   def getUserById(depositorID: DepositorID): Observable[EasyUser]
 }
 
-case class DatasetLoaderImpl(implicit parameters: DatabaseParameters) extends DatasetLoader {
+case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends DatasetLoader {
 
   def getAudience(audienceID: AudienceID): Observable[String] = {
     parameters.fedora.getDC(audienceID)

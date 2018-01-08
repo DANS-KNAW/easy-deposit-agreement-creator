@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy.license.internal
 
+import nl.knaw.dans.lib.string.StringExtensions
+
 object DatasetValidator {
 
   def validate(dataset: Dataset): Dataset = {

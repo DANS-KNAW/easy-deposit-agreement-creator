@@ -38,15 +38,11 @@ class LdapSpec extends UnitSpec with MockFactory {
     (ctx.search(_: String, _: String, _: SearchControls)) expects f returning result
 
     inSequence {
-      // the first hasMore call has to do with the implementation of Observable.from...
-      result.hasMore _ expects () returns true once()
-      result.hasMore _ expects () returns true twice()
-      result.hasMore _ expects () returns false once()
-    }
-
-    inSequence {
+      result.hasMore _ expects () returns true
       result.next _ expects () returns new SearchResult("foobar1", null, attrs1)
+      result.hasMore _ expects () returns true
       result.next _ expects () returns new SearchResult("foobar2", null, attrs2)
+      result.hasMore _ expects () returns false
     }
 
     val ldap = LdapImpl(ctx)
