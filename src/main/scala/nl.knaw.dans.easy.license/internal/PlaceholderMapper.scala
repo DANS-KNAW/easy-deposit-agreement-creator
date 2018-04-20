@@ -26,6 +26,7 @@ import nl.knaw.dans.easy.license.{ DatasetID, FileAccessRight, FileItem }
 import nl.knaw.dans.lib.string.StringExtensions
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.pf.language.emd.types.Spatial.{ Box, Point }
 import nl.knaw.dans.pf.language.emd.types._
 import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EmdDate, Term }
 import org.apache.commons.codec.binary.Base64
@@ -212,13 +213,13 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     val place = Option(spatial.getPlace).flatMap(_.getValue.toOption)
     lazy val point = Option(spatial.getPoint).map(formatPoint)
     lazy val box = Option(spatial.getBox).map(formatBox)
-    lazy val polygon = Option(spatial.getPolygon).map(formatPolygon)
-    lazy val s = point orElse box orElse polygon
+    lazy val polygons = Option(spatial.getPolygons.asScala).map(_.map(formatPolygon).mkString("\n\n"))
+    lazy val s = point orElse box orElse polygons
 
     place.map(p => s.map(s"$p\n" +)).getOrElse(s).getOrElse("")
   }
 
-  private def formatPoint(point: Spatial.Point): String = {
+  private def formatPoint(point: Point): String = {
     val scheme = Option(point.getScheme).map("scheme = " + _ + ", ").getOrElse("")
     val x = s"x = ${ point.getX }"
     val y = s"y = ${ point.getY }"
@@ -229,7 +230,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     s"<b>Point</b>: $scheme$x, $y"
   }
 
-  private def formatBox(box: Spatial.Box): String = {
+  private def formatBox(box: Box): String = {
     val scheme = Option(box.getScheme).map("scheme = " + _ + ", ").getOrElse("")
     val north = s"north = ${ box.getNorth }"
     val east = s"east = ${ box.getEast }"
@@ -239,7 +240,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     s"<b>Box:</b> $scheme$north, $east, $south, $west"
   }
 
-  private def formatPolygon(polygon: Spatial.Polygon): String = {
+  private def formatPolygon(polygon: Polygon): String = {
     val space = "\u00A0" * 4
     val scheme = Option(polygon.getScheme).map(s"${ space }scheme = " + _ + "\n").getOrElse("")
 
