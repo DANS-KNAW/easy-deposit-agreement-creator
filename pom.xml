@@ -27,7 +27,7 @@
 
     <groupId>nl.knaw.dans.easy</groupId>
     <artifactId>easy-license-creator</artifactId>
-    <version>1.9.2-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
 
     <name>EASY License Creator</name>
     <url>https://github.com/DANS-KNAW/easy-license-creator</url>
