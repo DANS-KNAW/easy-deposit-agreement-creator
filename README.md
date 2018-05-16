@@ -40,8 +40,8 @@ ARGUMENTS
 ---------
 
      -s, --sample    Indicates whether or not a sample license needs to be created
-         --help      Show help message
-         --version   Show version of this program
+     -h, --help      Show help message
+     -v, --version   Show version of this program
     
     trailing arguments:
      dataset-id (required)     The ID of the dataset of which a license has to be created
