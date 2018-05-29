@@ -156,10 +156,14 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
           case (t, items) if t.getName == Term.Name.ACCESSRIGHTS =>
             t.getName -> formatDatasetAccessRights(items.head)
           case (t, items) if t.getName == Term.Name.SPATIAL =>
-            t.getName -> items.collect {
-              case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
+            val basic = items.collect {
               case s: BasicString => s.getValue
-            }.mkString(newLine * 2)
+            }
+            val spatial = items.collect {
+              case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
+            }
+
+            t.getName -> (basic ++ spatial).mkString(newLine * 2)
           case (t, items) if t.getName == Term.Name.LICENSE =>
             t.getName -> items.map {
               case s: BasicString if s.getValue == "accept" => "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
@@ -211,12 +215,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
 
   def formatEasSpatial(spatial: Spatial): String = {
     val place = Option(spatial.getPlace).flatMap(_.getValue.toOption)
-    lazy val point = Option(spatial.getPoint).map(formatPoint)
-    lazy val box = Option(spatial.getBox).map(formatBox)
-    lazy val polygons = Option(spatial.getPolygons.asScala).map(_.map(formatPolygon).mkString("\n\n"))
-    lazy val s = point orElse box orElse polygons
+    val point = Option(spatial.getPoint).map(formatPoint)
+    val box = Option(spatial.getBox).map(formatBox)
+    val polygonText = Option(spatial.getPolygons).flatMap(_.asScala.headOption).map(formatPolygon)
 
-    place.map(p => s.map(s"$p\n" +)).getOrElse(s).getOrElse("")
+    (place.toList ::: point.toList ::: box.toList ::: polygonText.toList).mkString("\n")
   }
 
   private def formatPoint(point: Point): String = {
@@ -241,18 +244,9 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   private def formatPolygon(polygon: Polygon): String = {
-    val space = "\u00A0" * 4
-    val scheme = Option(polygon.getScheme).map(s"${ space }scheme = " + _ + "\n").getOrElse("")
-
-    def formatPart(start: String)(part: PolygonPart): String = {
-      s"""$space<i>$start:</i>
-         |${ s"$space$space${ part.getPlace }" }
-         |${ part.getPoints.asScala.map(point => s"$space${ space }Point: x = ${ point.getX }, y = ${ point.getY }").mkString("\n") }""".stripMargin
-    }
-
     s"""<b>Polygon:</b>
-       |$scheme${ formatPart(s"Exterior")(polygon.getExterior) }
-       |${ polygon.getInterior.asScala.map(formatPart(s"Interior")).mkString("\n") }""".stripMargin
+       |<i>To keep this license at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>
+    """.stripMargin
   }
 
   private def formatRelation(relation: Relation): String = {
