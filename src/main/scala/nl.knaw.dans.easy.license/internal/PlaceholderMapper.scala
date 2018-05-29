@@ -245,7 +245,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
 
   private def formatPolygon(polygon: Polygon): String = {
     s"""<b>Polygon:</b>
-       |<i>In order to preserve space, the polygon coordinates are left out of this license. For a full listing of the polygons, please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>
+       |<i>To keep this license at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>
     """.stripMargin
   }
 
