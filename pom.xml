@@ -131,11 +131,6 @@
             <artifactId>logback-classic</artifactId>
             <version>1.1.7</version>
         </dependency>
-        <dependency>
-            <groupId>org.gnieh</groupId>
-            <artifactId>logback-journal</artifactId>
-            <version>0.3.0</version>
-        </dependency>
 
         <!-- joda -->
         <!-- this dependency is here only to avoid warnings in build log -->
