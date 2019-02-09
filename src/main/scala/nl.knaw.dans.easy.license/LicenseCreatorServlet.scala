@@ -34,7 +34,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
       datasetID = params("datasetId"),
       isSample = params.get("sample").fold(false)(_.toBoolean),
       fedoraClient = app.fedoraClient,
-      ldapContext = app.ldapContext,
+      ldapContext = getLdapConnection(app.ldapConnectControls),
       fsrdb = app.fsrdb,
       fileLimit = app.fileLimit)
 

@@ -17,19 +17,36 @@ package nl.knaw.dans.easy
 
 import java.io.Closeable
 
+import javax.naming.ldap.{ InitialLdapContext, LdapContext }
 import org.apache.commons.io.IOUtils
 import rx.lang.scala.Observable
-
-import scala.util.{ Failure, Success, Try }
 
 package object license {
 
   type DatasetID = String
   type DepositorID = String
+  type LdapConnectControls = java.util.Hashtable[String, String]
 
   implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
     def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {
       Observable.using(resource)(observableFactory, t => { dispose(t); IOUtils.closeQuietly(t) }, disposeEagerly)
     }
   }
+
+  def getLdapConnection(ldapConnectControls: LdapConnectControls) : LdapContext = {
+    new InitialLdapContext(ldapConnectControls, null)
+  }
+
+//  def getLdapConnection(ldapConnectControls: LdapConnectControls) : Unit = {
+//    val ldapContext = Try {new InitialLdapContext(ldapConnectControls, null)}
+//    ldapContext.map {
+//      context => ldapContext.get.close()
+//    }.recoverWith {
+//      case t: AuthenticationException => Success(false)
+//      case t =>
+//        log.debug("Unexpected exception", t)
+//        Failure(new RuntimeException("Error trying to authenticate", t))
+//    }
+//  }
+
 }
