@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.license
 
 import java.io.File
-import javax.naming.ldap.LdapContext
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.license.internal.{BaseParameters => InternalBaseParams, Parameters => InternalParams}
@@ -35,8 +34,8 @@ object Parameters {
             isSample: Boolean,
             fileLimit: Int,
             fedoraClient: FedoraClient,
-            ldapContext: LdapContext,
+            ldapEnv: LdapEnv,
             fsrdb: (String, String, String)): InternalParams = {
-    new internal.Parameters(templateResourceDir, datasetID, isSample, fileLimit, fedoraClient, ldapContext, fsrdb)
+    new internal.Parameters(templateResourceDir, datasetID, isSample, fileLimit, fedoraClient, ldapEnv, fsrdb)
   }
 }

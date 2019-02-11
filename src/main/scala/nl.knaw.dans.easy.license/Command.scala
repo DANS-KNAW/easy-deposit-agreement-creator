@@ -54,7 +54,7 @@ object Command extends App with DebugEnhancedLogging {
           datasetID = commandLine.datasetID(),
           isSample = commandLine.isSample(),
           fedoraClient = app.fedoraClient,
-          ldapContext = getLdapConnection(app.ldapConnectControls),
+          ldapEnv = app.ldapEnv,
           fsrdb = app.fsrdb,
           fileLimit = app.fileLimit)
         val outputFile = commandLine.outputFile()
@@ -67,6 +67,7 @@ object Command extends App with DebugEnhancedLogging {
           .doOnCompleted {
             logger.info(s"license saved at ${ outputFile.getAbsolutePath }")
             params.fsrdb.close()
+            params.ldap.close()
             success = true
           }
           .toBlocking

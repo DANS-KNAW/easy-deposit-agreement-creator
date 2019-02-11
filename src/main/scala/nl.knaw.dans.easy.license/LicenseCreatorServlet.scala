@@ -34,7 +34,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
       datasetID = params("datasetId"),
       isSample = params.get("sample").fold(false)(_.toBoolean),
       fedoraClient = app.fedoraClient,
-      ldapContext = getLdapConnection(app.ldapConnectControls),
+      ldapEnv = app.ldapEnv,
       fsrdb = app.fsrdb,
       fileLimit = app.fileLimit)
 
@@ -44,6 +44,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
       .usedIn(LicenseCreator(parameters).createLicense)
       .doOnCompleted {
         parameters.fsrdb.close()
+        parameters.ldap.close()
         success = true
       }
       .toBlocking
