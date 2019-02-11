@@ -66,8 +66,7 @@ object Command extends App with DebugEnhancedLogging {
           .usedIn(LicenseCreator(params).createLicense)
           .doOnCompleted {
             logger.info(s"license saved at ${ outputFile.getAbsolutePath }")
-            params.fsrdb.close()
-            params.ldap.close()
+            params.close()
             success = true
           }
           .toBlocking

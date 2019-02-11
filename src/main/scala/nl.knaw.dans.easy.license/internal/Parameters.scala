@@ -43,11 +43,16 @@ case class Parameters(override val templateResourceDir: File,
                       fedora: Fedora,
                       ldap: Ldap,
                       fsrdb: Connection)
-  extends BaseParameters(templateResourceDir, datasetID, isSample, fileLimit) with DatabaseParameters {
+  extends BaseParameters(templateResourceDir, datasetID, isSample, fileLimit) with DatabaseParameters with AutoCloseable {
 
   def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fileLimit: Int, fedoraClient: FedoraClient, ldapEnv: LdapEnv, fsrdb: (String, String, String)) = {
     this(templateResourceDir, datasetID, isSample, fileLimit, FedoraImpl(fedoraClient), LdapImpl(new InitialLdapContext(ldapEnv, null)), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3))
   }
+
+    override def close(): Unit = {
+      fsrdb.close()
+      ldap.close()
+    }
 
   override def toString: String = super.toString
 }

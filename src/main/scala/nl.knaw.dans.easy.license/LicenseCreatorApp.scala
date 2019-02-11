@@ -32,14 +32,12 @@ class LicenseCreatorApp(configuration: Configuration) extends AutoCloseable {
     configuration.properties.getString("fsrdb.db-connection-username"),
     configuration.properties.getString("fsrdb.db-connection-password"))
   val fileLimit: Int = configuration.properties.getInt("license.fileLimit")
-  val ldapEnv: LdapEnv = {
-    val env = new LdapEnv
-    env.put(Context.PROVIDER_URL, configuration.properties.getString("auth.ldap.url"))
-    env.put(Context.SECURITY_AUTHENTICATION, "simple")
-    env.put(Context.SECURITY_PRINCIPAL, configuration.properties.getString("auth.ldap.user"))
-    env.put(Context.SECURITY_CREDENTIALS, configuration.properties.getString("auth.ldap.password"))
-    env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
-    env
+  val ldapEnv: LdapEnv = new LdapEnv {
+    put(Context.PROVIDER_URL, configuration.properties.getString("auth.ldap.url"))
+    put(Context.SECURITY_AUTHENTICATION, "simple")
+    put(Context.SECURITY_PRINCIPAL, configuration.properties.getString("auth.ldap.user"))
+    put(Context.SECURITY_CREDENTIALS, configuration.properties.getString("auth.ldap.password"))
+    put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
   }
 
   override def close(): Unit = {

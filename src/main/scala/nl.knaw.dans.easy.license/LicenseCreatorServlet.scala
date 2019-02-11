@@ -43,8 +43,7 @@ class LicenseCreatorServlet(app: LicenseCreatorApp) extends ScalatraServlet with
     output
       .usedIn(LicenseCreator(parameters).createLicense)
       .doOnCompleted {
-        parameters.fsrdb.close()
-        parameters.ldap.close()
+        parameters.close()
         success = true
       }
       .toBlocking
