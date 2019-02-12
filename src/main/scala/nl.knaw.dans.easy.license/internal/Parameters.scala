@@ -17,10 +17,10 @@ package nl.knaw.dans.easy.license.internal
 
 import java.io.File
 import java.sql.{ Connection, DriverManager }
-import javax.naming.ldap.LdapContext
 
+import javax.naming.ldap.InitialLdapContext
 import com.yourmediashelf.fedora.client.FedoraClient
-import nl.knaw.dans.easy.license.DatasetID
+import nl.knaw.dans.easy.license.{ DatasetID, LdapEnv }
 
 // this class needs to be in a separate file rather than in package.scala because of interop with
 // java business layer.
@@ -43,11 +43,16 @@ case class Parameters(override val templateResourceDir: File,
                       fedora: Fedora,
                       ldap: Ldap,
                       fsrdb: Connection)
-  extends BaseParameters(templateResourceDir, datasetID, isSample, fileLimit) with DatabaseParameters {
+  extends BaseParameters(templateResourceDir, datasetID, isSample, fileLimit) with DatabaseParameters with AutoCloseable {
 
-  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fileLimit: Int, fedoraClient: FedoraClient, ldapContext: LdapContext, fsrdb: (String, String, String)) = {
-    this(templateResourceDir, datasetID, isSample, fileLimit, FedoraImpl(fedoraClient), LdapImpl(ldapContext), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3))
+  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fileLimit: Int, fedoraClient: FedoraClient, ldapEnv: LdapEnv, fsrdb: (String, String, String)) = {
+    this(templateResourceDir, datasetID, isSample, fileLimit, FedoraImpl(fedoraClient), LdapImpl(new InitialLdapContext(ldapEnv, null)), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3))
   }
+
+    override def close(): Unit = {
+      fsrdb.close()
+      ldap.close()
+    }
 
   override def toString: String = super.toString
 }

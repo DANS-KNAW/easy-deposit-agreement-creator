@@ -17,15 +17,15 @@ package nl.knaw.dans.easy
 
 import java.io.Closeable
 
+import javax.naming.ldap.{ InitialLdapContext, LdapContext }
 import org.apache.commons.io.IOUtils
 import rx.lang.scala.Observable
-
-import scala.util.{ Failure, Success, Try }
 
 package object license {
 
   type DatasetID = String
   type DepositorID = String
+  type LdapEnv = java.util.Hashtable[String, String]
 
   implicit class ReactiveResourceManager[T <: Closeable](val resource: T) extends AnyVal {
     def usedIn[S](observableFactory: T => Observable[S], dispose: T => Unit = _ => {}, disposeEagerly: Boolean = false): Observable[S] = {

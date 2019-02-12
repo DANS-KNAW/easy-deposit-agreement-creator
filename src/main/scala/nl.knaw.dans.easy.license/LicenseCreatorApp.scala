@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.license
 
 import java.io.File
 import javax.naming.Context
-import javax.naming.ldap.InitialLdapContext
 
 import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
 import rx.schedulers.Schedulers
@@ -33,21 +32,15 @@ class LicenseCreatorApp(configuration: Configuration) extends AutoCloseable {
     configuration.properties.getString("fsrdb.db-connection-username"),
     configuration.properties.getString("fsrdb.db-connection-password"))
   val fileLimit: Int = configuration.properties.getInt("license.fileLimit")
-  val ldapContext: InitialLdapContext = {
-    import java.{ util => ju }
-
-    val env = new ju.Hashtable[String, String]
-    env.put(Context.PROVIDER_URL, configuration.properties.getString("auth.ldap.url"))
-    env.put(Context.SECURITY_AUTHENTICATION, "simple")
-    env.put(Context.SECURITY_PRINCIPAL, configuration.properties.getString("auth.ldap.user"))
-    env.put(Context.SECURITY_CREDENTIALS, configuration.properties.getString("auth.ldap.password"))
-    env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
-
-    new InitialLdapContext(env, null)
+  val ldapEnv: LdapEnv = new LdapEnv {
+    put(Context.PROVIDER_URL, configuration.properties.getString("auth.ldap.url"))
+    put(Context.SECURITY_AUTHENTICATION, "simple")
+    put(Context.SECURITY_PRINCIPAL, configuration.properties.getString("auth.ldap.user"))
+    put(Context.SECURITY_CREDENTIALS, configuration.properties.getString("auth.ldap.password"))
+    put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
   }
 
   override def close(): Unit = {
-    ldapContext.close()
     Schedulers.shutdown()
   }
 }
