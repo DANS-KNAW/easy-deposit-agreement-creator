@@ -18,5 +18,5 @@
 HOMEDIR=home
 DATADIR=data
 
-touch $DATADIR/easy-license-creator.log
+touch $DATADIR/easy-deposit-agreement-creator.log
 cp src/test/resources/debug-config/pdfgen.sh $HOMEDIR/res/

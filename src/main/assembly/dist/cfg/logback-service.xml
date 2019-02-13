@@ -2,9 +2,9 @@
 <configuration scan="true" scanPeriod="1 minute">
     <appender name="FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/opt/dans.knaw.nl/log/easy-license-creator/easy-license-creator.log</file>
+        <file>/var/opt/dans.knaw.nl/log/easy-deposit-agreement-creator/easy-deposit-agreement-creator.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/var/opt/dans.knaw.nl/log/easy-license-creator/easy-license-creator.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>/var/opt/dans.knaw.nl/log/easy-deposit-agreement-creator/easy-deposit-agreement-creator.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>

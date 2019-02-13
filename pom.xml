@@ -26,21 +26,21 @@
     </parent>
 
     <groupId>nl.knaw.dans.easy</groupId>
-    <artifactId>easy-license-creator</artifactId>
+    <artifactId>easy-deposit-agreement-creator</artifactId>
     <version>1.10.3-SNAPSHOT</version>
 
-    <name>EASY License Creator</name>
-    <url>https://github.com/DANS-KNAW/easy-license-creator</url>
-    <description>Create license file for EASY deposits</description>
+    <name>EASY Deposit Agreement Creator</name>
+    <url>https://github.com/DANS-KNAW/easy-deposit-agreement-creator</url>
+    <description>Create a deposit agreement file for EASY deposits</description>
     <inceptionYear>2016</inceptionYear>
 
     <properties>
-        <main-class>nl.knaw.dans.easy.license.Command</main-class>
+        <main-class>nl.knaw.dans.easy.agreement.Command</main-class>
         <easy.emd.version>3.8.0</easy.emd.version>
     </properties>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-license-creator</developerConnection>
+        <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-deposit-agreement-creator</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
