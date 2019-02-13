@@ -18,7 +18,7 @@
 
 #include <service.sh>
 
-MODULE_NAME=easy-license-creator
+MODULE_NAME=easy-deposit-agreement-creator
 PHASE="POST-TRANS"
 
 echo "$PHASE: START"

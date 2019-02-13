@@ -19,7 +19,7 @@
 #include <service.sh>
 
 NUMBER_OF_INSTALLATIONS=$1
-MODULE_NAME=easy-license-creator
+MODULE_NAME=easy-deposit-agreement-creator
 INSTALL_DIR=/opt/dans.knaw.nl/$MODULE_NAME
 PHASE="POST-INSTALL"
 
