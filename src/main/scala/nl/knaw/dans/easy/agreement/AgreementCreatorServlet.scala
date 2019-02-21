@@ -19,11 +19,12 @@ import java.io.ByteArrayOutputStream
 
 import nl.knaw.dans.easy.agreement.internal.{ Parameters => Params }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.logging.servlet._
 import org.scalatra._
 
-class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet with DebugEnhancedLogging {
+class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet with ServletLogger with PlainLogFormatter with DebugEnhancedLogging {
   get("/") {
-    Ok("Agreement Creator Service running")
+    Ok("Agreement Creator Service running").logResponse
   }
 
   post("/create") {
@@ -52,7 +53,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet 
         e => logger.error("An error was caught in main:", e),
         () => debug("completed"))
 
-    if(success) Ok(output.toByteArray)
-    else InternalServerError() // TODO: distinguish between server errors and client errors
+    if(success) Ok(output.toByteArray).logResponse
+    else InternalServerError().logResponse // TODO: distinguish between server errors and client errors
   }
 }
