@@ -24,7 +24,7 @@ import org.scalatra._
 
 class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet with ServletLogger with PlainLogFormatter with DebugEnhancedLogging {
   get("/") {
-    Ok("Agreement Creator Service running").logResponse
+    Ok(s"Agreement Creator Service running v${ app.version }.").logResponse
   }
 
   post("/create") {
@@ -53,7 +53,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet 
         e => logger.error("An error was caught in main:", e),
         () => debug("completed"))
 
-    if(success) Ok(output.toByteArray).logResponse
+    if (success) Ok(output.toByteArray).logResponse
     else InternalServerError().logResponse // TODO: distinguish between server errors and client errors
   }
 }
