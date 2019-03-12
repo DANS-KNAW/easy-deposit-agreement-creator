@@ -78,6 +78,12 @@ trait Fedora {
    */
   def queryRiSearch(query: String): Observable[String]
 
+  /**
+   * Queries whether the provided datasetID exists in Fedora
+   *
+   * @param datasetID
+   * @return true if the dataset exist else false
+   */
   def datasetIdExists(datasetID: DatasetID): Boolean
 }
 

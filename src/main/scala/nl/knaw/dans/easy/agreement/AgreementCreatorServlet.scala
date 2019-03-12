@@ -50,7 +50,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
   }
 
   private def validateDatasetIdExistsInFedora(pars: Params): Try[Params] = Try {
-    if (!pars.fedora.datasetIdExists(pars.datasetID)) throw new NoSuchElementException(s"${ pars.datasetID } was not found in fedora")
+    if (!pars.fedora.datasetIdExists(pars.datasetID)) throw new NoSuchElementException(s"Dataset ID ${ pars.datasetID } was not found in fedora")
     pars
   }
 
@@ -70,10 +70,11 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
       .usedIn(AgreementCreator(parameters).createAgreement)
       .doOnCompleted(parameters.close())
       .toBlocking
-      .subscribe(_ => {}, e => {
-        logger.error(s"An error was caught in main: ${ e.getMessage }")
-        throw e
-      },
+      .subscribe(_ => {},
+        e => {
+          logger.error(s"An error was caught in main: ${ e.getMessage }")
+          throw e
+        },
         () => debug("completed"))
   }
 }
