@@ -53,6 +53,7 @@
         <dependency>
             <groupId>org.scalamock</groupId>
             <artifactId>scalamock_2.12</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatra</groupId>
