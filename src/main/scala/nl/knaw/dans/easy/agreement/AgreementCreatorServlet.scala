@@ -50,8 +50,9 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
   }
 
   private def validateDatasetIdExistsInFedora(pars: Params): Try[Params] = Try {
-    if (!pars.fedora.datasetIdExists(pars.datasetID)) throw new NoSuchElementException(s"Dataset ID ${ pars.datasetID } was not found in fedora")
-    pars
+    val datasetIDExists = pars.fedora.datasetIdExists(pars.datasetID)
+    if (!datasetIDExists) throw new NoSuchElementException(s"Dataset ID ${ pars.datasetID } was not found in fedora")
+    else pars
   }
 
   private def createParameters(): Try[Params] = Try {
