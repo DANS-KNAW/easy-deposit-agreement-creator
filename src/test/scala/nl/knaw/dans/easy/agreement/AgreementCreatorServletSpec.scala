@@ -15,29 +15,17 @@
  */
 package nl.knaw.dans.easy.agreement
 
-import java.io.ByteArrayOutputStream
-
-import nl.knaw.dans.easy.agreement.internal.Parameters
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalatest.FlatSpec
 import org.scalatra.test.EmbeddedJettyContainer
 import org.scalatra.test.scalatest.ScalatraSuite
-import rx.lang.scala.Observable
-
-import scala.util.{ Success, Try }
 
 class AgreementCreatorServletSpec extends FlatSpec
   with ScalatraSuite
   with EmbeddedJettyContainer {
 
-  private val testVersion = "1.0.0"
   private val app = new AgreementCreatorApp(minimalAppConfig)
-  private val agreementCreatorServlet = new AgreementCreatorServlet(app) {
-    override def createAgreement(parameters: Parameters, output: ByteArrayOutputStream): Try[Unit] = {
-      println("there")
-      Success(Observable.empty)
-    }
-  }
+  private val agreementCreatorServlet = new AgreementCreatorServlet(app)
   addServlet(agreementCreatorServlet, "/*") //same as in nl.knaw.dans.easy.agreement.AgreementCreatorService
 
   "get /" should "respond with the service is running" in {
@@ -50,14 +38,6 @@ class AgreementCreatorServletSpec extends FlatSpec
   "post /create" should "return a bad request (400) when the param datasetId is not provided" in {
     post("/create") {
       status shouldBe 400
-      body shouldBe "mandatory parameter was not provided: key not found: datasetId"
-    }
-  }
-
-  it should "do something " in {
-    post("/create?datasetId=valid:id") {
-      println(body)
-      status shouldBe 404
       body shouldBe "mandatory parameter was not provided: key not found: datasetId"
     }
   }
