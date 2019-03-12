@@ -72,10 +72,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
       .doOnCompleted(parameters.close())
       .toBlocking
       .subscribe(_ => {},
-        e => {
-          logger.error(s"An error was caught in main: ${ e.getMessage }")
-          throw e
-        },
+        e => throw e,
         () => debug("completed"))
   }
 }
