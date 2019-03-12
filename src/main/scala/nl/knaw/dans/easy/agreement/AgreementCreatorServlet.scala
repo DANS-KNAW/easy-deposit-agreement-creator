@@ -47,6 +47,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
       .flatMap(par => createAgreement(par, output)) match {
       case Success(_) => Ok(output.toByteArray)
       case Failure(fce: FedoraClientException) if fce.getMessage.contains("404") => NotFound(fce.getMessage)
+      case Failure(nse: NoSuchElementException) => NotFound(nse.getMessage)
       case Failure(iae: IllegalArgumentException) => BadRequest(iae.getMessage)
       case Failure(t: Throwable) => InternalServerError(t.getMessage)
     }).logResponse
