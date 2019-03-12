@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.agreement
 
-import java.io.FileOutputStream
+import java.io.{ File, FileOutputStream }
 import java.nio.file.Paths
 
 import nl.knaw.dans.lib.error._
@@ -41,7 +41,6 @@ object Command extends App with DebugEnhancedLogging {
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
 
-
   private def runSubcommand(app: AgreementCreatorApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
@@ -49,34 +48,48 @@ object Command extends App with DebugEnhancedLogging {
         case _ => Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
       }
       .getOrElse {
-        val params = new internal.Parameters(
-          templateResourceDir = app.templateResourceDir,
-          datasetID = commandLine.datasetID(),
-          isSample = commandLine.isSample(),
-          fedoraClient = app.fedoraClient,
-          ldapEnv = app.ldapEnv,
-          fsrdb = app.fsrdb,
-          fileLimit = app.fileLimit)
         val outputFile = commandLine.outputFile()
+        for {
+          params <- createParameters(app)
+          _ = logger.debug(s"Using the following settings: $params")
+          _ = logger.debug(s"Output will be written to ${ outputFile.getAbsolutePath }")
+          _ <- createAgreement(outputFile, params)
+          _ = params.close()
+        } yield ()
+      } match {
+      case Success(_) => Success(s"Created agreement for ${ commandLine.datasetID() }")
+      case Failure(t: Throwable) => Failure(new Exception(s"Could not create agreement for ${ commandLine.datasetID() }: ${ t.getMessage }"))
+    }
+  }
 
-        logger.debug(s"Using the following settings: $params")
-        logger.debug(s"Output will be written to ${ outputFile.getAbsolutePath }")
-        var success: Boolean = false
-        new FileOutputStream(outputFile)
-          .usedIn(AgreementCreator(params).createAgreement)
-          .doOnCompleted {
-            logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }")
-            params.close()
-            success = true
-          }
-          .toBlocking
-          .subscribe(
-            _ => {},
-            e => logger.error("An error was caught in main:", e),
-            () => logger.debug("completed"))
-        if (success) Success(s"Created agreement for ${ commandLine.datasetID() }")
-        else Failure(new Exception(s"Could not create agreement for ${ commandLine.datasetID() }"))
-      }
+  private def createAgreement(outputFile: File, params: internal.Parameters): Try[Unit] = Try {
+    if (params.fedora.datasetIdExists(params.datasetID)) {
+      new FileOutputStream(outputFile)
+        .usedIn(AgreementCreator(params).createAgreement)
+        .doOnCompleted {
+          logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }")
+        }
+        .toBlocking
+        .subscribe(
+          _ => {},
+          e => logger.error("An error was caught in main:", e),
+          () => logger.debug("completed"))
+    }
+    else {
+      params.close()
+      throw new IllegalArgumentException(s"datasetID ${ params.datasetID } does not exist in Fedora")
+    }
+  }
+
+  private def createParameters(app: AgreementCreatorApp): Try[internal.Parameters] = Try {
+    new internal.Parameters(
+      templateResourceDir = app.templateResourceDir,
+      datasetID = commandLine.datasetID(),
+      isSample = commandLine.isSample(),
+      fedoraClient = app.fedoraClient,
+      ldapEnv = app.ldapEnv,
+      fsrdb = app.fsrdb,
+      fileLimit = app.fileLimit)
   }
 
   private def runAsService(app: AgreementCreatorApp): Try[FeedBackMessage] = Try {

@@ -128,8 +128,10 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
          |prefix dc: <http://purl.org/dc/elements/1.1/identifier>
          |ASK  {?s dc: "$datasetID" }
     """.stripMargin
-    managed(Source.fromInputStream(new RiSearch(query).lang("sparql").format("simple").execute(client).getEntityInputStream))
-      .acquireAndGet(result => BooleanUtils.toBoolean(result.mkString)
+    managed(Source.fromInputStream(new RiSearch(query).lang("sparql").format("csv").execute(client).getEntityInputStream))
+      .acquireAndGet(result => {
+        BooleanUtils.toBoolean(result.getLines().toList.last)
+      }
       )
   }
 }
