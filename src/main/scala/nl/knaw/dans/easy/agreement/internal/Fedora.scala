@@ -21,6 +21,7 @@ import com.yourmediashelf.fedora.client.request.RiSearch
 import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.agreement.DatasetID
+import resource.managed
 import rx.lang.scala.Observable
 import nl.knaw.dans.easy.agreement._
 import org.apache.commons.lang.BooleanUtils
@@ -77,7 +78,7 @@ trait Fedora {
    */
   def queryRiSearch(query: String): Observable[String]
 
-  def datasetExists(datasetID: DatasetID): Boolean
+  def datasetIdExists(datasetID: DatasetID): Boolean
 }
 
 case class FedoraImpl(client: FedoraClient) extends Fedora {
@@ -115,16 +116,14 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
     }
   }
 
-  override def datasetExists(datasetID: DatasetID): Boolean = {
+  override def datasetIdExists(datasetID: DatasetID): Boolean = { //TODO does this also have to be an observable?
     val query =
       s"""
          |prefix dc: <http://purl.org/dc/elements/1.1/identifier>
          |ASK  {?s dc: "$datasetID" }
     """.stripMargin
-    BooleanUtils
-      .toBoolean(Source
-        .fromInputStream(
-          new RiSearch(query).lang("sparql").format("simple").execute(client).getEntityInputStream).mkString
+    managed(Source.fromInputStream(new RiSearch(query).lang("sparql").format("simple").execute(client).getEntityInputStream))
+      .acquireAndGet(result => BooleanUtils.toBoolean(result.mkString)
       )
   }
 }

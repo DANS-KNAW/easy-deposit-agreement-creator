@@ -39,18 +39,19 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
     val output = new ByteArrayOutputStream()
     (createParameters()
       .recoverWith { case nse: NoSuchElementException => Failure(new IllegalArgumentException(s"mandatory parameter was not provided: ${ nse.getMessage }")) }
-      .flatMap {
-        pars =>
-          if (pars.fedora.datasetExists(pars.datasetID)) Success(pars)
-          else Failure(new NoSuchElementException(s"${ pars.datasetID } was not found in fedora"))
-      }
-      .flatMap(par => createAgreement(par, output)) match {
+      .flatMap(validateDatasetIdExistsInFedora)
+      .flatMap(createAgreement(_, output)) match {
       case Success(_) => Ok(output.toByteArray)
       case Failure(fce: FedoraClientException) if fce.getMessage.contains("404") => NotFound(fce.getMessage)
       case Failure(nse: NoSuchElementException) => NotFound(nse.getMessage)
       case Failure(iae: IllegalArgumentException) => BadRequest(iae.getMessage)
       case Failure(t: Throwable) => InternalServerError(t.getMessage)
     }).logResponse
+  }
+
+  private def validateDatasetIdExistsInFedora(pars: Params): Try[Params] = Try {
+    if (!pars.fedora.datasetIdExists(pars.datasetID)) throw new NoSuchElementException(s"${ pars.datasetID } was not found in fedora")
+    pars
   }
 
   private def createParameters(): Try[Params] = Try {
