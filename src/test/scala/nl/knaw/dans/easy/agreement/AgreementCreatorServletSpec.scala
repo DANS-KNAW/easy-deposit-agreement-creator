@@ -44,18 +44,17 @@ class AgreementCreatorServletSpec extends FlatSpec
 
   def minimalAppConfig: Configuration = {
     new Configuration("", new PropertiesConfiguration() {
-      addProperty("fcrepo.url", "http://deasy.dans.knaw.nl:8080/fedora")
+      addProperty("fcrepo.url", "http://localhost:8080/fedora")
       addProperty("fcrepo.user", "-")
       addProperty("fcrepo.password", "-")
       addProperty("fsrdb.db-connection-url", "")
       addProperty("fsrdb.db-connection-username", "-")
       addProperty("fsrdb.db-connection-password", "-")
       addProperty("auth.ldap.url", "ldap://localhost")
-      addProperty("auth.ldap.user", "cn=ldapadmin,dc=dans,dc=knaw,dc=nl")
-      addProperty("auth.ldap.password", "1234")
-      addProperty("agreement.resources", "home/res")
+      addProperty("auth.ldap.user", "")
+      addProperty("auth.ldap.password", "")
+      addProperty("agreement.resources", "")
       addProperty("agreement.fileLimit", "3")
-      addProperty("daemon.http.port", "20130")
     })
   }
 }
