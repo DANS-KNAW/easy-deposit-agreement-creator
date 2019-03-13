@@ -63,7 +63,8 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
       fedoraClient = app.fedoraClient,
       ldapEnv = app.ldapEnv,
       fsrdb = app.fsrdb,
-      fileLimit = app.fileLimit)
+      fileLimit = app.fileLimit,
+    )
   }
 
   private def createAgreement(parameters: Params, output: ByteArrayOutputStream): Try[Unit] = Try {
