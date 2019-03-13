@@ -69,7 +69,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
   private def createAgreement(parameters: Params, output: ByteArrayOutputStream): Try[Unit] = Try {
     output
       .usedIn(AgreementCreator(parameters).createAgreement)
-      .doOnCompleted(parameters.close())
+      .doOnTerminate(parameters.close())
       .toBlocking
       .subscribe(_ => {},
         e => throw e,

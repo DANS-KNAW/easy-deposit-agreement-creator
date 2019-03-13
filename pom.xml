@@ -53,13 +53,10 @@
         <dependency>
             <groupId>org.scalamock</groupId>
             <artifactId>scalamock_2.12</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatra</groupId>
             <artifactId>scalatra-scalatest_2.12</artifactId>
-            <version>2.5.0</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- Scala utils -->

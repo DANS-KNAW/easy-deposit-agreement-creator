@@ -129,9 +129,6 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
          |ASK  {?s dc: "$datasetID" }
     """.stripMargin
     managed(Source.fromInputStream(new RiSearch(query).lang("sparql").format("csv").execute(client).getEntityInputStream))
-      .acquireAndGet(result => {
-        BooleanUtils.toBoolean(result.getLines().toList.last)
-      }
-      )
+      .acquireAndGet(r => BooleanUtils.toBoolean(r.getLines().toList.last))
   }
 }
