@@ -31,7 +31,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
   with DebugEnhancedLogging {
 
   get("/") {
-    Ok("Agreement Creator Service running").logResponse
+    Ok(s"Agreement Creator Service running v${ app.version }.").logResponse
   }
 
   post("/create") {

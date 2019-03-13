@@ -22,6 +22,7 @@ import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
 import rx.schedulers.Schedulers
 
 class AgreementCreatorApp(configuration: Configuration) extends AutoCloseable {
+  val version: String = configuration.version
   val templateResourceDir = new File(configuration.properties.getString("agreement.resources"))
   val fedoraClient = new FedoraClient(new FedoraCredentials(
     configuration.properties.getString("fcrepo.url"),
