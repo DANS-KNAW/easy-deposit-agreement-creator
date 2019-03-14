@@ -63,9 +63,10 @@ object Command extends App with DebugEnhancedLogging {
   }
 
   private def validateDatasetIdExists(parameters: internal.Parameters): Try[Unit] = {
-    parameters.fedora.datasetIdExists(parameters.datasetID)
-      .flatMap(if (_) Success(())
-               else Failure(new IllegalArgumentException(s"datasetID ${ parameters.datasetID } does not exist in Fedora")))
+    parameters.fedora.datasetIdExists(parameters.datasetID).flatMap {
+      case true => Success(())
+      case false => Failure(new IllegalArgumentException(s"datasetID ${ parameters.datasetID } does not exist in Fedora"))
+    }
   }
 
   private def createAgreement(outputFile: File, params: internal.Parameters): Unit = {
