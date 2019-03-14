@@ -31,8 +31,8 @@ class AgreementCreatorServletSpec extends FlatSpec
   "get /" should "respond with the service is running" in {
     get("/") {
       status shouldBe 200
-      body shouldBe "Agreement Creator Service running"
-    } //TODO add version once the EASY-2002 gets merged
+      body shouldBe s"Agreement Creator Service running v${ app.version }."
+    }
   }
 
   "post /create" should "return a bad request (400) when the param datasetId is not provided" in {
@@ -43,7 +43,7 @@ class AgreementCreatorServletSpec extends FlatSpec
   }
 
   def minimalAppConfig: Configuration = {
-    new Configuration("", new PropertiesConfiguration() {
+    new Configuration("1.0.0", new PropertiesConfiguration() {
       addProperty("fcrepo.url", "http://localhost:8080/fedora")
       addProperty("fcrepo.user", "-")
       addProperty("fcrepo.password", "-")

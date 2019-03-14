@@ -27,6 +27,7 @@ import nl.knaw.dans.easy.agreement._
 import org.apache.commons.lang.BooleanUtils
 
 import scala.io.Source
+import scala.util.Try
 
 trait Fedora {
 
@@ -84,7 +85,7 @@ trait Fedora {
    * @param datasetID
    * @return true if the dataset exist else false
    */
-  def datasetIdExists(datasetID: DatasetID): Boolean
+  def datasetIdExists(datasetID: DatasetID): Try[Boolean]
 }
 
 case class FedoraImpl(client: FedoraClient) extends Fedora {
@@ -115,20 +116,20 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
 
   def queryRiSearch(query: String): Observable[String] = {
     Observable.defer {
-      new RiSearch(query).lang("sparql").format("csv").execute(client)
-        .getEntityInputStream
+      executeSparqlQuery(query)
         .usedIn(is => Observable.from(Source.fromInputStream(is)
           .getLines().toIterable).drop(1).map(_.split("/").last))
     }
   }
 
-  override def datasetIdExists(datasetID: DatasetID): Boolean = { //TODO does this also have to be an observable?
+  override def datasetIdExists(datasetID: DatasetID): Try[Boolean] = Try {
     val query =
       s"""
          |prefix dc: <http://purl.org/dc/elements/1.1/identifier>
          |ASK  {?s dc: "$datasetID" }
     """.stripMargin
-    managed(Source.fromInputStream(new RiSearch(query).lang("sparql").format("csv").execute(client).getEntityInputStream))
-      .acquireAndGet(r => BooleanUtils.toBoolean(r.getLines().toList.last))
+    managed(Source.fromInputStream(executeSparqlQuery(query))).acquireAndGet(r => BooleanUtils.toBoolean(r.getLines().toList.last))
   }
+
+  private def executeSparqlQuery(query: String): InputStream = new RiSearch(query).lang("sparql").format("csv").execute(client).getEntityInputStream
 }

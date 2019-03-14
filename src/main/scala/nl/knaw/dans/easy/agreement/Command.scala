@@ -53,32 +53,32 @@ object Command extends App with DebugEnhancedLogging {
           params <- createParameters(app)
           _ = logger.debug(s"Using the following settings: $params")
           _ = logger.debug(s"Output will be written to ${ outputFile.getAbsolutePath }")
-          _ <- createAgreement(outputFile, params)
+          _ <- validateDatasetIdExists(params)
+          _ = createAgreement(outputFile, params)
           _ = params.close()
         } yield ()
-      } match {
-      case Success(_) => Success(s"Created agreement for ${ commandLine.datasetID() }")
-      case Failure(t: Throwable) => Failure(new Exception(s"Could not create agreement for ${ commandLine.datasetID() }: ${ t.getMessage }"))
-    }
+      }
+      .recoverWith { case t: Throwable => Failure(new Exception(s"Could not create agreement for ${ commandLine.datasetID() }: ${ t.getMessage }")) }
+      .map(_ => s"Created agreement for ${ commandLine.datasetID() }")
   }
 
-  private def createAgreement(outputFile: File, params: internal.Parameters): Try[Unit] = Try {
-    if (params.fedora.datasetIdExists(params.datasetID)) {
-      new FileOutputStream(outputFile)
-        .usedIn(AgreementCreator(params).createAgreement)
-        .doOnCompleted {
-          logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }")
-        }
-        .toBlocking
-        .subscribe(
-          _ => {},
-          e => logger.error("An error was caught in main:", e),
-          () => logger.debug("completed"))
-    }
-    else {
-      params.close()
-      throw new IllegalArgumentException(s"datasetID ${ params.datasetID } does not exist in Fedora")
-    }
+  private def validateDatasetIdExists(parameters: internal.Parameters): Try[Unit] = {
+    parameters.fedora.datasetIdExists(parameters.datasetID)
+      .flatMap(if (_) Success(())
+               else Failure(new IllegalArgumentException(s"datasetID ${ parameters.datasetID } does not exist in Fedora")))
+  }
+
+  private def createAgreement(outputFile: File, params: internal.Parameters): Unit = {
+    new FileOutputStream(outputFile)
+      .usedIn(AgreementCreator(params).createAgreement)
+      .doOnCompleted {
+        logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }")
+      }
+      .toBlocking
+      .subscribe(
+        _ => {},
+        e => logger.error("An error was caught in main:", e),
+        () => logger.debug("completed"))
   }
 
   private def createParameters(app: AgreementCreatorApp): Try[internal.Parameters] = Try {
