@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream
 
 import com.yourmediashelf.fedora.client.FedoraClientException
 import nl.knaw.dans.easy.agreement.internal.{ Parameters => Params }
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.logging.servlet._
 import org.scalatra._
@@ -39,25 +40,24 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
     val output = new ByteArrayOutputStream()
 
     val result = for {
-      params <- createParameters()
-        .recoverWith { case nse: NoSuchElementException => Failure(new IllegalArgumentException(s"mandatory parameter was not provided: ${ nse.getMessage }")) }
+      params <- createParameters().recoverWith {
+        case nse: NoSuchElementException => Failure(new IllegalArgumentException(s"mandatory parameter was not provided: ${ nse.getMessage }"))
+      }
       _ <- validateDatasetIdExistsInFedora(params)
-      _ <- createAgreement(params, output)
-    } yield ()
+      actionResult <- createAgreement(params, output)
+    } yield actionResult
 
-    (result match {
-      case Success(_) => Ok(output.toByteArray.toString)
-      case Failure(fce: FedoraClientException) if fce.getMessage.contains("404") => NotFound(fce.getMessage)
-      case Failure(nse: NoSuchElementException) => NotFound(nse.getMessage)
-      case Failure(iae: IllegalArgumentException) => BadRequest(iae.getMessage)
-      case Failure(t: Throwable) => InternalServerError(t.getMessage)
-    }).logResponse
+    result.getOrRecover {
+      case nse: NoSuchElementException => NotFound(nse.getMessage)
+      case iae: IllegalArgumentException => BadRequest(iae.getMessage)
+      case t => InternalServerError(t.getMessage)
+    }.logResponse
   }
 
   private def validateDatasetIdExistsInFedora(pars: Params): Try[Unit] = {
     pars.fedora.datasetIdExists(pars.datasetID).flatMap {
       case true => Success(())
-      case false => Failure(new NoSuchElementException(s"Dataset ID ${ pars.datasetID } was not found in fedora"))
+      case false => Failure(new NoSuchElementException(s"DatasetId ${ pars.datasetID } does not exist"))
     }
   }
 
@@ -73,13 +73,16 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
     )
   }
 
-  private def createAgreement(parameters: Params, output: ByteArrayOutputStream): Try[Unit] = Try {
+  private def createAgreement(parameters: Params, output: ByteArrayOutputStream): Try[ActionResult] = Try {
     output
       .usedIn(AgreementCreator(parameters).createAgreement)
-      .doOnTerminate(parameters.close())
+      .doOnTerminate { parameters.close() }
+      .doOnCompleted { debug("completed") }
+      .onErrorReturn {
+        case fce: FedoraClientException if fce.getMessage.contains("404") => NotFound(fce.getMessage)
+        case t: Throwable => InternalServerError(t.getMessage)
+      }
       .toBlocking
-      .subscribe(_ => {},
-        e => throw e,
-        () => debug("completed"))
+      .headOrElse { Ok(output.toByteArray) }
   }
 }
