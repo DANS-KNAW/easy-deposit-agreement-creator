@@ -18,63 +18,74 @@ package nl.knaw.dans.easy.agreement.internal
 import java.io.InputStream
 
 import com.yourmediashelf.fedora.client.request.RiSearch
-import com.yourmediashelf.fedora.client.{FedoraClient, FedoraCredentials}
+import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.agreement.DatasetID
+import resource.managed
 import rx.lang.scala.Observable
 import nl.knaw.dans.easy.agreement._
+import org.apache.commons.lang.BooleanUtils
 
 import scala.io.Source
+import scala.util.Try
 
 trait Fedora {
 
   /**
-    * Queries Fedora for the AMD datastream dissemination xml of the dataset with `identifier = pid`.
-    *
-    * @param pid identifier of the dataset to be queried
-    * @return the resulting `InputStream` wrapped in an `Observable`
-    */
+   * Queries Fedora for the AMD datastream dissemination xml of the dataset with `identifier = pid`.
+   *
+   * @param pid identifier of the dataset to be queried
+   * @return the resulting `InputStream` wrapped in an `Observable`
+   */
   def getAMD(pid: DatasetID): Observable[InputStream]
 
   /**
-    * Queries Fedora for the DC datastream dissemination xml of the dataset with `identifier = pid`.
-    *
-    * @param pid identifier of the dataset to be queried
-    * @return the resulting `InputStream` wrapped in an `Observable`
-    */
+   * Queries Fedora for the DC datastream dissemination xml of the dataset with `identifier = pid`.
+   *
+   * @param pid identifier of the dataset to be queried
+   * @return the resulting `InputStream` wrapped in an `Observable`
+   */
   def getDC(pid: DatasetID): Observable[InputStream]
 
   /**
-    * Queries Fedora for the EMD datastream dissemination xml of the dataset with `identifier = pid`.
-    *
-    * @param pid identifier of the dataset to be queried
-    * @return the resulting `InputStream` wrapped in an `Observable`
-    */
+   * Queries Fedora for the EMD datastream dissemination xml of the dataset with `identifier = pid`.
+   *
+   * @param pid identifier of the dataset to be queried
+   * @return the resulting `InputStream` wrapped in an `Observable`
+   */
   def getEMD(pid: DatasetID): Observable[InputStream]
 
   /**
-    * Queries Fedora for the FILE_METADATA datastream dissemination xml of the dataset with `identifier = pid`.
-    *
-    * @param pid identifier of the dataset to be queried
-    * @return the resulting `InputStream` wrapped in an `Observable`
-    */
+   * Queries Fedora for the FILE_METADATA datastream dissemination xml of the dataset with `identifier = pid`.
+   *
+   * @param pid identifier of the dataset to be queried
+   * @return the resulting `InputStream` wrapped in an `Observable`
+   */
   def getFileMetadata(pid: FileID): Observable[InputStream]
 
   /**
-    * Queries Fedora for the EASY_FILE datastream of the dataset with `identifier = pid`.
-    *
-    * @param pid identifier of the dataset to be queried
-    * @return the resulting `DatastreamProfile` wrapped in an `Observable`
-    */
+   * Queries Fedora for the EASY_FILE datastream of the dataset with `identifier = pid`.
+   *
+   * @param pid identifier of the dataset to be queried
+   * @return the resulting `DatastreamProfile` wrapped in an `Observable`
+   */
   def getFile(pid: FileID): Observable[DatastreamProfile]
 
   /**
-    * Executes a ``RiSearch`` query in Fedora.
-    *
-    * @param query the query to be executed
-    * @return the result of that query
-    */
+   * Executes a ``RiSearch`` query in Fedora.
+   *
+   * @param query the query to be executed
+   * @return the result of that query
+   */
   def queryRiSearch(query: String): Observable[String]
+
+  /**
+   * Queries whether the provided datasetID exists in Fedora
+   *
+   * @param datasetID
+   * @return true if the dataset exist else false
+   */
+  def datasetIdExists(datasetID: DatasetID): Try[Boolean]
 }
 
 case class FedoraImpl(client: FedoraClient) extends Fedora {
@@ -105,10 +116,20 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
 
   def queryRiSearch(query: String): Observable[String] = {
     Observable.defer {
-      new RiSearch(query).lang("sparql").format("csv").execute(client)
-        .getEntityInputStream
+      executeSparqlQuery(query)
         .usedIn(is => Observable.from(Source.fromInputStream(is)
           .getLines().toIterable).drop(1).map(_.split("/").last))
     }
   }
+
+  override def datasetIdExists(datasetID: DatasetID): Try[Boolean] = Try {
+    val query =
+      s"""
+         |prefix dc: <http://purl.org/dc/elements/1.1/identifier>
+         |ASK  {?s dc: "$datasetID" }
+    """.stripMargin
+    managed(Source.fromInputStream(executeSparqlQuery(query))).acquireAndGet(r => BooleanUtils.toBoolean(r.getLines().toList.last))
+  }
+
+  private def executeSparqlQuery(query: String): InputStream = new RiSearch(query).lang("sparql").format("csv").execute(client).getEntityInputStream
 }
