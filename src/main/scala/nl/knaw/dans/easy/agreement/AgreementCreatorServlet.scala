@@ -29,10 +29,11 @@ import scala.util.{ Failure, Success, Try }
 class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
   with ServletLogger
   with PlainLogFormatter
+  with LogResponseBodyOnError
   with DebugEnhancedLogging {
 
   get("/") {
-    Ok(s"Agreement Creator Service running v${ app.version }.").logResponse
+    Ok(s"Agreement Creator Service running v${ app.version }.")
   }
 
   post("/create") {
@@ -51,7 +52,7 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
       case nse: NoSuchElementException => NotFound(nse.getMessage)
       case iae: IllegalArgumentException => BadRequest(iae.getMessage)
       case t => InternalServerError(t.getMessage)
-    }.logResponse
+    }
   }
 
   private def validateDatasetIdExistsInFedora(pars: Params): Try[Unit] = {
