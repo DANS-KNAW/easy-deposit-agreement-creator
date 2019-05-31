@@ -5,6 +5,7 @@ Description=EASY Example Module Service
 ExecStart=/bin/java \
    -Dlogback.configurationFile=/etc/opt/dans.knaw.nl/easy-deposit-agreement-creator/logback-service.xml \
    -Dapp.home=/opt/dans.knaw.nl/easy-deposit-agreement-creator \
+   -Dorg.scalatra.environment="production" \
    -jar /opt/dans.knaw.nl/easy-deposit-agreement-creator/bin/easy-deposit-agreement-creator.jar run-service
 
 # Java returns 143 even if the SIGTERM was handled correctly.
