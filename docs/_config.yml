@@ -1,6 +1,6 @@
 title: easy-deposit-agreement-creator
 description: >-
-  JSON-based deposit service.
+  JSON-based  service to generate Deposit Agreements.
 baseurl: "/easy-deposit-agreement-creator"
 github_username: DANS-KNAW
 
