@@ -58,7 +58,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
   /create:
     post:
-      summary: Returns a Deposit Agreement based on the datasetId
+      summary: Returns a Deposit Agreement based on the EASY datasetId in Fedora
       parameters:
         - name: datasetId
           in: query
