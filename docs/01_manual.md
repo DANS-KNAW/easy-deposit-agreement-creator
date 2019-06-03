@@ -9,42 +9,82 @@ Manual
 TABLE OF CONTENTS
 -----------------
 
+- [SYNOPSIS](#synopsis)
+- [DESCRIPTION](#description)
+- [ARGUMENTS](#arguments)
+- [INSTALLATION AND CONFIGURATION](#installation-and-configuration)
+- [BUILDING FROM SOURCE](#building-from-source)
 
 
 SYNOPSIS
 --------
 
-    easy-deposit-agreement-creator run-service
-                          
+    easy-deposit-agreement-creator [ -s ] <datasetID> <agreement-file>
+
 
 DESCRIPTION
 -----------
-This service offers a JSON-based API that lets the client generate a Deposit Agreement based on provided parameters.
 
-For details about the service API see the [OpenAPI specification].
+A command line tool that creates a pdf document containing the deposit agreement for a given dataset. The tool searches for a dataset that corresponds 
+to the given `datasetID` and uses the metadata of this dataset, as well as the personal data of the depositor to generate the deposit agreement.
 
-[OpenAPI specification]: ./api.html
+**Note:** the dataset needs to be in Fedora already. Newly created datasets (for example from `easy-split-multi-deposit`) need to be ingested 
+by EASY first before generating the deposit agreement.
+
+`easy-deposit-agreement-creator` uses a template with placeholders. After replacing the placeholders with actual data, the template is converted into a PDF file.
+
+Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML 
+files that are specified in `src/main/assembly/dist/res/template/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` 
+are required, namely `dans_logo.png`, `agreement_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
+
+Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool 
+requires to be installed before being used by `easy-deposit-agreement-creator`. In order to not having this installed on our computers while developing 
+on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. 
+During development we therefore require a different script than the one that is used in production. Follow the steps below:
+
+1. In `application.properties` set `pdf.script=localrun.sh`;
+2. In `localrun.sh` fill in the variables `USER_HOST` and `PRIVATE_KEY`.
+
+A `--sample` or `-s` flag can be added to the command line tool to signal that a 'sample agreement' needs to be created. This version of the agreement
+can be created when the DOI is not yet calculated. Also in the title of the agreement it is clearly indicated that this version is a *sample*.
 
 ARGUMENTS
 ---------
 
-          --help                Show help message
-          --version             Show version of this program
-
-    Subcommand: run-service - Starts the Deposit Agreement Creator as a daemon that services
-                              HTTP requests
-          --help   Show help message
-    ---
+     -s, --sample    Indicates whether or not a sample agreement needs to be created
+     -h, --help      Show help message
+     -v, --version   Show version of this program
+    
+    trailing arguments:
+     dataset-id (required)     The ID of the dataset of which a agreement has to be created
+     agreement-file (required)   The file location where the agreement needs to be stored
 
 
 INSTALLATION AND CONFIGURATION
 ------------------------------
-The preferred way of install this module is using the RPM package. This will install the binaries to
-`/opt/dans.knaw.nl/easy-deposit-agreement-creator`, the configuration files to `/etc/opt/dans.knaw.nl/easy-deposit-agreement-creator`,
-and will install the service script for `initd` or `systemd`.
 
-If you are on a system that does not support RPM, you can use the tarball. You will need to copy the
-service scripts to the appropiate locations yourself.
+
+1. Unzip the tarball to a directory of your choice, e.g. /opt/
+2. A new directory called easy-deposit-agreement-creator-<version> will be created
+3. Add the command script to your `PATH` environment variable by creating a symbolic link to it from a directory that is
+   on the path, e.g. 
+   
+        ln -s /opt/easy-deposit-agreement-creator-<version>/bin/easy-deposit-agreement-creator /usr/bin
+
+
+
+General configuration settings can be set in `src/main/assembly/dist/cfg/appliation.properties` and logging can be configured
+in `src/main/assembly/dist/cfg/logback.xml`. The available settings are explained in comments in aforementioned files.
+
+
+**WeasyPrint** is installed according to the [installation page](http://weasyprint.readthedocs.io/en/latest/install.html) or via:
+
+```
+yum install redhat-rpm-config python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel weasyprint
+```
+
+After this, `weasyprint --help` is supposed to show the appropriate help page.
+
 
 BUILDING FROM SOURCE
 --------------------
@@ -53,14 +93,9 @@ Prerequisites:
 
 * Java 8 or higher
 * Maven 3.3.3 or higher
-* RPM (if you want to build the RPM package).
 
 Steps:
 
-    git clone https://github.com/DANS-KNAW/easy-deposit-agreement-creator.git
-    cd easy-deposit-agreement-creator
-    mvn install
-
-If the `rpm` executable is found at `/usr/local/bin/rpm`, the build profile that includes the RPM 
-packaging will be activated. If `rpm` is available, but at a different path, then activate it by using
-Maven's `-P` switch: `mvn -Pprm install`.
+        git clone https://github.com/DANS-KNAW/easy-deposit-agreement-creator.git
+        cd easy-deposit-agreement-creator
+        mvn install
