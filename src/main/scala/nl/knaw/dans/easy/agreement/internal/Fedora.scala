@@ -17,16 +17,11 @@ package nl.knaw.dans.easy.agreement.internal
 
 import java.io.InputStream
 
-import com.yourmediashelf.fedora.client.request.RiSearch
-import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
+import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraClientException, FedoraCredentials }
 import com.yourmediashelf.fedora.generated.management.DatastreamProfile
 import nl.knaw.dans.easy.agreement.DatasetID
-import resource.managed
 import rx.lang.scala.Observable
-import nl.knaw.dans.easy.agreement._
-import org.apache.commons.lang.BooleanUtils
 
-import scala.io.Source
 import scala.util.Try
 
 trait Fedora {
@@ -72,14 +67,6 @@ trait Fedora {
   def getFile(pid: FileID): Observable[DatastreamProfile]
 
   /**
-   * Executes a ``RiSearch`` query in Fedora.
-   *
-   * @param query the query to be executed
-   * @return the result of that query
-   */
-  def queryRiSearch(query: String): Observable[String]
-
-  /**
    * Queries whether the provided datasetID exists in Fedora
    *
    * @param datasetID
@@ -114,22 +101,9 @@ case class FedoraImpl(client: FedoraClient) extends Fedora {
       .getDatastreamProfile)
   }
 
-  def queryRiSearch(query: String): Observable[String] = {
-    Observable.defer {
-      executeSparqlQuery(query)
-        .usedIn(is => Observable.from(Source.fromInputStream(is)
-          .getLines().toIterable).drop(1).map(_.split("/").last))
-    }
-  }
-
   override def datasetIdExists(datasetID: DatasetID): Try[Boolean] = Try {
-    val query =
-      s"""
-         |prefix dc: <http://purl.org/dc/elements/1.1/identifier>
-         |ASK  {?s dc: "$datasetID" }
-    """.stripMargin
-    managed(Source.fromInputStream(executeSparqlQuery(query))).acquireAndGet(r => BooleanUtils.toBoolean(r.getLines().toList.last))
-  }
-
-  private def executeSparqlQuery(query: String): InputStream = new RiSearch(query).lang("sparql").format("csv").execute(client).getEntityInputStream
+    FedoraClient.getObjectXML(datasetID)
+      .execute(client)
+      .getStatus == 200
+  } recover { case _: FedoraClientException => false }
 }
