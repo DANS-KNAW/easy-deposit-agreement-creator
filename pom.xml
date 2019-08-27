@@ -40,7 +40,7 @@
     </properties>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-deposit-agreement-creator</developerConnection>
+        <developerConnection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
