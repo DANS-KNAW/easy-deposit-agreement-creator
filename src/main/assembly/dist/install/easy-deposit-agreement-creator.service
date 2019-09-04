@@ -3,6 +3,7 @@ Description=EASY Example Module Service
 
 [Service]
 ExecStart=/bin/java \
+   $INITIAL_HEAP_SIZE \
    -Dlogback.configurationFile=/etc/opt/dans.knaw.nl/easy-deposit-agreement-creator/logback-service.xml \
    -Dapp.home=/opt/dans.knaw.nl/easy-deposit-agreement-creator \
    -Dorg.scalatra.environment="production" \
