@@ -175,7 +175,13 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   private def formatLicense(items: mutable.Buffer[MetadataItem]) = {
-    items.map {
+    val grouped = items.groupBy {
+      case s: BasicString if s.getValue == "accept" => true
+      case _ => false
+    }
+    val usedItems = if (grouped.size == 1) items
+                    else grouped(false)
+    usedItems.map {
       case s: BasicString if s.getValue == "accept" =>
         "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
       case s =>
