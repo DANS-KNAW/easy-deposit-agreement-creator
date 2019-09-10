@@ -23,9 +23,9 @@ import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
 import nl.knaw.dans.easy.agreement.FileAccessRight._
 import nl.knaw.dans.easy.agreement.{ DatasetID, FileAccessRight, FileItem }
-import nl.knaw.dans.lib.string.StringExtensions
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.string.StringExtensions
 import nl.knaw.dans.pf.language.emd.types.Spatial.{ Box, Point }
 import nl.knaw.dans.pf.language.emd.types._
 import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EmdDate, Term }
@@ -34,7 +34,7 @@ import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 
 import scala.collection.JavaConverters._
-import scala.collection.SortedMap
+import scala.collection.{ SortedMap, mutable }
 import scala.language.{ implicitConversions, postfixOps }
 import scala.util.Try
 
@@ -142,8 +142,9 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
 
   def currentDateAndTime: String = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
 
+  private val newLine = "<br/>"
+
   def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
-    val newLine = "<br/>"
     emd.getTerms
       .asScala
       .map(term => (term, emd.getTerm(term).asScala))
@@ -156,24 +157,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
           case (t, items) if t.getName == Term.Name.ACCESSRIGHTS =>
             t.getName -> formatDatasetAccessRights(items.head)
           case (t, items) if t.getName == Term.Name.SPATIAL =>
-            val basic = items.collect {
-              case s: BasicString => s.getValue
-            }
-            val spatial = items.collect {
-              case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
-            }
-
-            t.getName -> (basic ++ spatial).mkString(newLine * 2)
+            t.getName -> formatSpatials(items)
           case (t, items) if t.getName == Term.Name.LICENSE =>
-            t.getName -> items.map {
-              case s: BasicString if s.getValue == "accept" => "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
-              case s => s.toString
-            }.mkString(newLine)
+            t.getName -> formatLicense(items)
           case (t, items) if t.getName == Term.Name.RELATION =>
-            t.getName -> items.map {
-              case r: Relation => formatRelation(r)
-              case s => s.toString
-            }.mkString(newLine)
+            t.getName -> formatRelations(items)
           case (t, items) => t.getName -> items.mkString(newLine)
         }.reduce[(Term.Name, String)] { case ((t1, s1), (t2, s2)) if t1 == t2 => (t1, s1 + newLine * 2 + s2) }
 
@@ -184,6 +172,22 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         ).keywordMapAsJava
       }
       .sortedJavaCollection
+  }
+
+  private def formatLicense(items: mutable.Buffer[MetadataItem]) = {
+    items.map {
+      case s: BasicString if s.getValue == "accept" =>
+        "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+      case s =>
+        s.toString
+    }.mkString(newLine)
+  }
+
+  private def formatRelations(items: mutable.Buffer[MetadataItem]) = {
+    items.map {
+      case r: Relation => formatRelation(r)
+      case s => s.toString
+    }.mkString(newLine)
   }
 
   def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
@@ -198,7 +202,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   def formatDatasetAccessRights(item: MetadataItem): String = {
     Try(AccessCategory.valueOf(item.toString)) // may throw an IllegalArgumentException
       .map {
-      // @formatter:off
+        // @formatter:off
         case ANONYMOUS_ACCESS                 => "Anonymous"
         case OPEN_ACCESS                      => "Open Access"
         case OPEN_ACCESS_FOR_REGISTERED_USERS => "Open access for registered users"
@@ -208,9 +212,19 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         case NO_ACCESS                        => "Other"
         case FREELY_AVAILABLE                 => "Open Access"
         // @formatter:on
-    }
+      }
       .doIfFailure { case _ => logger.warn("No available mapping; using acces category value directly") }
       .getOrElse(item.toString)
+  }
+
+  private def formatSpatials(items: mutable.Buffer[MetadataItem]) = {
+    val basic = items.collect {
+      case s: BasicString => s.getValue
+    }
+    val spatial = items.collect {
+      case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
+    }
+    (basic ++ spatial).mkString(newLine * 2)
   }
 
   def formatEasSpatial(spatial: Spatial): String = {
