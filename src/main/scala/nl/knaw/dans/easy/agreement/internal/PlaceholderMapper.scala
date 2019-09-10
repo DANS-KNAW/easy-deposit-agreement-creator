@@ -159,7 +159,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
           case (t, items) if t.getName == Term.Name.SPATIAL =>
             t.getName -> formatSpatials(items)
           case (t, items) if t.getName == Term.Name.LICENSE =>
-            t.getName -> formatLicense(items)
+            t.getName -> getSpecifiedLicense(items)
+              .getOrElse(toLicense(emd.getEmdRights.getAccessCategory))
           case (t, items) if t.getName == Term.Name.RELATION =>
             t.getName -> formatRelations(items)
           case (t, items) => t.getName -> items.mkString(newLine)
@@ -174,19 +175,18 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .sortedJavaCollection
   }
 
-  private def formatLicense(items: mutable.Buffer[MetadataItem]) = {
-    val grouped = items.groupBy {
+  private def getSpecifiedLicense(licenseItems: mutable.Buffer[MetadataItem]) = {
+    licenseItems.filterNot {
       case s: BasicString if s.getValue == "accept" => true
       case _ => false
+    }.map(_.toString).headOption
+  }
+
+  private def toLicense(category: AccessCategory) = {
+    category match {
+      case AccessCategory.OPEN_ACCESS => "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+      case _ => "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf"
     }
-    val usedItems = if (grouped.size == 1) items
-                    else grouped(false)
-    usedItems.map {
-      case s: BasicString if s.getValue == "accept" =>
-        "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
-      case s =>
-        s.toString
-    }.mkString(newLine)
   }
 
   private def formatRelations(items: mutable.Buffer[MetadataItem]) = {

@@ -217,8 +217,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   "accessRights" should "map an Open Access category to an OpenAccess keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.OPEN_ACCESS
+    expectEmdRights(AccessCategory.OPEN_ACCESS)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -231,8 +230,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map an Anonymous Access category to an OpenAccess keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.ANONYMOUS_ACCESS
+    expectEmdRights(AccessCategory.ANONYMOUS_ACCESS)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -245,8 +243,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map a Freely Available category to an OpenAccess keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.FREELY_AVAILABLE
+    expectEmdRights(AccessCategory.FREELY_AVAILABLE)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -259,8 +256,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map an Open Access For Registered Users category to an OpenAccessForRegisteredUsers keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS
+    expectEmdRights(AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -273,8 +269,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map a Group Access category to an RestrictGroup keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.GROUP_ACCESS
+    expectEmdRights(AccessCategory.GROUP_ACCESS)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -287,8 +282,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map a Request Permission category to an RestrictRequest keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.REQUEST_PERMISSION
+    expectEmdRights(AccessCategory.REQUEST_PERMISSION)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -301,8 +295,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map an Access Elsewhere category to an OtherAccess keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.ACCESS_ELSEWHERE
+    expectEmdRights(AccessCategory.ACCESS_ELSEWHERE)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -315,8 +308,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map a No Access category to an OtherAccess keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.NO_ACCESS
+    expectEmdRights(AccessCategory.NO_ACCESS)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -329,8 +321,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "map a null value to an OpenAccess keyword" in {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning AccessCategory.OPEN_ACCESS
+    expectEmdRights(AccessCategory.OPEN_ACCESS)
 
     inside(testInstance.datasetAccessCategory(emd)) {
       case Success(map) => map should contain theSameElementsAs List(
@@ -376,7 +367,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     )
   }
 
-  "metadataTable" should "give a mapping with a chosen license" in {
+  "metadataTable" should "give a mapping with a specified license" in {
     val licenseTerm: Term = prepareEmd
     val accept: MetadataItem = new BasicString("accept")
     val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
@@ -391,11 +382,12 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     )
   }
 
-  it should "give a mapping with a default license" in {
+  it should "give a mapping with a cc0 license" in {
     val licenseTerm: Term = prepareEmd
     val accept: MetadataItem = new BasicString("accept")
     val licenseItems = List(accept).asJava
     emd.getTerm _ expects licenseTerm returning licenseItems
+    expectEmdRights(AccessCategory.OPEN_ACCESS)
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
       Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
@@ -403,6 +395,26 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
       Map(MetadataKey.keyword -> "license", MetadataValue.keyword -> "http://creativecommons.org/publicdomain/zero/1.0/legalcode").asJava,
     )
+  }
+
+  it should "give a mapping with a DANS license" in {
+    val licenseTerm: Term = prepareEmd
+    val accept: MetadataItem = new BasicString("accept")
+    val licenseItems = List(accept).asJava
+    emd.getTerm _ expects licenseTerm returning licenseItems
+    expectEmdRights(AccessCategory.GROUP_ACCESS)
+
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
+      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
+      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
+      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
+      Map(MetadataKey.keyword -> "license", MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf").asJava,
+    )
+  }
+
+  private def expectEmdRights(groupaccess: AccessCategory) = {
+    emd.getEmdRights _ expects() returning rights
+    rights.getAccessCategory _ expects() returning groupaccess
   }
 
   private def prepareEmd = {
