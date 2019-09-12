@@ -451,7 +451,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       new Relation("rabarbera", new URI("http://xx.dans.knaw.nl/yy")),
     ).asJava
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
         MetadataKey.keyword -> null,
         MetadataValue.keyword -> Seq(
@@ -479,7 +479,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       new Spatial("foo", new Polygon("bar", exterior, List().asJava)),
     ).asJava
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
         MetadataKey.keyword -> null,
         MetadataValue.keyword -> Seq(
