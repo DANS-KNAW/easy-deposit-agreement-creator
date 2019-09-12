@@ -372,7 +372,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   "metadataTable" should "give a mapping for the metadata elements in the dataset" in {
     val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
 
-    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
+    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DCTERMS)
     val mediumTerm = new Term(Name.MEDIUM, Namespace.DC)
     val abstractTerm = new Term(Name.ABSTRACT, Namespace.EAS)
     val terms = Set(audienceTerm, accessRightsTerm, licenseTerm, mediumTerm, abstractTerm).asJava
@@ -397,11 +397,11 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     expectLicenses(Seq("accept", ccBy))
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toList shouldBe List(
       Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
-      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
-      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
-      Map(MetadataKey.keyword -> "license", MetadataValue.keyword -> ccBy).asJava,
+      Map(MetadataKey.keyword -> "Access rights", MetadataValue.keyword -> "Anonymous").asJava,
+      Map(MetadataKey.keyword -> "License", MetadataValue.keyword -> ccBy).asJava,
+      Map(MetadataKey.keyword -> "Audience", MetadataValue.keyword -> "abc; def").asJava,
     )
   }
 
@@ -451,7 +451,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
     Map(
-      MetadataKey.keyword -> "license",
+      MetadataKey.keyword -> "License",
       MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
     ).asJava
   }
@@ -461,16 +461,16 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerms _ expects() returning Set(licenseTerm).asJava
     expectLicenses(Seq(ccBy))
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
-        MetadataKey.keyword -> "license",
+        MetadataKey.keyword -> "License",
         MetadataValue.keyword -> ccBy,
       ).asJava,
     )
   }
 
   it should "map relations" in {
-    val term = new Term(Name.RELATION, Namespace.DCTERMS)
+    val term = new Term(Name.RELATION, Namespace.DC)
     emd.getTerms _ expects() returning Set(term).asJava
     emd.getTerm _ expects term returning Seq(
       new BasicString("foo"),
@@ -480,7 +480,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
-        MetadataKey.keyword -> "relation",
+        MetadataKey.keyword -> "Relation",
         MetadataValue.keyword -> Seq(
           "foo",
           "title = bar",
@@ -508,7 +508,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
-        MetadataKey.keyword -> "spatial",
+        MetadataKey.keyword -> "Spatial",
         MetadataValue.keyword -> Seq(
           "foo",
           "Amsterdam<br/><b>Point</b>: scheme = RD, x = 1, y = 2",
@@ -526,7 +526,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerm _ expects licenseTerm returning items.asJava
   }
 
-  private val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
+  private val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DCTERMS)
 
   private def expectEmdRights(accessCategory: AccessCategory) = {
     emd.getEmdRights _ expects() returning rights
