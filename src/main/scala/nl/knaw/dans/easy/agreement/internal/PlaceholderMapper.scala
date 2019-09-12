@@ -265,8 +265,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
 
   private def formatPolygon(polygon: Polygon): String = {
     s"""<b>Polygon:</b>
-       |<i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>
-    """.stripMargin
+       |<i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>""".stripMargin
   }
 
   private def formatRelation(relation: Relation): String = {

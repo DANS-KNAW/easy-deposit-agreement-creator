@@ -23,7 +23,8 @@ import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.easy.agreement.{ FileAccessRight, FileItem, UnitSpec }
 import nl.knaw.dans.pf.language.emd.Term.{ Name, Namespace }
 import nl.knaw.dans.pf.language.emd._
-import nl.knaw.dans.pf.language.emd.types.{ BasicString, IsoDate, MetadataItem, Relation }
+import nl.knaw.dans.pf.language.emd.types.Spatial.{ Box, Point }
+import nl.knaw.dans.pf.language.emd.types._
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
@@ -444,17 +445,51 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   it should "map relations" in {
     val term = new Term(Name.RELATION, Namespace.DCTERMS)
     emd.getTerms _ expects() returning Set(term).asJava
-    val items: Seq[MetadataItem] = Seq(
+    emd.getTerm _ expects term returning Seq(
       new BasicString("foo"),
       new Relation("bar"),
       new Relation("rabarbera", new URI("http://xx.dans.knaw.nl/yy")),
-    )
-    emd.getTerm _ expects term returning items.asJava
+    ).asJava
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
       Map(
         MetadataKey.keyword -> null,
-        MetadataValue.keyword -> "foo<br/>title = bar<br/>title = rabarbera, url = http://xx.dans.knaw.nl/yy",
+        MetadataValue.keyword -> Seq(
+          "foo",
+          "title = bar",
+          "title = rabarbera, url = http://xx.dans.knaw.nl/yy"
+        ).mkString("<br/>"),
+      ).asJava,
+    )
+  }
+
+  it should "map spatials" in {
+    val exterior = new PolygonPart("main triangle", ju.Arrays.asList(
+      new PolygonPoint("52.08110", "4.34521"),
+      new PolygonPoint("52.08071", "4.34422"),
+      new PolygonPoint("52.07913", "4.34332"),
+      new PolygonPoint("52.08110", "4.34521")
+    ))
+    val term = new Term(Name.SPATIAL, Namespace.DCTERMS)
+    emd.getTerms _ expects() returning Set(term).asJava
+    emd.getTerm _ expects term returning Seq(
+      new BasicString("foo"),
+      new Spatial("Amsterdam", new Point("RD", "1", "2")),
+      new Spatial("Amsterdam", new Box("RD", "463001", "155001", "462999", "154999")),
+      new Spatial("foo", new Polygon("bar", exterior, List().asJava)),
+    ).asJava
+
+    val expected = Seq(
+      "foo",
+      "Amsterdam<br/><b>Point</b>: scheme = RD, x = 1, y = 2",
+      "Amsterdam<br/><b>Box:</b> scheme = RD, north = 463001, east = 155001, south = 462999, west = 154999",
+      """foo<br/><b>Polygon:</b><br/><i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>""",
+    ).mkString("<br/><br/>")
+    println(expected)
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
+      Map(
+        MetadataKey.keyword -> null,
+        MetadataValue.keyword -> expected,
       ).asJava,
     )
   }
