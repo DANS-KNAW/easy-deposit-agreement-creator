@@ -16,13 +16,14 @@
 package nl.knaw.dans.easy.agreement.internal
 
 import java.io.File
+import java.net.URI
 import java.{ util => ju }
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.easy.agreement.{ FileAccessRight, FileItem, UnitSpec }
 import nl.knaw.dans.pf.language.emd.Term.{ Name, Namespace }
 import nl.knaw.dans.pf.language.emd._
-import nl.knaw.dans.pf.language.emd.types.{ BasicString, IsoDate, MetadataItem }
+import nl.knaw.dans.pf.language.emd.types.{ BasicString, IsoDate, MetadataItem, Relation }
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
@@ -402,6 +403,24 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
         MetadataKey.keyword -> "license",
         MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
       ).asJava
+  }
+
+  it should "map relations" in {
+    val term = new Term(Name.RELATION, Namespace.DCTERMS)
+    emd.getTerms _ expects() returning Set(term).asJava
+    val items: Seq[MetadataItem] = Seq(
+      new BasicString("foo"),
+      new Relation("bar"),
+      new Relation("rabarbera", new URI("http://xx.dans.knaw.nl/yy")),
+    )
+    emd.getTerm _ expects term returning items.asJava
+
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
+      Map(
+        MetadataKey.keyword -> null,
+        MetadataValue.keyword -> "foo<br/>title = bar<br/>title = rabarbera, url = http://xx.dans.knaw.nl/yy",
+      ).asJava,
+    )
   }
 
   private val licenseTerm = new Term(Name.LICENSE, Namespace.DCTERMS)
