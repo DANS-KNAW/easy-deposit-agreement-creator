@@ -367,12 +367,10 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     )
   }
 
-  "metadataTable" should "give a mapping with a specified license" in {
-    val licenseTerm: Term = prepareEmd
-    val accept: MetadataItem = new BasicString("accept")
+  "metadataTable" should "give a mapping for the metadata elements in the dataset" in {
     val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
-    val licenseItems = List(accept, new BasicString(ccBy)).asJava
-    emd.getTerm _ expects licenseTerm returning licenseItems
+    expectEmd
+    expectLicenses(Seq("accept", ccBy))
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
       Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
@@ -383,44 +381,43 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "give a mapping with a cc0 license" in {
-    val licenseTerm: Term = prepareEmd
-    val accept: MetadataItem = new BasicString("accept")
-    val licenseItems = List(accept).asJava
-    emd.getTerm _ expects licenseTerm returning licenseItems
+    expectEmd
+    expectLicenses(Seq("accept"))
     expectEmdRights(AccessCategory.OPEN_ACCESS)
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
-      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
-      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
-      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
-      Map(MetadataKey.keyword -> "license", MetadataValue.keyword -> "http://creativecommons.org/publicdomain/zero/1.0/legalcode").asJava,
-    )
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
+      Map(
+        MetadataKey.keyword -> "license",
+        MetadataValue.keyword -> "http://creativecommons.org/publicdomain/zero/1.0/legalcode",
+      ).asJava
   }
 
   it should "give a mapping with a DANS license" in {
-    val licenseTerm: Term = prepareEmd
-    val accept: MetadataItem = new BasicString("accept")
-    val licenseItems = List(accept).asJava
-    emd.getTerm _ expects licenseTerm returning licenseItems
+    expectEmd
+    expectLicenses(Seq("accept"))
     expectEmdRights(AccessCategory.GROUP_ACCESS)
 
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
-      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
-      Map(MetadataKey.keyword -> "def", MetadataValue.keyword -> "Anonymous").asJava,
-      Map(MetadataKey.keyword -> "abc", MetadataValue.keyword -> "abc; def").asJava,
-      Map(MetadataKey.keyword -> "license", MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf").asJava,
-    )
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
+      Map(
+        MetadataKey.keyword -> "license",
+        MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
+      ).asJava
   }
 
-  private def expectEmdRights(groupaccess: AccessCategory) = {
+  private val licenseTerm = new Term(Name.LICENSE, Namespace.DCTERMS)
+  private def expectLicenses (values: Seq[String]) = {
+    val items: Seq[MetadataItem] = values.map(new BasicString(_))
+    emd.getTerm _ expects licenseTerm returning items.asJava
+  }
+
+  private def expectEmdRights(accessCategory: AccessCategory) = {
     emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning groupaccess
+    rights.getAccessCategory _ expects() returning accessCategory
   }
 
-  private def prepareEmd = {
+  private def expectEmd = {
     val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
     val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
-    val licenseTerm = new Term(Name.LICENSE, Namespace.DCTERMS)
     val mediumTerm = new Term(Name.MEDIUM, Namespace.DC)
     val abstractTerm = new Term(Name.ABSTRACT, Namespace.EAS)
     val terms = Set(audienceTerm, accessRightsTerm, licenseTerm, mediumTerm, abstractTerm).asJava
@@ -442,7 +439,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerm _ expects accessRightsTerm returning accessRightItems
     emd.getTerm _ expects mediumTerm returning mediumItems
     emd.getTerm _ expects abstractTerm returning abstractItems
-    licenseTerm
   }
 
   "formatAudience" should "combine the audiences separated by <semicolon>" in {
