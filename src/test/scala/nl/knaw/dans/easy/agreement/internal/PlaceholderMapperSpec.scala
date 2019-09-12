@@ -479,17 +479,15 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       new Spatial("foo", new Polygon("bar", exterior, List().asJava)),
     ).asJava
 
-    val expected = Seq(
-      "foo",
-      "Amsterdam<br/><b>Point</b>: scheme = RD, x = 1, y = 2",
-      "Amsterdam<br/><b>Box:</b> scheme = RD, north = 463001, east = 155001, south = 462999, west = 154999",
-      """foo<br/><b>Polygon:</b><br/><i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>""",
-    ).mkString("<br/><br/>")
-    println(expected)
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
       Map(
         MetadataKey.keyword -> null,
-        MetadataValue.keyword -> expected,
+        MetadataValue.keyword -> Seq(
+          "foo",
+          "Amsterdam<br/><b>Point</b>: scheme = RD, x = 1, y = 2",
+          "Amsterdam<br/><b>Box:</b> scheme = RD, north = 463001, east = 155001, south = 462999, west = 154999",
+          """foo<br/><b>Polygon:</b><br/><i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>""",
+        ).mkString("<br/><br/>"),
       ).asJava,
     )
   }
