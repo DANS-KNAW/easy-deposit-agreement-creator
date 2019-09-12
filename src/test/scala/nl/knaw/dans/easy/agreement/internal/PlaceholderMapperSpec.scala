@@ -1,18 +1,18 @@
 /**
- * Copyright (C) 2016 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright (C) 2016 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package nl.knaw.dans.easy.agreement.internal
 
 import java.io.File
@@ -409,24 +409,51 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
     expectLicenses(Seq("accept"))
     expectEmdRights(AccessCategory.OPEN_ACCESS)
+    expectRightsTerms(AccessCategory.OPEN_ACCESS)
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
-      Map(
-        MetadataKey.keyword -> "license",
-        MetadataValue.keyword -> "http://creativecommons.org/publicdomain/zero/1.0/legalcode",
-      ).asJava
+    Map(
+      MetadataKey.keyword -> "license",
+      MetadataValue.keyword -> "http://creativecommons.org/publicdomain/zero/1.0/legalcode",
+    ).asJava
   }
 
   it should "give a mapping with a DANS license" in {
     emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
     expectLicenses(Seq("accept"))
     expectEmdRights(AccessCategory.GROUP_ACCESS)
+    expectRightsTerms(AccessCategory.GROUP_ACCESS)
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
-      Map(
-        MetadataKey.keyword -> "license",
-        MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
-      ).asJava
+    Map(
+      MetadataKey.keyword -> "license",
+      MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
+    ).asJava
+  }
+
+  it should "map an empty license list to a default license" in {
+    emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
+    val items: Seq[MetadataItem] = Seq[MetadataItem]()
+    emd.getTerm _ expects licenseTerm returning items.asJava
+
+    expectRightsTerms(AccessCategory.REQUEST_PERMISSION)
+
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
+    Map(
+      MetadataKey.keyword -> "license",
+      MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
+    ).asJava
+  }
+
+  it should "map just access rights to a default license" in {
+    emd.getTerms _ expects() returning Set(accessRightsTerm).asJava
+    expectRightsTerms(AccessCategory.OPEN_ACCESS)
+
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
+    Map(
+      MetadataKey.keyword -> "license",
+      MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
+    ).asJava
   }
 
   it should "map the specified license" in {
@@ -453,7 +480,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
-        MetadataKey.keyword -> null,
+        MetadataKey.keyword -> "relation",
         MetadataValue.keyword -> Seq(
           "foo",
           "title = bar",
@@ -481,7 +508,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
       Map(
-        MetadataKey.keyword -> null,
+        MetadataKey.keyword -> "spatial",
         MetadataValue.keyword -> Seq(
           "foo",
           "Amsterdam<br/><b>Point</b>: scheme = RD, x = 1, y = 2",
@@ -493,18 +520,22 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   private val licenseTerm = new Term(Name.LICENSE, Namespace.DCTERMS)
-  private def expectLicenses (values: Seq[String]) = {
+
+  private def expectLicenses(values: Seq[String]) = {
     val items: Seq[MetadataItem] = values.map(new BasicString(_))
     emd.getTerm _ expects licenseTerm returning items.asJava
   }
 
   private val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
-  private def expectEmdRights(accessCategory: AccessCategory) = {
-    emd.getEmdRights _ expects() returning rights anyNumberOfTimes()
-    rights.getAccessCategory _ expects() returning accessCategory anyNumberOfTimes()
 
+  private def expectEmdRights(accessCategory: AccessCategory) = {
+    emd.getEmdRights _ expects() returning rights
+    rights.getAccessCategory _ expects() returning accessCategory
+  }
+
+  private def expectRightsTerms(accessCategory: AccessCategory) = {
     val items: Seq[MetadataItem] = Seq(new BasicString(accessCategory.toString))
-    emd.getTerm _ expects accessRightsTerm returning items.asJava anyNumberOfTimes()
+    emd.getTerm _ expects accessRightsTerm returning items.asJava
   }
 
   "formatAudience" should "combine the audiences separated by <semicolon>" in {

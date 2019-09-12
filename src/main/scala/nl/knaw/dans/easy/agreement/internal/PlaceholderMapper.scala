@@ -175,7 +175,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .sortedJavaCollection
   }
 
-  private def getSpecifiedLicense(licenseItems: mutable.Buffer[MetadataItem]) = {
+  private def getSpecifiedLicense(licenseItems: mutable.Buffer[MetadataItem]): Option[FileID] = {
     licenseItems.filterNot {
       case s: BasicString if s.getValue == "accept" => true
       case _ => false
@@ -189,7 +189,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     }
   }
 
-  private def formatRelations(items: mutable.Buffer[MetadataItem]) = {
+  private def formatRelations(items: mutable.Buffer[MetadataItem]): String = {
     items.map {
       case r: Relation => formatRelation(r)
       case s => s.toString
@@ -223,7 +223,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .getOrElse(item.toString)
   }
 
-  private def formatSpatials(items: mutable.Buffer[MetadataItem]) = {
+  private def formatSpatials(items: mutable.Buffer[MetadataItem]): String = {
     val basic = items.collect {
       case s: BasicString => s.getValue
     }
