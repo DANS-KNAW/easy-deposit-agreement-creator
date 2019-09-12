@@ -370,7 +370,30 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
   "metadataTable" should "give a mapping for the metadata elements in the dataset" in {
     val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
-    expectEmd
+
+    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
+    val mediumTerm = new Term(Name.MEDIUM, Namespace.DC)
+    val abstractTerm = new Term(Name.ABSTRACT, Namespace.EAS)
+    val terms = Set(audienceTerm, accessRightsTerm, licenseTerm, mediumTerm, abstractTerm).asJava
+
+    val anonymous = metadataItemMock("ANONYMOUS_ACCESS")
+    val open = metadataItemMock("OPEN_ACCESS")
+    val item1 = metadataItemMock("item1")
+    val item4 = metadataItemMock("item4")
+    val item5 = metadataItemMock("item5")
+    val item6 = metadataItemMock("item6")
+
+    val audienceItems = List(item1, anonymous).asJava
+    val accessRightItems = List(anonymous, open).asJava
+    val mediumItems = List(item4, item5, item6).asJava
+    val abstractItems = ju.Collections.emptyList[MetadataItem]()
+
+    emd.getTerms _ expects() returning terms
+    emd.getTerm _ expects audienceTerm returning audienceItems
+    emd.getTerm _ expects accessRightsTerm returning accessRightItems
+    emd.getTerm _ expects mediumTerm returning mediumItems
+    emd.getTerm _ expects abstractTerm returning abstractItems
+
     expectLicenses(Seq("accept", ccBy))
 
     testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs List(
@@ -382,7 +405,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "give a mapping with a cc0 license" in {
-    expectEmd
+    emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
     expectLicenses(Seq("accept"))
     expectEmdRights(AccessCategory.OPEN_ACCESS)
 
@@ -394,7 +417,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   }
 
   it should "give a mapping with a DANS license" in {
-    expectEmd
+    emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
     expectLicenses(Seq("accept"))
     expectEmdRights(AccessCategory.GROUP_ACCESS)
 
@@ -403,6 +426,19 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
         MetadataKey.keyword -> "license",
         MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
       ).asJava
+  }
+
+  it should "map the specified license" in {
+    val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
+    emd.getTerms _ expects() returning Set(licenseTerm).asJava
+    expectLicenses(Seq(ccBy))
+
+    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain theSameElementsAs Seq(
+      Map(
+        MetadataKey.keyword -> "license",
+        MetadataValue.keyword -> ccBy,
+      ).asJava,
+    )
   }
 
   it should "map relations" in {
@@ -429,35 +465,13 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     emd.getTerm _ expects licenseTerm returning items.asJava
   }
 
+  private val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
   private def expectEmdRights(accessCategory: AccessCategory) = {
-    emd.getEmdRights _ expects() returning rights
-    rights.getAccessCategory _ expects() returning accessCategory
-  }
+    emd.getEmdRights _ expects() returning rights anyNumberOfTimes()
+    rights.getAccessCategory _ expects() returning accessCategory anyNumberOfTimes()
 
-  private def expectEmd = {
-    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
-    val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
-    val mediumTerm = new Term(Name.MEDIUM, Namespace.DC)
-    val abstractTerm = new Term(Name.ABSTRACT, Namespace.EAS)
-    val terms = Set(audienceTerm, accessRightsTerm, licenseTerm, mediumTerm, abstractTerm).asJava
-
-    val anonymous = metadataItemMock("ANONYMOUS_ACCESS")
-    val open = metadataItemMock("OPEN_ACCESS")
-    val item1 = metadataItemMock("item1")
-    val item4 = metadataItemMock("item4")
-    val item5 = metadataItemMock("item5")
-    val item6 = metadataItemMock("item6")
-
-    val audienceItems = List(item1, anonymous).asJava
-    val accessRightItems = List(anonymous, open).asJava
-    val mediumItems = List(item4, item5, item6).asJava
-    val abstractItems = ju.Collections.emptyList[MetadataItem]()
-
-    emd.getTerms _ expects() returning terms
-    emd.getTerm _ expects audienceTerm returning audienceItems
-    emd.getTerm _ expects accessRightsTerm returning accessRightItems
-    emd.getTerm _ expects mediumTerm returning mediumItems
-    emd.getTerm _ expects abstractTerm returning abstractItems
+    val items: Seq[MetadataItem] = Seq(new BasicString(accessCategory.toString))
+    emd.getTerm _ expects accessRightsTerm returning items.asJava anyNumberOfTimes()
   }
 
   "formatAudience" should "combine the audiences separated by <semicolon>" in {
