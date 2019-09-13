@@ -145,26 +145,30 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   private val newLine = "<br/>"
 
   def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
+    def format(term: Term, items: mutable.Buffer[MetadataItem]): (Term.Name, String) = {
+      val str = term.getName match {
+        case Term.Name.AUDIENCE => formatAudience(audiences, datasetID)
+        case Term.Name.ACCESSRIGHTS => formatDatasetAccessRights(items.head)
+        case Term.Name.SPATIAL => formatSpatials(items)
+        case Term.Name.LICENSE => getSpecifiedLicense(items)
+          .getOrElse(toLicense(emd.getEmdRights.getAccessCategory))
+        case Term.Name.RELATION => formatRelations(items)
+        case _ => items.mkString(newLine)
+      }
+      term.getName -> str
+    }
+
     emd.getTerms
       .asScala
       .map(term => (term, emd.getTerm(term).asScala))
       .filter { case (_, items) => items.nonEmpty }
       .groupBy { case (term, _) => metadataNames.getProperty(term.getQualifiedName) }
       .map { case (name, termsAndItems) =>
-        val (termName, value) = termsAndItems.map {
-          case (t, _) if t.getName == Term.Name.AUDIENCE =>
-            t.getName -> formatAudience(audiences, datasetID)
-          case (t, items) if t.getName == Term.Name.ACCESSRIGHTS =>
-            t.getName -> formatDatasetAccessRights(items.head)
-          case (t, items) if t.getName == Term.Name.SPATIAL =>
-            t.getName -> formatSpatials(items)
-          case (t, items) if t.getName == Term.Name.LICENSE =>
-            t.getName -> getSpecifiedLicense(items)
-              .getOrElse(toLicense(emd.getEmdRights.getAccessCategory))
-          case (t, items) if t.getName == Term.Name.RELATION =>
-            t.getName -> formatRelations(items)
-          case (t, items) => t.getName -> items.mkString(newLine)
-        }.reduce[(Term.Name, String)] { case ((t1, s1), (t2, s2)) if t1 == t2 => (t1, s1 + newLine * 2 + s2) }
+        val (termName, value) = termsAndItems
+          .map((format _).tupled)
+          .reduce[(Term.Name, String)] {
+            case ((t1, s1), (t2, s2)) if t1 == t2 => (t1, s1 + newLine * 2 + s2)
+          }
 
         // keep the Term.Name around for sorting according to the Enum order
         termName -> Map(
