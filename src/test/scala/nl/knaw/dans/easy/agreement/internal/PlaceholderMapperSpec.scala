@@ -415,7 +415,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
     // TODO fix scala.MatchError
     Try(testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234")) should matchPattern {
-      case Failure(e) if e.getMessage == "((AUDIENCE,abc; def),(ACCESSRIGHTS,Anonymous)) (of class scala.Tuple2)" =>
+      case Failure(e) if e.getMessage.endsWith(" (of class scala.Tuple2)") =>
     }
   }
 
