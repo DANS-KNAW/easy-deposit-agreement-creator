@@ -30,7 +30,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
 
 import scala.collection.JavaConverters._
-import scala.util.Success
+import scala.util.{ Failure, Success, Try }
 
 class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfter with BeforeAndAfterAll {
 
@@ -403,6 +403,20 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       Map(MetadataKey.keyword -> "License", MetadataValue.keyword -> ccBy).asJava,
       Map(MetadataKey.keyword -> "Audience", MetadataValue.keyword -> "abc; def").asJava,
     )
+  }
+
+  it should "fail on currently invalid input" in {
+    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
+    val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC) // should be dcterms
+    val items = List(metadataItemMock("ANONYMOUS_ACCESS")).asJava
+    emd.getTerms _ expects() returning Set(audienceTerm, accessRightsTerm).asJava
+    emd.getTerm _ expects audienceTerm returning items
+    emd.getTerm _ expects accessRightsTerm returning items
+
+    // TODO fix scala.MatchError
+    Try(testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234")) should matchPattern {
+      case Failure(e) if e.getMessage == "((AUDIENCE,abc; def),(ACCESSRIGHTS,Anonymous)) (of class scala.Tuple2)" =>
+    }
   }
 
   it should "give a mapping with a cc0 license" in {
