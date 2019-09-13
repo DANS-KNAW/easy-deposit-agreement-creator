@@ -145,8 +145,8 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   private val newLine = "<br/>"
 
   def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
-    def format(term: Term, items: mutable.Buffer[MetadataItem]): (Term.Name, String) = {
-      val str = term.getName match {
+    def format(term: Term, items: mutable.Buffer[MetadataItem]): String = {
+      term.getName match {
         case Term.Name.AUDIENCE => formatAudience(audiences, datasetID)
         case Term.Name.ACCESSRIGHTS => formatDatasetAccessRights(items.head)
         case Term.Name.SPATIAL => formatSpatials(items)
@@ -155,38 +155,48 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         case Term.Name.RELATION => formatRelations(items)
         case _ => items.mkString(newLine)
       }
-      term.getName -> str
+    }
+
+    def getDisplayName(term: Term): String = {
+      val qualifiedName = term.getQualifiedName
+      Option(metadataNames.getProperty(qualifiedName))
+        .getOrElse {
+          logger.warn(s"Could not find display name for a term with qualified name '$qualifiedName'")
+          qualifiedName
+        }
     }
 
     emd.getTerms
       .asScala
       .map(term => (term, emd.getTerm(term).asScala))
       .filter { case (_, items) => items.nonEmpty }
-      .groupBy { case (term, _) => metadataNames.getProperty(term.getQualifiedName) }
-      .map { case (name, termsAndItems) =>
-        val (termName, value) = termsAndItems
+      .groupBy { case (term, _) => getDisplayName(term) }
+      .map { case (displayName, termsAndItems) =>
+        // by definition of `groupBy`, `termsAndItems` cannot be empty
+        val termName = termsAndItems.head._1.getName
+        val value = termsAndItems
           .map((format _).tupled)
-          .reduce[(Term.Name, String)] {
-            case ((t1, s1), (t2, s2)) if t1 == t2 => (t1, s1 + newLine * 2 + s2)
+          .reduce[String] {
+            case (s1, s2) => s1 + newLine * 2 + s2
           }
 
         // keep the Term.Name around for sorting according to the Enum order
         termName -> Map(
-          MetadataKey -> name,
+          MetadataKey -> displayName,
           MetadataValue -> value
         ).keywordMapAsJava
       }
       .sortedJavaCollection
   }
 
-  private def getSpecifiedLicense(licenseItems: mutable.Buffer[MetadataItem]): Option[FileID] = {
+  private def getSpecifiedLicense(licenseItems: mutable.Buffer[MetadataItem]): Option[String] = {
     licenseItems.filterNot {
       case s: BasicString if s.getValue == "accept" => true
       case _ => false
     }.map(_.toString).headOption
   }
 
-  private def toLicense(category: AccessCategory) = {
+  private def toLicense(category: AccessCategory): String = {
     category match {
       case AccessCategory.OPEN_ACCESS => "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
       case _ => "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf"
@@ -223,7 +233,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         case FREELY_AVAILABLE                 => "Open Access"
         // @formatter:on
       }
-      .doIfFailure { case _ => logger.warn("No available mapping; using acces category value directly") }
+      .doIfFailure { case _ => logger.warn("No available mapping; using access category value directly") }
       .getOrElse(item.toString)
   }
 
