@@ -405,9 +405,10 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     )
   }
 
-  it should "use the qualified names on currently invalid input" in {
+  it should "use the qualified names on invalid input" in {
+    // valid input would have DCTERMS for both
     val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
-    val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC) // should be dcterms
+    val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
     val items = List(metadataItemMock("ANONYMOUS_ACCESS")).asJava
     emd.getTerms _ expects() returning Set(audienceTerm, accessRightsTerm).asJava
     emd.getTerm _ expects audienceTerm returning items
