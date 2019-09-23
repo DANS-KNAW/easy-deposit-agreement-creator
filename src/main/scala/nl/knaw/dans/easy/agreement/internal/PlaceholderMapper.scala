@@ -176,9 +176,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
         val termName = termsAndItems.head._1.getName
         val value = termsAndItems
           .map((format _).tupled)
-          .reduce[String] {
-            case (s1, s2) => s1 + newLine * 2 + s2
-          }
+          .reduce(_ + newLine * 2 + _)
 
         // keep the Term.Name around for sorting according to the Enum order
         termName -> Map(
