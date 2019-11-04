@@ -15,13 +15,12 @@
  */
 package nl.knaw.dans.easy.agreement
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
+import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, OutputStream }
 
 import nl.knaw.dans.easy.agreement.internal._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.pf.language.emd.EasyMetadata
-import rx.lang.scala.Observable
-import rx.lang.scala.TryToObservable
+import rx.lang.scala.{ Observable, TryToObservable }
 
 import scala.util.Try
 
@@ -34,7 +33,7 @@ class AgreementCreator(placeholderMapper: PlaceholderMapper,
     trace(dataset, outputStream)
     resource.managed(new ByteArrayOutputStream())
       .map(templateOut => {
-        logger.info(s"""creating the agreement for dataset "${dataset.datasetID}"""")
+        logger.info(s"""creating the agreement for dataset "${ dataset.datasetID }"""")
         for {
           placeholders <- placeholderMapper.datasetToPlaceholderMap(dataset.validate)
           _ <- templateResolver.createTemplate(templateOut, placeholders)
@@ -64,7 +63,7 @@ class AgreementCreatorWithDatasetLoader(datasetLoader: DatasetLoader,
   // used in Easy-Ingest-Flow
   def createAgreement(emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem])
                      (outputStream: OutputStream): Observable[Nothing] = {
-    datasetLoader.getDataset(parameters.datasetID, emd, depositorID, files, parameters.fileLimit)
+    datasetLoader.getDataset(parameters.datasetID, emd, depositorID)
       .flatMap(createAgreement(_)(outputStream).toObservable)
       .filter(_ => false)
       .asInstanceOf[Observable[Nothing]]

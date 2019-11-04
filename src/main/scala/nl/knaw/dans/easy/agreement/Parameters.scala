@@ -18,12 +18,12 @@ package nl.knaw.dans.easy.agreement
 import java.io.File
 
 import com.yourmediashelf.fedora.client.FedoraClient
-import nl.knaw.dans.easy.agreement.internal.{BaseParameters => InternalBaseParams, Parameters => InternalParams}
+import nl.knaw.dans.easy.agreement.internal.{ BaseParameters => InternalBaseParams, Parameters => InternalParams }
 
 object BaseParameters {
 
-  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fileLimit: Int): InternalBaseParams = {
-    new internal.BaseParameters(templateResourceDir, datasetID, isSample, fileLimit)
+  def apply(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean): InternalBaseParams = {
+    new internal.BaseParameters(templateResourceDir, datasetID, isSample)
   }
 }
 
@@ -32,10 +32,9 @@ object Parameters {
   def apply(templateResourceDir: File,
             datasetID: DatasetID,
             isSample: Boolean,
-            fileLimit: Int,
             fedoraClient: FedoraClient,
             ldapEnv: LdapEnv,
             fsrdb: (String, String, String)): InternalParams = {
-    new internal.Parameters(templateResourceDir, datasetID, isSample, fileLimit, fedoraClient, ldapEnv, fsrdb)
+    new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapEnv, fsrdb)
   }
 }

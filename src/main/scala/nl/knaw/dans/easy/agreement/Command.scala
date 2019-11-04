@@ -90,7 +90,7 @@ object Command extends App with DebugEnhancedLogging {
       fedoraClient = app.fedoraClient,
       ldapEnv = app.ldapEnv,
       fsrdb = app.fsrdb,
-      fileLimit = app.fileLimit)
+    )
   }
 
   private def runAsService(app: AgreementCreatorApp): Try[FeedBackMessage] = Try {

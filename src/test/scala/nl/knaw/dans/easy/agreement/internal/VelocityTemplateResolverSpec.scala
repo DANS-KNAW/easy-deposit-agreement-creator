@@ -15,19 +15,19 @@
  */
 package nl.knaw.dans.easy.agreement.internal
 
-import java.io.{ByteArrayOutputStream, File}
+import java.io.{ ByteArrayOutputStream, File }
 import java.util.Properties
 
 import nl.knaw.dans.easy.agreement.UnitSpec
 import org.apache.velocity.exception.MethodInvocationException
 import org.scalatest.exceptions.TestFailedException
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
 
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with BeforeAndAfterAll {
 
-  implicit val parameters = new BaseParameters(new File(testDir, "template"), null, false, 3)
+  implicit val parameters = new BaseParameters(new File(testDir, "template"), null, false)
 
   before {
     new File(getClass.getResource("/velocity/").toURI).copyDir(parameters.templateResourceDir)
@@ -39,7 +39,7 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
 
   override def afterAll: Unit = testDir.getParentFile.deleteDirectory()
 
-  private val keyword: KeywordMapping = new KeywordMapping { val keyword: String = "name" }
+  private val keyword: KeywordMapping = new KeywordMapping {val keyword: String = "name" }
   private val testProperties = {
     val p = new Properties()
 
@@ -69,7 +69,7 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
 
     templateCreator.createTemplate(baos, map) shouldBe a[Success[_]]
 
-    new String(baos.toByteArray) should include ("<p>hello world</p>")
+    new String(baos.toByteArray) should include("<p>hello world</p>")
   }
 
   it should "fail if not all placeholders are filled in" in {
@@ -80,7 +80,7 @@ class VelocityTemplateResolverSpec extends UnitSpec with BeforeAndAfter with Bef
 
     val res = templateCreator.createTemplate(baos, map)
     res shouldBe a[Failure[_]]
-    (the [MethodInvocationException] thrownBy res.get).getMessage should include ("$name")
+    (the[MethodInvocationException] thrownBy res.get).getMessage should include("$name")
 
     new String(baos.toByteArray) should not include "<p>hello world</p>"
   }

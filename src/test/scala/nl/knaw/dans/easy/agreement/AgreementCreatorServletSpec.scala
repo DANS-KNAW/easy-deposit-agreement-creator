@@ -54,7 +54,6 @@ class AgreementCreatorServletSpec extends FlatSpec
       addProperty("auth.ldap.user", "")
       addProperty("auth.ldap.password", "")
       addProperty("agreement.resources", "")
-      addProperty("agreement.fileLimit", "3")
     })
   }
 }

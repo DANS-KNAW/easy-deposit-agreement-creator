@@ -16,10 +16,10 @@
 package nl.knaw.dans.easy.agreement.internal
 
 import java.io.File
-import java.sql.{ Connection, PreparedStatement, ResultSet }
+import java.sql.Connection
 import java.util
-import javax.naming.directory.BasicAttributes
 
+import javax.naming.directory.BasicAttributes
 import nl.knaw.dans.easy.agreement._
 import nl.knaw.dans.pf.language.emd._
 import org.apache.commons.io.{ FileUtils, IOUtils }
@@ -57,7 +57,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     override val fedora: Fedora = fedoraMock
     override val ldap: Ldap = ldapMock
     override val fsrdb: Connection = fsrdbMock
-    override val fileLimit: Int = 2
   }
 
   before {
@@ -154,82 +153,16 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
         Observable.just(3)
       }
     }
-    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Seq[FileItem], Boolean)]()
+    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Boolean)]()
     loader.getDatasetById(id)
       // there is no equals defined for the emd, so I need to unpack here
-      .map { case Dataset(datasetID, emd, usr, titles, fileItems, allFilesListed) =>
-        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr, titles, fileItems, allFilesListed) }
+      .map { case Dataset(datasetID, emd, usr, titles, Seq(), true) =>
+        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr, titles, true)
+      }
       .subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValue((id, Seq("descr foo bar"), user, audiences, files, true))
-    testObserver.assertNoErrors()
-    testObserver.assertCompleted()
-  }
-
-  "getFilesInDataset" should "return the files contained in the dataset corresponding to the given datasetID" in {
-    val id = "testID"
-    val pid1 = "pid1"
-    val pid2 = "pid2"
-    val fi1 @ FileItem(path1, accTo1, Some(chcksm1)) = FileItem("path1", FileAccessRight.NONE, Some("chcksm1"))
-    val fi2 @ FileItem(path2, accTo2, _) = FileItem("path2", FileAccessRight.KNOWN, None)
-
-    val mockedPrepStatement = mock[PreparedStatement]
-    val mockedResultSet = mock[ResultSet]
-
-    inSequence {
-      (fsrdbMock.prepareStatement(_: String)) expects * returning mockedPrepStatement
-      mockedPrepStatement.setString _ expects(1, id)
-      mockedPrepStatement.setInt _ expects(2, 2)
-      mockedPrepStatement.executeQuery _ expects() returning mockedResultSet
-      mockedResultSet.next _ expects() returning true
-      (mockedResultSet.getString(_: String)) expects "pid" returning pid1
-      (mockedResultSet.getString(_: String)) expects "path" returning path1
-      (mockedResultSet.getString(_: String)) expects "sha1checksum" returning chcksm1
-      (mockedResultSet.getString(_: String)) expects "accessible_to" returning accTo1.toString
-      mockedResultSet.next _ expects() returning true
-      (mockedResultSet.getString(_: String)) expects "pid" returning pid2
-      (mockedResultSet.getString(_: String)) expects "path" returning path2
-      (mockedResultSet.getString(_: String)) expects "sha1checksum" returning "null"
-      (mockedResultSet.getString(_: String)) expects "accessible_to" returning accTo2.toString
-      mockedResultSet.next _ expects() returning false
-      mockedResultSet.close _ expects()
-      mockedPrepStatement.close _ expects()
-    }
-
-    val loader = DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Set[FileItem]]()
-    loader.getFilesInDataset(id).toSet.subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertValue(Set(fi1, fi2))
-    testObserver.assertNoErrors()
-    testObserver.assertCompleted()
-  }
-
-  "countFiles" should "return the number of files contained in the dataset corresponding to the given datasetID" in {
-    val id = "testID"
-    val fileCount = 500
-
-    val mockedPrepStatement = mock[PreparedStatement]
-    val mockedResultSet = mock[ResultSet]
-
-    inSequence {
-      (fsrdbMock.prepareStatement(_: String)) expects * returning mockedPrepStatement
-      mockedPrepStatement.setString _ expects(1, id)
-      mockedPrepStatement.executeQuery _ expects() returning mockedResultSet
-      mockedResultSet.next _ expects() returning true
-      (mockedResultSet.getInt(_: String)) expects "count" returning fileCount
-      mockedResultSet.close _ expects()
-      mockedPrepStatement.close _ expects()
-    }
-
-    val loader = DatasetLoaderImpl()
-    val testObserver = TestSubscriber[Int]()
-    loader.countFiles(id).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertValue(fileCount)
+    testObserver.assertValue((id, Seq("descr foo bar"), user, audiences, true))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
   }

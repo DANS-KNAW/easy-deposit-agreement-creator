@@ -40,7 +40,7 @@ class TemplateSpec extends UnitSpec with MockFactory {
 
   "createTemplate" should "find all place holders" in {
     val isSample = true
-    implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample, fileLimit = 3)
+    implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample)
     val placeholders = new PlaceholderMapper(properties)
       .datasetToPlaceholderMap(getDataset(AccessCategory.OPEN_ACCESS, isSample))
       .getOrRecover(fail(_))
@@ -50,7 +50,7 @@ class TemplateSpec extends UnitSpec with MockFactory {
 
   "createTemplate" should "handle a sample" in {
     val isSample = false
-    implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample, fileLimit = 3)
+    implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample)
     val placeholders = new PlaceholderMapper(properties)
       .datasetToPlaceholderMap(getDataset(AccessCategory.NO_ACCESS, isSample))
       .getOrRecover(fail(_))
@@ -73,6 +73,6 @@ class TemplateSpec extends UnitSpec with MockFactory {
       emd.getEmdIdentifier _ expects() returning emdIdentifier anyNumberOfTimes()
       emdIdentifier.getDansManagedDoi _ expects() returning "10.17026/test-dans-2xg-umq8" anyNumberOfTimes()
     }
-    Dataset(datasetID = "easy:12", emd, user, audiences = null, fileItems = Seq.empty, filesLimited = true).validate
+    Dataset(datasetID = "easy:12", emd, user, audiences = null).validate
   }
 }

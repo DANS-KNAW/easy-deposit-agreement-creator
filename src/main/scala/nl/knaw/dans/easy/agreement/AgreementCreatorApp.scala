@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.agreement
 
 import java.io.File
-import javax.naming.Context
 
 import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
+import javax.naming.Context
 import rx.schedulers.Schedulers
 
 class AgreementCreatorApp(configuration: Configuration) extends AutoCloseable {
@@ -32,7 +32,6 @@ class AgreementCreatorApp(configuration: Configuration) extends AutoCloseable {
     configuration.properties.getString("fsrdb.db-connection-url"),
     configuration.properties.getString("fsrdb.db-connection-username"),
     configuration.properties.getString("fsrdb.db-connection-password"))
-  val fileLimit: Int = configuration.properties.getInt("agreement.fileLimit")
   val ldapEnv: LdapEnv = new LdapEnv {
     put(Context.PROVIDER_URL, configuration.properties.getString("auth.ldap.url"))
     put(Context.SECURITY_AUTHENTICATION, "simple")
