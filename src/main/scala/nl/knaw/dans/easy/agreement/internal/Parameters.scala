@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.agreement.internal
 
 import java.io.File
-import java.sql.{ Connection, DriverManager }
 
 import com.yourmediashelf.fedora.client.FedoraClient
 import javax.naming.ldap.InitialLdapContext
@@ -32,23 +31,20 @@ class BaseParameters(val templateResourceDir: File,
 trait DatabaseParameters {
   val fedora: Fedora
   val ldap: Ldap
-  val fsrdb: Connection
 }
 
 case class Parameters(override val templateResourceDir: File,
                       override val datasetID: DatasetID,
                       override val isSample: Boolean,
                       fedora: Fedora,
-                      ldap: Ldap,
-                      fsrdb: Connection)
+                      ldap: Ldap)
   extends BaseParameters(templateResourceDir, datasetID, isSample) with DatabaseParameters with AutoCloseable {
 
-  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapEnv: LdapEnv, fsrdb: (String, String, String)) = {
-    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(new InitialLdapContext(ldapEnv, null)), DriverManager.getConnection(fsrdb._1, fsrdb._2, fsrdb._3))
+  def this(templateResourceDir: File, datasetID: DatasetID, isSample: Boolean, fedoraClient: FedoraClient, ldapEnv: LdapEnv) = {
+    this(templateResourceDir, datasetID, isSample, FedoraImpl(fedoraClient), LdapImpl(new InitialLdapContext(ldapEnv, null)))
   }
 
   override def close(): Unit = {
-    fsrdb.close()
     ldap.close()
   }
 

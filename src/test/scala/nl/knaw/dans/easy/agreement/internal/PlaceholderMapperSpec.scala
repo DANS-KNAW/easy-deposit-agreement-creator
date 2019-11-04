@@ -53,7 +53,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     isSample = false,
     fedora = null,
     ldap = null,
-    fsrdb = null,
   )
 
   before {
@@ -127,7 +126,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       isSample = true,
       fedora = null,
       ldap = null,
-      fsrdb = null,
     )
     val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
@@ -154,7 +152,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       isSample = true,
       fedora = null,
       ldap = null,
-      fsrdb = null,
     )
 
     emd.getEmdIdentifier _ expects() never()

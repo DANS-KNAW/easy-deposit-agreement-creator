@@ -15,10 +15,8 @@
  */
 package nl.knaw.dans.easy.agreement.internal
 
-import java.sql.SQLException
-
 import javax.naming.directory.Attributes
-import nl.knaw.dans.easy.agreement.{ DatasetID, DepositorID, FileAccessRight, FileItem }
+import nl.knaw.dans.easy.agreement.{ DatasetID, DepositorID, FileItem }
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
 import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EasyMetadataImpl, EmdAudience }
 import rx.lang.scala.schedulers.IOScheduler
@@ -106,6 +104,9 @@ trait DatasetLoader {
    * @return the dataset corresponding to `datasetID`
    */
   def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID): Observable[Dataset] = {
+    def countFiles(datasetID: DatasetID): Observable[Int] = {
+      ???
+    }
     val audiences = getAudiences(emd.getEmdAudience).toSeq
     val easyUser = getUserById(depositorID)
     val filesWereLimited = countFiles(datasetID).map(0 <)
@@ -115,22 +116,6 @@ trait DatasetLoader {
         case ((user, auds), _) => Dataset(datasetID, emd, user, auds)
       }
   }
-
-  /**
-   * Returns all files corresponding to the dataset with identifier `datasetID`
-   *
-   * @param datasetID the identifier of the dataset
-   * @return the files corresponding to the dataset with identifier `datasetID`
-   */
-  def getFilesInDataset(datasetID: DatasetID): Observable[FileItem]
-
-  /**
-   * Return the number of files corresponding to the dataset with identifier `datasetID`
-   *
-   * @param datasetID the identifier of the dataset
-   * @return the number of files corresponding to the dataset with identifier `datasetID`
-   */
-  def countFiles(datasetID: DatasetID): Observable[Int]
 
   /**
    * Queries the user data given a `depositorID`
@@ -163,13 +148,9 @@ case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends 
       emd.combineLatestWith(depositorObs) {
         (emdValue, depositorValue) =>
           (audiences: Seq[AudienceTitle]) =>
-            (files: Seq[FileItem]) =>
-              (_: Boolean) =>
-                Dataset(datasetID, emdValue, depositorValue, audiences)
+            Dataset(datasetID, emdValue, depositorValue, audiences)
       }
         .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_ (_))
-        .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_ (_))
-        .combineLatestWith(countFiles(datasetID).map(0 <))(_ (_))
         .single
         .onErrorResumeNext {
           case e: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID, e))
@@ -177,60 +158,6 @@ case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends 
           case NonFatal(e) => Observable.error(e)
         }
     })
-  }
-
-  def getFilesInDataset(datasetID: DatasetID): Observable[FileItem] = {
-    Class.forName("org.postgresql.Driver")
-    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ? ORDER BY pid LIMIT ?;"
-    Observable.using(parameters.fsrdb.prepareStatement(query))(
-      prepStatement => {
-        prepStatement.setString(1, datasetID)
-        prepStatement.setInt(2, 1)
-
-        Observable.using(prepStatement.executeQuery())(
-          resultSet => Observable.defer(Observable.just(resultSet.next()))
-            .repeat
-            .takeWhile(b => b)
-            .map(_ => {
-              val pid = resultSet.getString("pid")
-              val path = resultSet.getString("path")
-              val sha1checksum = resultSet.getString("sha1checksum")
-              val accessibleTo = FileAccessRight.valueOf(resultSet.getString("accessible_to"))
-                .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $pid"))
-
-              FileItem(path, accessibleTo, if (sha1checksum == "null") None
-                                           else Some(sha1checksum))
-            }),
-          _.close(),
-          disposeEagerly = true
-        )
-      },
-      _.close(),
-      disposeEagerly = true
-    )
-  }
-
-  def countFiles(datasetID: DatasetID): Observable[Int] = {
-    Class.forName("org.postgresql.Driver")
-    val query = "SELECT COUNT(pid) FROM easy_files WHERE dataset_sid = ?;"
-    Observable.using(parameters.fsrdb.prepareStatement(query))(
-      prepStatement => {
-        prepStatement.setString(1, datasetID)
-
-        Observable.using(prepStatement.executeQuery())(
-          resultSet => {
-            if (resultSet.next())
-              Observable.just(resultSet.getInt("count"))
-            else
-              Observable.error(new SQLException(s"unable to count the number of files in dataset $datasetID"))
-          },
-          _.close(),
-          disposeEagerly = true
-        )
-      },
-      _.close(),
-      disposeEagerly = true
-    )
   }
 
   private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {

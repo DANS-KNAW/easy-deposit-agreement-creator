@@ -34,7 +34,7 @@ object Parameters {
             isSample: Boolean,
             fedoraClient: FedoraClient,
             ldapEnv: LdapEnv,
-            fsrdb: (String, String, String)): InternalParams = {
-    new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapEnv, fsrdb)
+           ): InternalParams = {
+    new internal.Parameters(templateResourceDir, datasetID, isSample, fedoraClient, ldapEnv)
   }
 }

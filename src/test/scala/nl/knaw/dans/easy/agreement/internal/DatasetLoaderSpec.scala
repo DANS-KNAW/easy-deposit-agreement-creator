@@ -35,7 +35,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
 
   private val fedoraMock = mock[Fedora]
   private val ldapMock = mock[Ldap]
-  private val fsrdbMock = mock[Connection]
 
   val (userAttributes, expectedUser) = {
     val attrs = new BasicAttributes
@@ -56,7 +55,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
   implicit val parameters: DatabaseParameters = new DatabaseParameters {
     override val fedora: Fedora = fedoraMock
     override val ldap: Ldap = ldapMock
-    override val fsrdb: Connection = fsrdbMock
   }
 
   before {
@@ -142,15 +140,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
       override def getAudiences(a: EmdAudience): Observable[AudienceTitle] = {
         if (a.getDisciplines.asScala.map(_.getValue) == audiences) Observable.from(audiences)
         else fail("not the correct audiences")
-      }
-
-      override def getFilesInDataset(did: DatasetID): Observable[FileItem] = {
-        if (did == id) Observable.from(files)
-        else fail(s"not the correct datasetID, was $did, should be $id")
-      }
-
-      override def countFiles(datasetID: DatasetID): Observable[Int] = {
-        Observable.just(3)
       }
     }
     val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Boolean)]()

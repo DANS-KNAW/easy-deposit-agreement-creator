@@ -28,10 +28,6 @@ class AgreementCreatorApp(configuration: Configuration) extends AutoCloseable {
     configuration.properties.getString("fcrepo.url"),
     configuration.properties.getString("fcrepo.user"),
     configuration.properties.getString("fcrepo.password")))
-  val fsrdb: (String, String, String) = (
-    configuration.properties.getString("fsrdb.db-connection-url"),
-    configuration.properties.getString("fsrdb.db-connection-username"),
-    configuration.properties.getString("fsrdb.db-connection-password"))
   val ldapEnv: LdapEnv = new LdapEnv {
     put(Context.PROVIDER_URL, configuration.properties.getString("auth.ldap.url"))
     put(Context.SECURITY_AUTHENTICATION, "simple")

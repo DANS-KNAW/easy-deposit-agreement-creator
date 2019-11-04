@@ -70,7 +70,6 @@ class AgreementCreatorServlet(app: AgreementCreatorApp) extends ScalatraServlet
       isSample = params.get("sample").fold(false)(_.toBoolean),
       fedoraClient = app.fedoraClient,
       ldapEnv = app.ldapEnv,
-      fsrdb = app.fsrdb,
     )
   }
 

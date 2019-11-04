@@ -89,7 +89,6 @@ object Command extends App with DebugEnhancedLogging {
       isSample = commandLine.isSample(),
       fedoraClient = app.fedoraClient,
       ldapEnv = app.ldapEnv,
-      fsrdb = app.fsrdb,
     )
   }
 
