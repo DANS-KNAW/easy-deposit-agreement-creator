@@ -60,12 +60,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       accessRightMap <- datasetAccessCategory(emd)
       embargoMap = embargo(emd)
       dateTime = CurrentDateAndTime -> currentDateAndTime
-      metadata = MetadataTable -> metadataTable(emd, dataset.audiences, dataset.datasetID)
-      files @ (_, table) = FileTable -> filesTable(dataset.fileItems)
-      hasFiles = HasFiles -> boolean2Boolean(!table.isEmpty)
-      limitFiles = LimitFiles -> parameters.fileLimit.toString
-      shouldLimitFiles = ShouldLimitFiles -> boolean2Boolean(dataset.filesLimited)
-    } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime + metadata + files + hasFiles + limitFiles + shouldLimitFiles
+    } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime
   }
 
   def header(emd: EasyMetadata): Try[PlaceholderMap] = Try {
