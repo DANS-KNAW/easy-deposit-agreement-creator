@@ -104,9 +104,9 @@ case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends 
       .flatMap(getUserById(_).subscribeOn(IOScheduler()))
 
     emdObs.combineLatestWith(depositorObs) {
-        (emdValue, depositorValue) =>
-            Dataset(datasetID, emdValue, depositorValue)
-      }
+      (emdValue, depositorValue) =>
+        Dataset(datasetID, emdValue, depositorValue)
+    }
   }
 
   private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {

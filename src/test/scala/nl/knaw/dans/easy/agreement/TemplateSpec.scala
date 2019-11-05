@@ -41,8 +41,8 @@ class TemplateSpec extends UnitSpec with MockFactory with TableDrivenPropertyChe
   }
 
   private val templateResourceDir = new java.io.File("src/main/assembly/dist/res")
-  val properties = new File(templateResourceDir, "MetadataTestTerms.properties")
-  val datasetId = "easy:12"
+  private val properties = new File(templateResourceDir, "MetadataTestTerms.properties")
+  private val datasetId = "easy:12"
   private val user = EasyUser(
     name = "N.O. Body",
     organization = "Eidgenössische Technische Hochschule",
