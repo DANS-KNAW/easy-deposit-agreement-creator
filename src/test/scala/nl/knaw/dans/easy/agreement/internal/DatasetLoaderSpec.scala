@@ -16,12 +16,9 @@
 package nl.knaw.dans.easy.agreement.internal
 
 import java.io.File
-import java.sql.Connection
-import java.util
 
 import javax.naming.directory.BasicAttributes
 import nl.knaw.dans.easy.agreement._
-import nl.knaw.dans.pf.language.emd._
 import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
@@ -119,11 +116,6 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     val id = "testID"
     val depID = "depID"
     val user = EasyUser("name", "org", "addr", "pc", "city", "cntr", "phone", "mail")
-    val audiences = Seq("aud1", "aud2")
-    val files = Seq(
-      FileItem("path1", FileAccessRight.RESTRICTED_GROUP, Some("chs1")),
-      FileItem("path2", FileAccessRight.KNOWN, Some("chs2"))
-    )
 
     val amdStream = IOUtils.toInputStream(<foo><depositorId>{depID}</depositorId></foo>.toString)
     val emdStream = FileUtils.openInputStream(new File(testDir, "datasetloader/emd.xml"))
@@ -131,76 +123,23 @@ class DatasetLoaderSpec extends UnitSpec with MockFactory with BeforeAndAfter wi
     fedoraMock.getAMD _ expects id returning Observable.just(amdStream)
     fedoraMock.getEMD _ expects id returning Observable.just(emdStream)
 
-    val loader = new DatasetLoaderImpl {
+    val loader: DatasetLoaderImpl = new DatasetLoaderImpl {
       override def getUserById(depositorID: DepositorID): Observable[EasyUser] = {
         if (depositorID == depID) Observable.just(user)
         else fail(s"not the correct depositorID, was $depositorID, should be $depID")
       }
-
-      override def getAudiences(a: EmdAudience): Observable[AudienceTitle] = {
-        if (a.getDisciplines.asScala.map(_.getValue) == audiences) Observable.from(audiences)
-        else fail("not the correct audiences")
-      }
     }
-    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser, Seq[AudienceTitle], Boolean)]()
+    val testObserver = TestSubscriber[(DatasetID, Seq[String], EasyUser)]()
     loader.getDatasetById(id)
       // there is no equals defined for the emd, so I need to unpack here
-      .map { case Dataset(datasetID, emd, usr, titles, Seq(), true) =>
-        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr, titles, true)
+      .map { case Dataset(datasetID, emd, usr) =>
+        (datasetID, emd.getEmdDescription.getDcDescription.asScala.map(_.getValue), usr)
       }
       .subscribe(testObserver)
 
     testObserver.awaitTerminalEvent()
-    testObserver.assertValue((id, Seq("descr foo bar"), user, audiences, true))
+    testObserver.assertValue((id, Seq("descr foo bar"), user))
     testObserver.assertNoErrors()
     testObserver.assertCompleted()
-  }
-
-  "getAudience" should "search the title for each audienceID in the EmdAudience in Fedora" in {
-    val is = IOUtils.toInputStream(<foo><title>title1</title></foo>.toString)
-    val (id1, title1) = ("id1", "title1")
-
-    fedoraMock.getDC _ expects id1 returning Observable.just(is)
-
-    val loader = DatasetLoaderImpl()
-    val testObserver = TestSubscriber[String]()
-    loader.getAudience(id1).subscribe(testObserver)
-
-    testObserver.awaitTerminalEvent()
-    testObserver.assertValues(title1)
-    testObserver.assertNoErrors()
-    testObserver.assertCompleted()
-  }
-
-  "getAudiences" should "search the title for each audienceID in the EmdAudience in Fedora" in {
-    val (id1, title1) = ("id1", "title1")
-    val (id2, title2) = ("id2", "title2")
-    val (id3, title3) = ("id3", "title3")
-    val audience = mock[EmdAudience]
-
-    audience.getValues _ expects() returning util.Arrays.asList(id1, id2, id3)
-
-    // can't do mocking due to concurrency issues
-    val loader = new DatasetLoaderImpl {
-
-      var counter = 0
-
-      override def getAudience(audienceID: AudienceID): Observable[AudienceID] = {
-        counter += 1
-        counter match {
-          case 1 => Observable.just(title1)
-          case 2 => Observable.just(title2)
-          case 3 => Observable.just(title3)
-          case _ => throw new IllegalStateException(s"Called this method too many times. audienceID = $audienceID")
-        }
-      }
-    }
-    val testObserver = TestSubscriber[String]()
-    loader.getAudiences(audience).subscribe(testObserver)
-
-    testObserver.assertValues(title1, title2, title3)
-    testObserver.assertNoErrors()
-    testObserver.assertCompleted()
-    loader.counter shouldBe 3
   }
 }

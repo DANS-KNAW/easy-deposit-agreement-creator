@@ -16,13 +16,12 @@
 package nl.knaw.dans.easy.agreement.internal
 
 import javax.naming.directory.Attributes
-import nl.knaw.dans.easy.agreement.{ DatasetID, DepositorID, FileItem }
+import nl.knaw.dans.easy.agreement.{ DatasetID, DepositorID }
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
-import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EasyMetadataImpl, EmdAudience }
+import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EasyMetadataImpl }
+import rx.lang.scala.Observable
 import rx.lang.scala.schedulers.IOScheduler
-import rx.lang.scala.{ Observable, ObservableExtensions }
 
-import scala.collection.JavaConverters._
 import scala.language.postfixOps
 import scala.util.control.NonFatal
 
@@ -54,12 +53,7 @@ case class EasyUser(name: String,
   require(email != null, "'email' must be defined")
 }
 
-case class Dataset(datasetID: DatasetID,
-                   emd: EasyMetadata,
-                   easyUser: EasyUser,
-                   audiences: Seq[AudienceTitle],
-                   fileItems: Seq[FileItem] = Seq.empty,
-                   filesLimited: Boolean = true) {
+case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser) {
 
   require(datasetID != null, "'datasetID' must be defined")
 
@@ -67,24 +61,6 @@ case class Dataset(datasetID: DatasetID,
 }
 
 trait DatasetLoader {
-
-  /**
-   * Queries the audience title from Fedora given an audience identifiers
-   *
-   * @param audienceID the identifier of the audience
-   * @return The audidence title corresponding to the `audienceID`
-   */
-  def getAudience(audienceID: AudienceID): Observable[AudienceTitle]
-
-  /**
-   * Queries the audience titles from Fedora for the audiences in `EmdAudience`.
-   *
-   * @param audience the audience object with the identifiers
-   * @return the titles of the audiences that correspond to the identifiers in `EmdAudience`
-   */
-  def getAudiences(audience: EmdAudience): Observable[AudienceTitle] = {
-    audience.getValues.asScala.toObservable.flatMap(getAudience)
-  }
 
   /**
    * Create a `Dataset` based on the given `datasetID`
@@ -95,8 +71,7 @@ trait DatasetLoader {
   def getDatasetById(datasetID: DatasetID): Observable[Dataset]
 
   /**
-   * Create a `Dataset` based on the given `datasetID`, `emd`, `depositorID` and `files`, while
-   * querying for the audience titles and the depositor data.
+   * Create a `Dataset` based on the given `datasetID`, `emd` and `depositorID`, while querying for the depositor data.
    *
    * @param datasetID   the identifier of the dataset
    * @param emd         the `EasyMetadata` of the dataset
@@ -104,17 +79,8 @@ trait DatasetLoader {
    * @return the dataset corresponding to `datasetID`
    */
   def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID): Observable[Dataset] = {
-    def countFiles(datasetID: DatasetID): Observable[Int] = {
-      ???
-    }
-    val audiences = getAudiences(emd.getEmdAudience).toSeq
-    val easyUser = getUserById(depositorID)
-    val filesWereLimited = countFiles(datasetID).map(0 <)
-
-    easyUser.combineLatest(audiences)
-      .combineLatestWith(filesWereLimited) {
-        case ((user, auds), _) => Dataset(datasetID, emd, user, auds)
-      }
+    getUserById(depositorID)
+      .map(Dataset(datasetID, emd, _))
   }
 
   /**
@@ -128,12 +94,6 @@ trait DatasetLoader {
 
 case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends DatasetLoader {
 
-  def getAudience(audienceID: AudienceID): Observable[String] = {
-    parameters.fedora.getDC(audienceID)
-      .map(resource.managed(_).acquireAndGet(_.loadXML \\ "title" text))
-      .subscribeOn(IOScheduler())
-  }
-
   def getDatasetById(datasetID: DatasetID): Observable[Dataset] = {
     val emdObs = parameters.fedora.getEMD(datasetID)
       .map(resource.managed(_).acquireAndGet(new EmdUnmarshaller(classOf[EasyMetadataImpl]).unmarshal))
@@ -143,21 +103,10 @@ case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends 
       .subscribeOn(IOScheduler())
       .flatMap(getUserById(_).subscribeOn(IOScheduler()))
 
-    // publish because emd is used in multiple places here
-    emdObs.publish(emd => {
-      emd.combineLatestWith(depositorObs) {
+    emdObs.combineLatestWith(depositorObs) {
         (emdValue, depositorValue) =>
-          (audiences: Seq[AudienceTitle]) =>
-            Dataset(datasetID, emdValue, depositorValue, audiences)
+            Dataset(datasetID, emdValue, depositorValue)
       }
-        .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_ (_))
-        .single
-        .onErrorResumeNext {
-          case e: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID, e))
-          case e: NoSuchElementException => Observable.error(NoDatasetFoundException(datasetID, e))
-          case NonFatal(e) => Observable.error(e)
-        }
-    })
   }
 
   private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {

@@ -30,9 +30,6 @@ import scala.xml.{ Elem, XML }
 
 package object internal {
 
-  type AudienceID = String
-  type AudienceTitle = String
-
   type FileID = String
 
   type PlaceholderMap = Map[KeywordMapping, Object]
