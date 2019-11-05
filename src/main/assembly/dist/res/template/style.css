@@ -18,13 +18,11 @@ body {
     font: 14px "Bitstream Charter";
     text-align: justify;
 }
-.error {
-    color: red;
-    font-size: 150%;
-    font-weight: bold;
+.choice, .choice-header {
+    padding-left: 5em;
 }
-.inline-header {
-    font-weight: bold;
+.choice-header {
+    text-decoration: underline;
 }
 
 /* parties and dataset on front page */
@@ -41,7 +39,13 @@ td {
     vertical-align: top;
 }
 
-/* numbered lists, first level prefix for second level, third level alphanumeric */
+/* first paragraph of a list item */
+
+li p:first-child {
+    font-weight: bold;
+}
+
+/* numbered lists, first level prefix for second level */
 
 ol {
   list-style-type: lower-alpha;
@@ -54,21 +58,21 @@ li {
     counter-increment: item;
     margin-bottom: 0.6em;
 }
-
 li:before {
     content: counters(item, ".") ". ";
     display: table-cell;
     padding-right: 0.6em;
 }
-
 li li {
     margin: 0;
 }
-
 li li:before {
     width: 1.7em;
     content: counters(item, ".") " ";
 }
+
+/* third level alphanumeric list (within numbered list) */
+
 ol ol ol {
     list-style-type: lower-alpha;
     counter-reset: item3;
@@ -80,9 +84,6 @@ li li li:before {
     content: counter(item3, lower-alpha) ". ";
     width: auto;
 }
-li p:first-child {
-    font-weight: bold;
-}
 
 /* bullet list (within numbered list) */
 
@@ -91,7 +92,7 @@ ul {
 }
 ul li:before {
     content: "●";
-    width: 0.7em;
+    width: auto;
 }
 
 ul li {

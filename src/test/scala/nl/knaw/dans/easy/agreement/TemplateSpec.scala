@@ -23,11 +23,13 @@ import nl.knaw.dans.lib.error._
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.IsoDate
+import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.prop.TableDrivenPropertyChecks
 
-import scala.util.Success
+import scala.util.{ Success, Try }
 
-class TemplateSpec extends UnitSpec with MockFactory {
+class TemplateSpec extends UnitSpec with MockFactory with TableDrivenPropertyChecks {
   trait MockEasyMetadata extends EasyMetadata {
     def toString(x: String, y: Name): String = ""
 
@@ -54,26 +56,35 @@ class TemplateSpec extends UnitSpec with MockFactory {
   testDir.mkdirs()
 
   "createTemplate" should "find all place holders" in {
-    val isSample = true
-    implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample)
-    val placeholders = new PlaceholderMapper(properties)
-      .datasetToPlaceholderMap(getDataset(AccessCategory.OPEN_ACCESS, isSample))
-      .getOrRecover(fail(_))
-    new VelocityTemplateResolver(velocityProperties)
-      .createTemplate(new FileOutputStream(testDir + "/openAccess.html"), placeholders) shouldBe Success(())
+    forEvery(for {
+      rights <- Seq(AccessCategory.OPEN_ACCESS, AccessCategory.NO_ACCESS)
+      isSample <- Seq(true, false)
+      available <- Seq(new DateTime, (new DateTime).plusYears(1)).map(new IsoDate(_))
+    } yield (isSample, rights, available)) {
+      case (isSample, rights, available) =>
+        createDoc(isSample, rights, available) shouldBe Success(())
+    }
   }
 
-  "createTemplate" should "handle a sample" in {
-    val isSample = false
+  private def createDoc(isSample: Boolean, rights: AccessCategory, available: IsoDate): Try[Unit] = {
+    val dataset = mockDataset(rights, isSample, available)
+    val outputStream = new FileOutputStream(docName(isSample, rights, available))
     implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample)
     val placeholders = new PlaceholderMapper(properties)
-      .datasetToPlaceholderMap(getDataset(AccessCategory.NO_ACCESS, isSample))
+      .datasetToPlaceholderMap(dataset)
       .getOrRecover(fail(_))
     new VelocityTemplateResolver(velocityProperties)
-      .createTemplate(new FileOutputStream(testDir + "/noAccessSample.html"), placeholders) shouldBe Success(())
+      .createTemplate(outputStream, placeholders)
   }
 
-  private def getDataset(openaccess: AccessCategory, isSample: Boolean) = {
+  private def docName(isSample: Boolean, rights: AccessCategory, available: IsoDate): String = {
+    s"$testDir/$rights-${
+      if (isSample) "sample-"
+      else ""
+    }$available.html"
+  }
+
+  private def mockDataset(openaccess: AccessCategory, isSample: Boolean, dateAvailable: IsoDate): Dataset = {
     val emd = mock[MockEasyMetadata]
     val date = mock[EmdDate]
     val rights = mock[EmdRights]
@@ -82,7 +93,7 @@ class TemplateSpec extends UnitSpec with MockFactory {
     emd.getEmdDate _ expects() returning date twice()
     rights.getAccessCategory _ expects() returning openaccess
     date.getEasDateSubmitted _ expects() returning java.util.Arrays.asList(new IsoDate("1992-07-30"))
-    date.getEasAvailable _ expects() returning java.util.Arrays.asList(new IsoDate("1992-07-30"))
+    date.getEasAvailable _ expects() returning java.util.Arrays.asList(dateAvailable)
     if (!isSample) {
       val emdIdentifier = mock[EmdIdentifier]
       emd.getEmdIdentifier _ expects() returning emdIdentifier anyNumberOfTimes()

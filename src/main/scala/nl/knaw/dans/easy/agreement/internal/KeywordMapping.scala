@@ -53,20 +53,4 @@ case object UnderEmbargo                 extends KeywordMapping { val keyword = 
 case object DateAvailable                extends KeywordMapping { val keyword = "DateAvailable" }
 
 case object CurrentDateAndTime           extends KeywordMapping { val keyword = "CurrentDateAndTime" }
-
-// metadata table
-case object MetadataTable                extends KeywordMapping { val keyword = "MetadataTable" }
-case object MetadataKey                  extends KeywordMapping { val keyword = "MetadataKey" }
-case object MetadataValue                extends KeywordMapping { val keyword = "MetadataValue" }
-
-// file table
-case object HasFiles                     extends KeywordMapping { val keyword = "HasFiles" }
-case object FileTable                    extends KeywordMapping { val keyword = "FileTable" }
-case object FilePath                     extends KeywordMapping { val keyword = "FilePath" }
-case object FileChecksum                 extends KeywordMapping { val keyword = "FileChecksum" }
-case object FileAccessibleTo             extends KeywordMapping { val keyword = "FileAccessibleTo" }
-
-// file limit
-case object LimitFiles                   extends KeywordMapping { val keyword = "limitFiles" }
-case object ShouldLimitFiles             extends KeywordMapping { val keyword = "shouldLimitFiles" }
 // @formatter:on
