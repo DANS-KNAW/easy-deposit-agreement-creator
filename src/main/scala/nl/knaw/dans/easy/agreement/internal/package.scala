@@ -30,8 +30,6 @@ import scala.xml.{ Elem, XML }
 
 package object internal {
 
-  type FileID = String
-
   type PlaceholderMap = Map[KeywordMapping, Object]
 
   val encoding: Charset = Charsets.UTF_8
