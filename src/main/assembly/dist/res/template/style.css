@@ -80,6 +80,20 @@ li li li:before {
     content: counter(item3, lower-alpha) ". ";
     width: auto;
 }
-li p {
+li p:first-child {
     font-weight: bold;
+}
+
+/* bullet list (within numbered list) */
+
+ul {
+    padding-left: 0.8em;
+}
+ul li:before {
+    content: "●";
+    width: 0.7em;
+}
+
+ul li {
+  counter-increment: none;
 }
