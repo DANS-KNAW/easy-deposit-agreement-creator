@@ -22,6 +22,7 @@ body {
     padding-left: 5em;
 }
 .choice-header {
+    /* NB: underline dances with <sup> by WeasyPrintPdfGenerator */
     text-decoration: underline;
 }
 
