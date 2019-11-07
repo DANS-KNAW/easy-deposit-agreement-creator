@@ -29,7 +29,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 
 import scala.util.{ Success, Try }
 
-class TemplateSpec extends UnitSpec with MockFactory with TableDrivenPropertyChecks {
+class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPropertyChecks {
   trait MockEasyMetadata extends EasyMetadata {
     def toString(x: String, y: Name): String = ""
 

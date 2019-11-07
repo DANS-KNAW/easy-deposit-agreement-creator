@@ -98,3 +98,14 @@ ul li:before {
 ul li {
   counter-increment: none;
 }
+
+/* footnote */
+
+.footnote {
+  padding-top: 20em;
+}
+hr {
+  border: 0;
+  height: 1pt;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(0, 0, 0, 1), rgba(0, 0, 0, 1), rgba(0, 0, 0, 0), rgba(0, 0, 0, 0), rgba(0, 0, 0, 0), rgba(0, 0, 0, 0), rgba(0, 0, 0, 0));
+}
