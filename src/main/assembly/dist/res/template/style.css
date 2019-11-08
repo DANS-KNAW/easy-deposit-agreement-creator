@@ -21,6 +21,11 @@ body {
 .choice, .choice-header {
     padding-left: 5em;
 }
+.error {
+    color: red;
+    font-size: 150%;
+    font-weight: bold;
+}
 .choice-header {
     /* NB: underline dances with <sup> by WeasyPrintPdfGenerator */
     text-decoration: underline;

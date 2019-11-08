@@ -15,19 +15,20 @@
  */
 package nl.knaw.dans.easy.agreement
 
-import java.io.{ File, FileOutputStream }
+import java.io.{ ByteArrayOutputStream, File, FileOutputStream, OutputStream }
+import java.util.Arrays.asList
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.easy.agreement.internal.{ BaseParameters, Dataset, EasyUser, PlaceholderMapper, VelocityTemplateResolver, velocityProperties }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
-import nl.knaw.dans.pf.language.emd.types.IsoDate
+import nl.knaw.dans.pf.language.emd.types.{ BasicString, IsoDate }
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-import scala.util.{ Success, Try }
+import scala.util.Success
 
 class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPropertyChecks {
   trait MockEasyMetadata extends EasyMetadata {
@@ -62,13 +63,37 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
       available <- Seq(new DateTime, (new DateTime).plusYears(1)).map(new IsoDate(_))
     } yield (isSample, rights, available)) {
       case (isSample, rights, available) =>
-        createDoc(isSample, rights, available) shouldBe Success(())
+        create(
+          isSample,
+          mockDataset(rights, isSample, available),
+          new FileOutputStream(docName(isSample, rights, available))
+        ) shouldBe Success(())
     }
   }
 
-  private def createDoc(isSample: Boolean, rights: AccessCategory, available: IsoDate): Try[Unit] = {
-    val dataset = mockDataset(rights, isSample, available)
-    val outputStream = new FileOutputStream(docName(isSample, rights, available))
+  it should "properly format all types of licenses" in {
+    forEvery(Seq (
+      new BasicString("") -> """error">neither name nor URL for chosen license""" ,
+      new BasicString("blabla") -> ">blabla<" ,
+      new BasicString("https://dans.knaw.nl")
+        -> """<a href="https://dans.knaw.nl">https://dans.knaw.nl</a>""" ,
+      new BasicString("http://creativecommons.org/licenses/by-nc-sa/3.0")
+        -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode</a>""" ,
+    )) {
+      case (emdRightsTermsLicense, expected) =>
+        val dataset = mockDataset(AccessCategory.OPEN_ACCESS, isSample = false, new IsoDate(), emdRightsTermsLicense)
+        val outputStream = new ByteArrayOutputStream()
+
+        create(isSample = false, dataset, outputStream) shouldBe Success(())
+
+        val lines = outputStream.toString.split("\n")
+          .filter(_.contains("""class="choice">"""))
+        lines should have length(1) // detected a forgotten #else in the template
+        lines.mkString("\n", "\n", "\n") should include(expected)
+    }
+  }
+
+  private def create(isSample: Boolean, dataset: Dataset, outputStream: OutputStream) = {
     implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample)
     val placeholders = new PlaceholderMapper(properties)
       .datasetToPlaceholderMap(dataset)
@@ -84,16 +109,19 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     }$available.html"
   }
 
-  private def mockDataset(openaccess: AccessCategory, isSample: Boolean, dateAvailable: IsoDate): Dataset = {
+  private def mockDataset(openaccess: AccessCategory, isSample: Boolean, dateAvailable: IsoDate,
+                          emdRightsTermsLicense: BasicString = new BasicString("http://creativecommons.org/licenses/by-nc-sa/3.0")
+                         ): Dataset = {
     val emd = mock[MockEasyMetadata]
     val date = mock[EmdDate]
     val rights = mock[EmdRights]
     emd.getPreferredTitle _ expects() returning "about testing"
-    emd.getEmdRights _ expects() returning rights
+    emd.getEmdRights _ expects() returning rights twice()
     emd.getEmdDate _ expects() returning date twice()
     rights.getAccessCategory _ expects() returning openaccess
-    date.getEasDateSubmitted _ expects() returning java.util.Arrays.asList(new IsoDate("1992-07-30"))
-    date.getEasAvailable _ expects() returning java.util.Arrays.asList(dateAvailable)
+    rights.getTermsLicense _ expects() returning asList(emdRightsTermsLicense)
+    date.getEasDateSubmitted _ expects() returning asList(new IsoDate("1992-07-30"))
+    date.getEasAvailable _ expects() returning asList(dateAvailable)
     if (!isSample) {
       val emdIdentifier = mock[EmdIdentifier]
       emd.getEmdIdentifier _ expects() returning emdIdentifier anyNumberOfTimes()

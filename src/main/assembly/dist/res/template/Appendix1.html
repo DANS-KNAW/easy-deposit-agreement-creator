@@ -1,23 +1,35 @@
 <h1 style="page-break-before: always">Appendix 1 Dataset availability</h1>
 <p>The Dataset will be distributed and made available by the Depositary in the manner set out below. If the Dataset contains personal data within the meaning of the GDPR, with the exception of Bibliographical Data, the only access category permitted is Restricted Access. Metadata will always be made freely available.</p>
 #if ($OpenAccess)
-<h2>Open Access</h2>
-<p>The files in the Dataset will be directly accessible to third parties. Third parties do not have to register with the Depositary. The Dataset will be placed in the public domain or made available under an Open Access Licence.</p>
-<p><span class="choice-header">Using the following public-domain statement or Open Access Licence</span>:</p>
-<p class="choice">............................</p>
+    <h2>Open Access</h2>
+    <p>The files in the Dataset will be directly accessible to third parties. Third parties do not have to register with the Depositary. The Dataset will be placed in the public domain or made available under an Open Access Licence.</p>
+    <p><span class="choice-header">Using the following public-domain statement or Open Access Licence</span>:</p>
+    #if ($TermsLicenseUrl)
+        #if ($TermsLicense)
+            <p class="choice">$TermsLicense : <a href="$TermsLicenseUrl">$TermsLicenseUrl</a></p>
+        #else
+            <p class="choice"><a href="$TermsLicenseUrl">$TermsLicenseUrl</a></p>
+        #end
+    #else
+        #if ($TermsLicense)
+            <p class="choice">$TermsLicense</p>
+        #else
+            <p class="choice error">neither name nor URL for chosen license</p>
+        #end
+    #end
 #else
-<h2>Restricted Access</h2>
-<p>The files in the Dataset will be made available to Users by the Depositary only after the Depositor has given its express consent. Users will be obliged to comply with the DANS Licence. After receiving a permission request for access to the Dataset, the Depositor can approve the request, reject it or impose additional conditions of use on a User.</p>
-<p><span class="choice-header">Using the following licence</span>:</p>
-<p class="choice">DANS Licence (see Appendix 2)</p>
+    <h2>Restricted Access</h2>
+    <p>The files in the Dataset will be made available to Users by the Depositary only after the Depositor has given its express consent. Users will be obliged to comply with the DANS Licence. After receiving a permission request for access to the Dataset, the Depositor can approve the request, reject it or impose additional conditions of use on a User.</p>
+    <p><span class="choice-header">Using the following licence</span>:</p>
+    <p class="choice">DANS Licence (see Appendix 2)</p>
 #end
 #if ($UnderEmbargo)
-<h2>Embargo</h2>
-<p>The files in the Dataset will not be made available to third parties for a limited period of up to two years from the commencement of this agreement. After this period has expired, the agreed access category and public-domain declaration or licence will automatically take effect. Extension of this period will only be possible for compelling reasons and in consultation with the Depositary. </p>
-<p><span class="choice-header">Until the following date</span><sup>1</sup>:</p>
-<p class="choice">$DateAvailable</p>
-<div class="footnote">
-<hr>
-<p><sup>1</sup>The end date will be a maximum of 2 years after the commencement of this agreement.</p>
-</div>
+    <h2>Embargo</h2>
+    <p>The files in the Dataset will not be made available to third parties for a limited period of up to two years from the commencement of this agreement. After this period has expired, the agreed access category and public-domain declaration or licence will automatically take effect. Extension of this period will only be possible for compelling reasons and in consultation with the Depositary. </p>
+    <p><span class="choice-header">Until the following date</span><sup>1</sup>:</p>
+    <p class="choice">$DateAvailable</p>
+    <div class="footnote">
+        <hr>
+        <p><sup>1</sup>The end date will be a maximum of 2 years after the commencement of this agreement.</p>
+    </div>
 #end
