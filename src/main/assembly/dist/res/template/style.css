@@ -1,6 +1,6 @@
 
 @page {
-    margin: 2.5cm 1.5cm 2.5cm 1.5cm;
+    margin: 2.5cm 1.5cm 3cm 1.5cm;
     size: A4;
     @top-left {
         content: "";
@@ -11,12 +11,9 @@
         background-size: 280px 90px;
     }
     @bottom-left {
-        /* https://stackoverflow.com/questions/4609279/css-to-line-break-before-after-a-particular-inline-block-item/4609491#4609491 */
-        /* \A works in FireFox: https://jsfiddle.net/q4WC4/1/ */
-        /* not with (our version of) weasyprint */
         font: 12px "Bitstream Charter";
-        content: "DANS promotes sustainable access to digital research data. \A"
-        "See www.dans.knaw.nl for more information. \A\A"
+        white-space: pre-wrap;
+        content: "\A\A" /* first line overlaps with fixed footer */
         "Data Archiving and Networked Services (DANS) \A"
         "Anna van Saksenlaan 51 | 2593 HW Den Haag \A"
         "070 349 44 50 | info@dans.knaw.nl | www.dans.knaw.nl \A"
@@ -24,15 +21,25 @@
     }
     @bottom-right {
         vertical-align: top;
-        content: counter(page) "/" counter(pages) " \A Deposit agreement \A  Version 26-09-2019" ;
+        white-space: pre-wrap;
+        margin-bottom: 0.5cm;
+        content: counter(page) "/" counter(pages) " \A\A Deposit agreement Version 26-09-2019";
         font: 12px "Bitstream Charter";
         background: url(data:image/jpg;base64,$DrivenByData) no-repeat 0 0;
-        background-position: right center;
+        background-position: right bottom;
     }
 }
 body {
     font: 14px "Bitstream Charter";
     text-align: justify;
+}
+footer {
+    /* overlap with the first line of: @page {@bottom-xxx {...}} */
+    position: fixed;
+    bottom: -2.7em;
+    margin-left: -0.6em;
+    width: 90em;
+    font: 12px "Bitstream Charter";
 }
 .choice, .choice-header {
     padding-left: 5em;
