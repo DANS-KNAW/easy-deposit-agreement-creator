@@ -19,7 +19,7 @@ import java.io.{ ByteArrayOutputStream, File, FileOutputStream, OutputStream }
 import java.util.Arrays.asList
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
-import nl.knaw.dans.easy.agreement.internal.{ BaseParameters, Dataset, EasyUser, PlaceholderMapper, VelocityTemplateResolver, velocityProperties }
+import nl.knaw.dans.easy.agreement.internal._
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._

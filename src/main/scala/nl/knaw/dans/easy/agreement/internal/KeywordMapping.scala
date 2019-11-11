@@ -18,8 +18,9 @@ package nl.knaw.dans.easy.agreement.internal
 // @formatter:off
 trait KeywordMapping { val keyword: String }
 
-// logo in header (for 64bit encoding)
+// logos in header and footer (for 64bit encoding)
 case object DansLogo                     extends KeywordMapping { val keyword = "DansLogo" }
+case object DrivenByData                 extends KeywordMapping { val keyword = "DrivenByData" }
 
 // footer text
 case object FooterText                   extends KeywordMapping { val keyword = "FooterText" }

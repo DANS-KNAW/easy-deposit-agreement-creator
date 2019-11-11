@@ -1,17 +1,33 @@
+
 @page {
-    margin: 2.5cm 1.5cm 2cm 1.5cm;
+    margin: 2.5cm 1.5cm 2.5cm 1.5cm;
     size: A4;
     @top-left {
         content: "";
         width: 100%;
         height: 100%;
         background: url(data:image/jpg;base64,$DansLogo) no-repeat 0 0;
-        background-position: left center;
-        background-size: 100px 30px;
+        background-position: left bottom;
+        background-size: 280px 90px;
     }
-    @bottom-center {
-        content: "$FooterText - page " counter(page) "/" counter(pages);
-        font: 14px "Bitstream Charter";
+    @bottom-left {
+        /* https://stackoverflow.com/questions/4609279/css-to-line-break-before-after-a-particular-inline-block-item/4609491#4609491 */
+        /* \A works in FireFox: https://jsfiddle.net/q4WC4/1/ */
+        /* not with (our version of) weasyprint */
+        font: 12px "Bitstream Charter";
+        content: "DANS promotes sustainable access to digital research data. \A"
+        "See www.dans.knaw.nl for more information. \A\A"
+        "Data Archiving and Networked Services (DANS) \A"
+        "Anna van Saksenlaan 51 | 2593 HW Den Haag \A"
+        "070 349 44 50 | info@dans.knaw.nl | www.dans.knaw.nl \A"
+        "CoC 54667089 | DANS is an institute of KNAW and NWO ";
+    }
+    @bottom-right {
+        vertical-align: top;
+        content: counter(page) "/" counter(pages) " \A Deposit agreement \A  Version 26-09-2019" ;
+        font: 12px "Bitstream Charter";
+        background: url(data:image/jpg;base64,$DrivenByData) no-repeat 0 0;
+        background-position: right center;
     }
 }
 body {

@@ -49,13 +49,14 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       headerMap <- if (parameters.isSample) sampleHeader(emd)
                    else header(emd)
       dansLogo = DansLogo -> encodeImage(dansLogoFile)
+      drivenByData = DrivenByData -> encodeImage(drivenByDataFile)
       footer = FooterText -> footerText(footerTextFile)
       depositorMap = depositor(dataset.easyUser)
       accessRightMap <- datasetAccessCategory(emd)
       termsLicenseMap <- termsLicenseMap(emd)
       embargoMap = embargo(emd)
       dateTime = CurrentDateAndTime -> currentDateAndTime
-    } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap ++ termsLicenseMap + dateTime
+    } yield headerMap + dansLogo + drivenByData + footer ++ depositorMap ++ accessRightMap ++ termsLicenseMap ++ embargoMap + dateTime
   }
 
   def header(emd: EasyMetadata): Try[PlaceholderMap] = Try {

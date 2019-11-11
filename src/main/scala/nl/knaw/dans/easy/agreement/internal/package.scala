@@ -53,6 +53,10 @@ package object internal {
     new File(parameters.templateResourceDir, "/dans_logo.png")
   }
 
+  def drivenByDataFile(implicit parameters: BaseParameters): File = {
+    new File(parameters.templateResourceDir, "/DrivenByData.png")
+  }
+
   def footerTextFile(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/agreement_version.txt")
   }
