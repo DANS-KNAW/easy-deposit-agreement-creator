@@ -133,40 +133,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
 
   def termsLicenseMap(emd: EasyMetadata): Try[PlaceholderMap] = Try {
     val url = emd.getEmdRights.getTermsLicense.asScala.headOption.map(_.getValue).getOrElse("")
-    val (legal, description) = url match {
-      // TODO use https://github.com/DANS-KNAW/easy-licenses/blob/master/src/main/resources/licenses/licenses.json
-      //  once it has links to readable legal pages
-      case "http://creativecommons.org/publicdomain/zero/1.0" => s"$url/legalcode" -> "CC0-1.0"
-      case "http://creativecommons.org/licenses/by/4.0" => s"$url/legalcode" -> "CC-BY-4.0"
-      case "http://creativecommons.org/licenses/by-sa/4.0/" => s"$url/legalcode" -> "CC-BY-SA-4.0"
-      case "http://creativecommons.org/licenses/by-nc/4.0/" => s"$url/legalcode" -> "CC-BY-NC-4.0"
-      case "http://creativecommons.org/licenses/by-nd/4.0/" => s"$url/legalcode" -> "CC-BY-ND-4.0"
-      case "http://creativecommons.org/licenses/by-nc-nd/4.0/" => s"$url/legalcode" -> "CC-BY-NC-ND-4.0"
-      case "http://creativecommons.org/licenses/by-nc-sa/4.0/" => s"$url/legalcode" -> "CC-BY-NC-SA-4.0"
-      case "http://creativecommons.org/licenses/by-nc/3.0" => s"$url/legalcode" -> "BY-NC-3.0"
-      case "http://creativecommons.org/licenses/by-nc-sa/3.0" => s"$url/legalcode" -> "BY-NC-SA-3.0"
-      case "http://opensource.org/licenses/BSD-2-Clause" => s"$url/" -> "BSD-2-Clause"
-      case "http://opensource.org/licenses/BSD-3-Clause" => s"$url/" -> "BSD-3-Clause"
-      case "http://opensource.org/licenses/MIT" => s"$url/" -> "MIT"
-      case "http://www.apache.org/licenses/LICENSE-2.0" => s"$url/" -> "Apache-2.0"
-      case "http://www.cecill.info/licences/Licence_CeCILL_V2-en.html" => s"https://github.com/DANS-KNAW/easy-licenses/blob/master/src/main/resources/licenses/CeCILL-V2.html" -> "CeCILL_V2" // TODO retry when site is available
-      case "http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html" => s"https://github.com/DANS-KNAW/easy-licenses/blob/master/src/main/resources/licenses/CeCILL-B_V1.html" -> "CeCILL-B_V1" // TODO idem
-      case "http://www.gnu.org/licenses/gpl-3.0.en.html" => s"$url/" -> "GPL-3.0"
-      case "http://www.gnu.org/licenses/lgpl-3.0.txt" => s"$url/" -> "LGPL-3.0"
-      case "http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html" => s"$url/" -> "GPL-2.0"
-      case "http://www.mozilla.org/en-US/MPL/2.0/" => s"$url/" -> "MPL-2.0"
-      case "http://www.ohwr.org/attachments/735/CERNOHLv1_1.txt" => s"$url/" -> "CERN-OHL-1.1"
-      case "http://www.ohwr.org/attachments/2388/cern_ohl_v_1_2.txt" => s"$url/" -> "CERN-OHL-1.2"
-      case "http://www.tapr.org/ohl.html" => s"https://www.tapr.org/TAPR_Open_Hardware_License_v1.0.txt" -> "TAPR-OHL-1.0"
-      case "http://www.tapr.org/TAPR_Open_Hardware_License_v1.0.txt" => s"$url/" -> "TAPR-OHL-1.0"
-      case "http://www.ohwr.org/projects/cernohl/wiki" => s"$url/" -> "TAPR-OHL-1.0"
-      case "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf" => s"$url/" -> "DANSGeneralconditionsofuseUKDEF"
-      case s if s.matches("http[s]://.*") => url -> ""
-      case _ => "" -> url
-    }
+    val file = parameters.licenseLegalResource(url)
     Map(
-      TermsLicenseUrl -> legal,
-      TermsLicense -> description,
+      TermsLicenseUrl -> url,
+      TermsLicense -> file.replaceAll("[.][^.]+","").replaceAll(".*/",""),
+      Appendix3 -> file.toString
     )
   }
 

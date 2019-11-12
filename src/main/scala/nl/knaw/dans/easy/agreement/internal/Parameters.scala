@@ -20,13 +20,29 @@ import java.io.File
 import com.yourmediashelf.fedora.client.FedoraClient
 import javax.naming.ldap.InitialLdapContext
 import nl.knaw.dans.easy.agreement.{ DatasetID, LdapEnv }
+import org.apache.commons.configuration.PropertiesConfiguration
+
+import scala.collection.JavaConverters._
+import scala.util.Try
 
 // this class needs to be in a separate file rather than in package.scala because of interop with
 // java business layer.
 class BaseParameters(val templateResourceDir: File,
                      val datasetID: DatasetID,
                      val isSample: Boolean,
-                    )
+                    ) {
+  private val licenseUrlPrefixRegExp = "https?://(www.)?"
+  private val licencesMap: Map[String, String] = Try {
+    val licenses = new PropertiesConfiguration(new File(templateResourceDir, "/template/licenses/licenses.properties"))
+    licenses.getKeys.asScala.map(key =>
+      key.replaceAll(licenseUrlPrefixRegExp, "") -> s"licenses/${licenses.getString(key)}"
+    ).toMap
+  }.getOrElse(Map.empty)
+
+  def licenseLegalResource(url: String): String = {
+    licencesMap(url.replaceAll(licenseUrlPrefixRegExp, ""))
+  }
+}
 
 trait DatabaseParameters {
   val fedora: Fedora

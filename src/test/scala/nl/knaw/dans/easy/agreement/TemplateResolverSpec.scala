@@ -20,17 +20,17 @@ import java.util.Arrays.asList
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.easy.agreement.internal._
-import nl.knaw.dans.lib.error._
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.{ BasicString, IsoDate }
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.prop.TableDrivenPropertyChecks
 
 import scala.util.Success
 
-class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPropertyChecks {
+class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPropertyChecks with BeforeAndAfterAll {
   trait MockEasyMetadata extends EasyMetadata {
     def toString(x: String, y: Name): String = ""
 
@@ -41,7 +41,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     def toString(x: String): String = ""
   }
 
-  private val templateResourceDir = new java.io.File("src/main/assembly/dist/res")
+  private val templateResourceDir = new java.io.File(testDir, "res")
   private val properties = new File(templateResourceDir, "MetadataTestTerms.properties")
   private val datasetId = "easy:12"
   private val user = EasyUser(
@@ -54,7 +54,15 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     telephone = "+41 44 632 11 11",
     email = "nobody@dans.knaw.nl"
   )
-  testDir.mkdirs()
+
+  override def beforeAll() {
+    testDir.mkdirs()
+    super.beforeAll()
+    testDir.deleteDirectory()
+    testDir.mkdirs()
+    new File("src/main/assembly/dist/res").copyDir(new File(testDir, "res"))
+    new File("target/easy-licenses/licenses").copyDir(new File(testDir, "res/template/licenses"))
+  }
 
   "createTemplate" should "find all place holders" in {
     forEvery(for {
@@ -72,13 +80,15 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
   }
 
   it should "properly format all types of licenses" in {
-    forEvery(Seq (
-      new BasicString("") -> """error">neither name nor URL for chosen license""" ,
-      new BasicString("blabla") -> ">blabla<" ,
-      new BasicString("https://dans.knaw.nl")
-        -> """<a href="https://dans.knaw.nl">https://dans.knaw.nl</a>""" ,
+    forEvery(Seq(
       new BasicString("http://creativecommons.org/licenses/by-nc-sa/3.0")
-        -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode</a>""" ,
+        -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
+      new BasicString("https://creativecommons.org/licenses/by-nc-sa/3.0")
+        -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
+      new BasicString("https://www.creativecommons.org/licenses/by-nc-sa/3.0")
+        -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
+      new BasicString("http://www.creativecommons.org/licenses/by-nc-sa/3.0")
+        -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
     )) {
       case (emdRightsTermsLicense, expected) =>
         val dataset = mockDataset(AccessCategory.OPEN_ACCESS, isSample = false, new IsoDate(), emdRightsTermsLicense)
@@ -88,18 +98,19 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
 
         val lines = outputStream.toString.split("\n")
           .filter(_.contains("""class="choice">"""))
-        lines should have length(1) // detected a forgotten #else in the template
+        lines should have length (1) // detected a forgotten #else in the template
         lines.mkString("\n", "\n", "\n") should include(expected)
     }
   }
 
   private def create(isSample: Boolean, dataset: Dataset, outputStream: OutputStream) = {
     implicit val parameters: BaseParameters = new BaseParameters(templateResourceDir, datasetId, isSample)
-    val placeholders = new PlaceholderMapper(properties)
+    new PlaceholderMapper(properties)
       .datasetToPlaceholderMap(dataset)
-      .getOrRecover(fail(_))
-    new VelocityTemplateResolver(velocityProperties)
-      .createTemplate(outputStream, placeholders)
+      .flatMap(placeholders =>
+        new VelocityTemplateResolver(velocityProperties)
+          .createTemplate(outputStream, placeholders)
+      )
   }
 
   private def docName(isSample: Boolean, rights: AccessCategory, available: IsoDate): String = {

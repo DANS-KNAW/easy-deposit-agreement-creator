@@ -56,4 +56,4 @@ case object DateAvailable                extends KeywordMapping { val keyword = 
 case object CurrentDateAndTime           extends KeywordMapping { val keyword = "CurrentDateAndTime" }
 case object TermsLicense                 extends KeywordMapping { val keyword = "TermsLicense" }
 case object TermsLicenseUrl              extends KeywordMapping { val keyword = "TermsLicenseUrl" }
-// @formatter:on
+case object Appendix3                    extends KeywordMapping { val keyword = "Appendix3" }// @formatter:on
