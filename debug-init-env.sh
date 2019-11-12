@@ -20,3 +20,4 @@ DATADIR=data
 
 touch $DATADIR/easy-deposit-agreement-creator.log
 cp src/test/resources/debug-config/pdfgen.sh $HOMEDIR/res/
+cp -r target/easy-licenses/licenses $HOMEDIR/res/licenses

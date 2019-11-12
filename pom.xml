@@ -37,6 +37,7 @@
     <properties>
         <main-class>nl.knaw.dans.easy.agreement.Command</main-class>
         <easy.emd.version>3.8.0</easy.emd.version>
+        <easy-licenses.version>1.0.1</easy-licenses.version>
     </properties>
 
     <scm>
@@ -187,6 +188,28 @@
             <build>
                 <plugins>
                     <plugin>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>resources</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>nl.knaw.dans.easy</groupId>
+                                            <artifactId>easy-licenses</artifactId>
+                                            <version>${easy-licenses.version}</version>
+                                            <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>rpm-maven-plugin</artifactId>
                         <executions>
@@ -216,6 +239,24 @@
                                     <sources>
                                         <source>
                                             <location>src/main/assembly/dist/res</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+                                <mapping>
+                                    <directory>/var/opt/${dans-provider-name}/resource/${project.artifactId}/licenses</directory>
+                                    <configuration>${rpm-replace-configuration}</configuration>
+                                    <sources>
+                                        <source>
+                                            <location>target/easy-licenses/licenses</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+                                <mapping>
+                                    <directory>/opt/${dans-provider-name}/${project.artifactId}/res/licenses</directory>
+                                    <configuration>${rpm-replace-configuration}</configuration>
+                                    <sources>
+                                        <source>
+                                            <location>target/easy-licenses/licenses</location>
                                         </source>
                                     </sources>
                                 </mapping>
