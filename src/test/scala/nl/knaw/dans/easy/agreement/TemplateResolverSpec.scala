@@ -81,6 +81,8 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
 
   it should "properly format all types of licenses" in {
     forEvery(Seq(
+      new BasicString("blabla")
+        -> """<p class="choice error">neither name nor URL for chosen license</p>""",
       new BasicString("http://creativecommons.org/licenses/by-nc-sa/3.0")
         -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
       new BasicString("https://creativecommons.org/licenses/by-nc-sa/3.0")

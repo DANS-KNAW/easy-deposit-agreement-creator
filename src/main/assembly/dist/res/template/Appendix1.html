@@ -4,19 +4,24 @@
     <h2>Open Access</h2>
     <p>The files in the Dataset will be directly accessible to third parties. Third parties do not have to register with the Depositary. The Dataset will be placed in the public domain or made available under an Open Access Licence.</p>
     <p><span class="choice-header">Using the following public-domain statement or Open Access Licence</span>:</p>
-    #if ($TermsLicenseUrl)
-        #if ($TermsLicense)
-            <p class="choice">$TermsLicense : <a href="$TermsLicenseUrl">$TermsLicenseUrl</a></p>
+    <p class="choice">
+        #if ($TermsLicenseUrl)
+            #if ($TermsLicense)
+                $TermsLicense : <a href="$TermsLicenseUrl">$TermsLicenseUrl</a>
+            #else
+                <a href="$TermsLicenseUrl">$TermsLicenseUrl</a>
+            #end
         #else
-            <p class="choice"><a href="$TermsLicenseUrl">$TermsLicenseUrl</a></p>
+            #if ($TermsLicense)
+                $TermsLicense
+            #else
+                <span class="error">neither name nor URL for chosen license</span>
+            #end
         #end
-    #else
-        #if ($TermsLicense)
-            <p class="choice">$TermsLicense</p>
-        #else
-            <p class="choice error">neither name nor URL for chosen license</p>
+        #if ($Appendix3)
+            (see Appendix 3)
         #end
-    #end
+    <p class="choice">
 #else
     <h2>Restricted Access</h2>
     <p>The files in the Dataset will be made available to Users by the Depositary only after the Depositor has given its express consent. Users will be obliged to comply with the DANS Licence. After receiving a permission request for access to the Dataset, the Depositor can approve the request, reject it or impose additional conditions of use on a User.</p>

@@ -13,7 +13,7 @@
     @bottom-left {
         font: 12px "Bitstream Charter";
         white-space: pre-wrap;
-        content: "\A\A" /* first line overlaps with fixed footer */
+        content: "\A" /* first line overlaps with fixed footer */
         "Data Archiving and Networked Services (DANS) \A"
         "Anna van Saksenlaan 51 | 2593 HW Den Haag \A"
         "070 349 44 50 | info@dans.knaw.nl | www.dans.knaw.nl \A"

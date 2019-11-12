@@ -16,12 +16,17 @@
 #parse("Body.html")
 #parse("Appendix1.html")
 #parse("Appendix2.html")
-  <footer>
-      <p>
-          DANS promotes sustainable access to digital research data.
-          See <a href="www.dans.knaw.nl">www.dans.knaw.nl</a> for more information.
-      </p>
-  </footer>
+#if ($Appendix3)
+    <h1 style="page-break-before: always">Appendix 2 Legal text of chosen license</h1>
+    #parse($Appendix3)
+#end
+
+    <footer>
+        <p>
+            DANS promotes sustainable access to digital research data.
+            See <a href="www.dans.knaw.nl">www.dans.knaw.nl</a> for more information.
+        </p>
+    </footer>
 
 </body>
 </html>

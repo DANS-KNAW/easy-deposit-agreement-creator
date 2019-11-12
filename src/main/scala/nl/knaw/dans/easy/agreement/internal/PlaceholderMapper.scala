@@ -54,6 +54,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       depositorMap = depositor(dataset.easyUser)
       accessRightMap <- datasetAccessCategory(emd)
       termsLicenseMap <- termsLicenseMap(emd)
+      _ = println(termsLicenseMap)
       embargoMap = embargo(emd)
       dateTime = CurrentDateAndTime -> currentDateAndTime
     } yield headerMap + dansLogo + drivenByData + footer ++ depositorMap ++ accessRightMap ++ termsLicenseMap ++ embargoMap + dateTime
@@ -136,7 +137,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     val file = parameters.licenseLegalResource(url)
     Map(
       TermsLicenseUrl -> url,
-      TermsLicense -> file.replaceAll("[.][^.]+","").replaceAll(".*/",""),
+      TermsLicense -> new File(file).getName.replaceAll(".[^.]+$","").replaceAll(".[^.]/",""),
       Appendix3 -> file.toString
     )
   }

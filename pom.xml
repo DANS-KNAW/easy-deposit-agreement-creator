@@ -243,7 +243,7 @@
                                     </sources>
                                 </mapping>
                                 <mapping>
-                                    <directory>/var/opt/${dans-provider-name}/resource/${project.artifactId}/licenses</directory>
+                                    <directory>/var/opt/${dans-provider-name}/resource/${project.artifactId}/template/licenses</directory>
                                     <configuration>${rpm-replace-configuration}</configuration>
                                     <sources>
                                         <source>
@@ -252,7 +252,7 @@
                                     </sources>
                                 </mapping>
                                 <mapping>
-                                    <directory>/opt/${dans-provider-name}/${project.artifactId}/res/licenses</directory>
+                                    <directory>/opt/${dans-provider-name}/${project.artifactId}/res/template/licenses</directory>
                                     <configuration>${rpm-replace-configuration}</configuration>
                                     <sources>
                                         <source>
