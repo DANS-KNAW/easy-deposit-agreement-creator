@@ -54,7 +54,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       depositorMap = depositor(dataset.easyUser)
       accessRightMap <- datasetAccessCategory(emd)
       termsLicenseMap <- termsLicenseMap(emd)
-      _ = println(termsLicenseMap)
       embargoMap = embargo(emd)
       dateTime = CurrentDateAndTime -> currentDateAndTime
     } yield headerMap + dansLogo + drivenByData + footer ++ depositorMap ++ accessRightMap ++ termsLicenseMap ++ embargoMap + dateTime
@@ -133,7 +132,10 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
   }
 
   def termsLicenseMap(emd: EasyMetadata): Try[PlaceholderMap] = Try {
-    val url = emd.getEmdRights.getTermsLicense.asScala.headOption.map(_.getValue).getOrElse("")
+    val url = emd.getEmdRights.getTermsLicense.asScala
+      .map(_.getValue)
+      .find(_.startsWith("http"))
+      .getOrElse(throw new IllegalArgumentException("Did not find a <emd:rights><dct:license>http..."))
     val file = parameters.licenseLegalResource(url)
     Map(
       TermsLicenseUrl -> url,

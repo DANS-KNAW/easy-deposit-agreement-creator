@@ -23,7 +23,6 @@ import nl.knaw.dans.easy.agreement.internal._
 import nl.knaw.dans.pf.language.emd.Term.Name
 import nl.knaw.dans.pf.language.emd._
 import nl.knaw.dans.pf.language.emd.types.{ BasicString, IsoDate }
-import org.apache.velocity.exception.ResourceNotFoundException
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterAll
@@ -80,19 +79,26 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     }
   }
 
-  it should "not find the resource for Appendix 3" in {
-    val dataset = mockDataset(AccessCategory.OPEN_ACCESS, isSample = false, new IsoDate(), new BasicString("blabla"))
+  it should "not find a license url" in {
+    val dataset = mockDataset(AccessCategory.OPEN_ACCESS, isSample = false, new IsoDate(), new BasicString("accept"))
     val outputStream = new ByteArrayOutputStream()
 
-    create(isSample = false, dataset, outputStream) should matchPattern{
-      case Failure(_: ResourceNotFoundException) =>
+    create(isSample = false, dataset, outputStream) should matchPattern {
+      case Failure(e: IllegalArgumentException) if (e.getMessage == "Did not find a <emd:rights><dct:license>http...") =>
+    }
+  }
+
+  it should "not find the resource for Appendix 3" in {
+    val dataset = mockDataset(AccessCategory.OPEN_ACCESS, isSample = false, new IsoDate(), new BasicString("http://dans.knaw.nl"))
+    val outputStream = new ByteArrayOutputStream()
+
+    create(isSample = false, dataset, outputStream) should matchPattern {
+      case Failure(e: java.lang.IllegalArgumentException) if (e.getMessage == "No legal text found for http://dans.knaw.nl") =>
     }
   }
 
   it should "properly format all types of licenses" in {
     forEvery(Seq(
-      new BasicString("accept") // old open access datasets don't have an explicit chosen license
-        -> """CC0-1.0 : <a href="http://creativecommons.org/publicdomain/zero/1.0</a>""",
       new BasicString("http://creativecommons.org/licenses/by-nc-sa/3.0")
         -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
       new BasicString("https://creativecommons.org/licenses/by-nc-sa/3.0")
@@ -109,8 +115,8 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
         create(isSample = false, dataset, outputStream) shouldBe Success(())
 
         val lines = outputStream.toString.split("\n")
-       //   .filter(_.contains("""class="choice">""")) // TODO less output in case of failure, but it's no longer on a single line
-       //  lines should have length (1) // detected a forgotten #else in the template
+        //   .filter(_.contains("""class="choice">""")) // TODO less output in case of failure, but it's no longer on a single line
+        //  lines should have length (1) // detected a forgotten #else in the template
         lines.mkString("\n", "\n", "\n") should include(expected)
     }
   }
@@ -140,11 +146,11 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     val rights = mock[EmdRights]
     emd.getPreferredTitle _ expects() returning "about testing"
     emd.getEmdRights _ expects() returning rights twice()
-    emd.getEmdDate _ expects() returning date twice()
+    emd.getEmdDate _ expects() returning date anyNumberOfTimes()
     rights.getAccessCategory _ expects() returning openaccess
     rights.getTermsLicense _ expects() returning asList(emdRightsTermsLicense)
     date.getEasDateSubmitted _ expects() returning asList(new IsoDate("1992-07-30"))
-    date.getEasAvailable _ expects() returning asList(dateAvailable)
+    date.getEasAvailable _ expects() returning asList(dateAvailable) anyNumberOfTimes()
     if (!isSample) {
       val emdIdentifier = mock[EmdIdentifier]
       emd.getEmdIdentifier _ expects() returning emdIdentifier anyNumberOfTimes()

@@ -32,18 +32,19 @@ class BaseParameters(val templateResourceDir: File,
                      val isSample: Boolean,
                     ) {
   private val licenseUrlPrefixRegExp = "https?://(www.)?"
-  private val licencesMap: Map[String, String] = Try {
+  val licencesMap: Map[String, String] = Try {
     val file = new File(templateResourceDir, "/template/licenses/licenses.properties")
-    println(s"properties: exists=${file.exists()} $file")
     val licenses = new PropertiesConfiguration(file)
     licenses.getKeys.asScala.map(key =>
-      key.replaceAll(licenseUrlPrefixRegExp, "") -> s"/licenses/${licenses.getString(key)}"
+      key.replaceAll(licenseUrlPrefixRegExp, "") -> s"/licenses/${ licenses.getString(key) }"
     ).toMap
   }.getOrElse(Map.empty)
 
   def licenseLegalResource(url: String): String = {
-    println(s"licenseLegalResource: $url")
-    licencesMap.getOrElse(url.replaceAll(licenseUrlPrefixRegExp, ""), "")
+    licencesMap.getOrElse(
+      url.replaceAll(licenseUrlPrefixRegExp, ""),
+      throw new IllegalArgumentException(s"No legal text found for $url")
+    )
   }
 }
 
