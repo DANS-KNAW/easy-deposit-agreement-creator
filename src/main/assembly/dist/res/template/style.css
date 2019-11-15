@@ -1,6 +1,8 @@
 
 @page {
-    margin: 2.5cm 1.5cm 1.5cm 1.5cm;
+    /* the bottom gets 2cm extra for the footer */
+    margin: 2.5cm 1.5cm 3.5cm 1.5cm;
+
     size: A4;
     @top-left {
         content: "";
@@ -8,10 +10,11 @@
         height: 100%;
         background: url(data:image/jpg;base64,$DansLogo) no-repeat 0 0;
         background-position: left bottom;
-        background-size: 280px 90px;
+        background-size: 235px 90px;
     }
     @bottom-right {
         vertical-align: top;
+        margin-right: 8px;
         font: 12px "Bitstream Charter";
         content: counter(page) "/" counter(pages);
     }
@@ -20,22 +23,36 @@ body {
     font: 14px "Bitstream Charter";
     text-align: justify;
 }
-@media screen {
-    body {
-        margin-bottom: 7em;
-    }
-}
 footer {
     position: fixed;
     width: 100%;
-    bottom: 0;
+    bottom: -8em;
     font: 12px "Bitstream Charter";
     background: #FFF url(data:image/jpg;base64,$DrivenByData) no-repeat 0 0;
-    background-position: right bottom;
+    background-size: 212px 33px;
+
+    /* 4% in a PDF matches the 16px in "footer p:first-child { margin-right" */
+    background-position: 96% 100%;
+}
+@media screen {
+    body {
+        margin-bottom: 9em;
+    }
+    footer {
+        bottom: 0;
+    }
 }
 footer p:first-child {
     float: right;
+
+    /* box model of body has a margin of 8px,
+     * the footer is 8px larger than the body with its margin
+     * which matches 4% for "footer { background-position"
+     */
+    margin-right: 16px;
+
     margin-top: 3em;
+    text-align: right;
     background-color: #FFF;
 }
 .choice, .choice-header {
