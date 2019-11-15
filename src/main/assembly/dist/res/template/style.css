@@ -1,6 +1,6 @@
 
 @page {
-    margin: 2.5cm 1.5cm 3cm 1.5cm;
+    margin: 2.5cm 1.5cm 1.5cm 1.5cm;
     size: A4;
     @top-left {
         content: "";
@@ -10,36 +10,33 @@
         background-position: left bottom;
         background-size: 280px 90px;
     }
-    @bottom-left {
-        font: 12px "Bitstream Charter";
-        white-space: pre-wrap;
-        content: "\A" /* first line overlaps with fixed footer */
-        "Data Archiving and Networked Services (DANS) \A"
-        "Anna van Saksenlaan 51 | 2593 HW Den Haag \A"
-        "070 349 44 50 | info@dans.knaw.nl | www.dans.knaw.nl \A"
-        "CoC 54667089 | DANS is an institute of KNAW and NWO ";
-    }
     @bottom-right {
         vertical-align: top;
-        white-space: pre-wrap;
-        margin-bottom: 0.5cm;
-        content: counter(page) "/" counter(pages) " \A\A Deposit agreement Version 26-09-2019";
         font: 12px "Bitstream Charter";
-        background: url(data:image/jpg;base64,$DrivenByData) no-repeat 0 0;
-        background-position: right bottom;
+        content: counter(page) "/" counter(pages);
     }
 }
 body {
     font: 14px "Bitstream Charter";
     text-align: justify;
 }
+@media screen {
+    body {
+        margin-bottom: 7em;
+    }
+}
 footer {
-    /* overlap with the first line of: @page {@bottom-xxx {...}} */
     position: fixed;
-    bottom: -2.7em;
-    margin-left: -0.6em;
-    width: 90em;
+    width: 100%;
+    bottom: 0;
     font: 12px "Bitstream Charter";
+    background: #FFF url(data:image/jpg;base64,$DrivenByData) no-repeat 0 0;
+    background-position: right bottom;
+}
+footer p:first-child {
+    float: right;
+    margin-top: 3em;
+    background-color: #FFF;
 }
 .choice, .choice-header {
     padding-left: 5em;
