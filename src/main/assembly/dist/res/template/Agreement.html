@@ -3,15 +3,14 @@
 <head>
     <style>
         #parse("style.css")
-
     </style>
 </head>
 <body>
 
 #if ($IsSample)
-#parse("Header-sample.html")
+    #parse("Header-sample.html")
 #else
-#parse("Header.html")
+    #parse("Header.html")
 #end
 
 #parse("Body.html")
@@ -19,7 +18,9 @@
 #parse("Appendix2.html")
 #if ($Appendix3)
     <h1 style="page-break-before: always">Appendix 3 Legal text of chosen license</h1>
-    #parse($Appendix3)
+    <pre>
+        #parse($Appendix3)
+    </pre>
 #end
 
 <footer>

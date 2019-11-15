@@ -50,13 +50,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
                    else header(emd)
       dansLogo = DansLogo -> encodeImage(dansLogoFile)
       drivenByData = DrivenByData -> encodeImage(drivenByDataFile)
-      footer = FooterText -> footerText(footerTextFile)
       depositorMap = depositor(dataset.easyUser)
-      accessRightMap <- datasetAccessCategory(emd)
+      openAccess = OpenAccess -> boolean2Boolean(isOpenAccess(emd))
       termsLicenseMap <- termsLicenseMap(emd)
       embargoMap = embargo(emd)
-      dateTime = CurrentDateAndTime -> currentDateAndTime
-    } yield headerMap + dansLogo + drivenByData + footer ++ depositorMap ++ accessRightMap ++ termsLicenseMap ++ embargoMap + dateTime
+    } yield headerMap + dansLogo + drivenByData ++ depositorMap + openAccess ++ termsLicenseMap ++ embargoMap
   }
 
   def header(emd: EasyMetadata): Try[PlaceholderMap] = Try {
@@ -103,23 +101,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     )
   }
 
-  def datasetAccessCategory(emd: EasyMetadata): Try[PlaceholderMap] = Try {
+  def isOpenAccess(emd: EasyMetadata): Boolean = {
     // access category in EMD may be null, in which case OPEN_ACCESS is the default value
-    val ac = Option(emd.getEmdRights.getAccessCategory).getOrElse(OPEN_ACCESS)
-
-    val result = Map[KeywordMapping, List[AccessCategory]](
-      OpenAccess -> List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE),
-      OpenAccessForRegisteredUsers -> List(OPEN_ACCESS_FOR_REGISTERED_USERS),
-      OtherAccess -> List(ACCESS_ELSEWHERE, NO_ACCESS),
-      RestrictGroup -> List(GROUP_ACCESS),
-      RestrictRequest -> List(REQUEST_PERMISSION)
-      // because Velocity requires Java objects, we transform Scala's Boolean into a Java Boolean
-    ).mapValues(lst => boolean2Boolean(lst.contains(ac)))
-
-    if (result.exists { case (_, bool) => bool == true })
-      result
-    else
-      throw new IllegalArgumentException(s"The specified access category ($ac) does not map to any of these keywords.")
+    val accessCategory = Option(emd.getEmdRights.getAccessCategory).getOrElse(OPEN_ACCESS)
+    List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE)
+      .contains(accessCategory)
   }
 
   def embargo(emd: EasyMetadata): PlaceholderMap = {

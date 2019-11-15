@@ -215,119 +215,47 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
   "accessRights" should "map an Open Access category to an OpenAccess keyword" in {
     expectEmdRights(AccessCategory.OPEN_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   it should "map an Anonymous Access category to an OpenAccess keyword" in {
     expectEmdRights(AccessCategory.ANONYMOUS_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   it should "map a Freely Available category to an OpenAccess keyword" in {
     expectEmdRights(AccessCategory.FREELY_AVAILABLE)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   it should "map an Open Access For Registered Users category to an OpenAccessForRegisteredUsers keyword" in {
     expectEmdRights(AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, true),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a Group Access category to an RestrictGroup keyword" in {
     expectEmdRights(AccessCategory.GROUP_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, true),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a Request Permission category to an RestrictRequest keyword" in {
     expectEmdRights(AccessCategory.REQUEST_PERMISSION)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, true))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map an Access Elsewhere category to an OtherAccess keyword" in {
     expectEmdRights(AccessCategory.ACCESS_ELSEWHERE)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, true),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a No Access category to an OtherAccess keyword" in {
     expectEmdRights(AccessCategory.NO_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, true),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a null value to an OpenAccess keyword" in {
-    expectEmdRights(AccessCategory.OPEN_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    expectEmdRights(accessCategory = null)
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   "embargo" should "give the embargo keyword mappings with UnderEmbargo=true when there is an embargo" in {

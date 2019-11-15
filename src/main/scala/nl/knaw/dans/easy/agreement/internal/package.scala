@@ -25,7 +25,6 @@ import rx.lang.scala.Notification.{ OnCompleted, OnError, OnNext }
 import rx.lang.scala.{ Notification, Observable }
 
 import scala.language.postfixOps
-import scala.util.Try
 import scala.xml.{ Elem, XML }
 
 package object internal {
@@ -33,7 +32,6 @@ package object internal {
   type PlaceholderMap = Map[KeywordMapping, Object]
 
   val encoding: Charset = Charsets.UTF_8
-  val checkSumNotCalculated = "------not-calculated------"
 
   def velocityProperties(implicit parameters: BaseParameters): Properties = {
     val p = new Properties
@@ -55,10 +53,6 @@ package object internal {
 
   def drivenByDataFile(implicit parameters: BaseParameters): File = {
     new File(parameters.templateResourceDir, "/DrivenByData.png")
-  }
-
-  def footerTextFile(implicit parameters: BaseParameters): File = {
-    new File(parameters.templateResourceDir, "/agreement_version.txt")
   }
 
   def metadataTermsProperties(implicit parameters: BaseParameters): File = {
@@ -104,25 +98,6 @@ package object internal {
     def copyDir(destDir: File): Unit = FileUtils.copyDirectory(file, destDir)
 
     /**
-     * Determines whether the ``parent`` directory contains the ``child`` element (a file or directory).
-     * <p>
-     * Files are normalized before comparison.
-     * </p>
-     *
-     * Edge cases:
-     * <ul>
-     * <li>A ``directory`` must not be null: if null, throw IllegalArgumentException</li>
-     * <li>A ``directory`` must be a directory: if not a directory, throw IllegalArgumentException</li>
-     * <li>A directory does not contain itself: return false</li>
-     * <li>A null child file is not contained in any parent: return false</li>
-     * </ul>
-     *
-     * @param child the file to consider as the child.
-     * @return true is the candidate leaf is under by the specified composite. False otherwise.
-     */
-    def directoryContains(child: File): Boolean = FileUtils.directoryContains(file, child)
-
-    /**
      * Deletes a directory recursively.
      */
     def deleteDirectory(): Unit = FileUtils.deleteDirectory(file)
@@ -140,7 +115,7 @@ package object internal {
     def loadXML: Elem = XML.load(stream)
   }
 
-  // TODO not used here anymore, but useful for debugging purposed. Maybe we can migrate this to a EASY-Utils project?
+  // TODO not used here anymore, but useful for debugging purposes.
   implicit class ObservableDebug[T](val observable: Observable[T]) extends AnyVal {
     def debugThreadName(s: String = "")(implicit logger: Logger): Observable[T] = {
 
@@ -162,15 +137,5 @@ package object internal {
         .doOnEach(x => logger.debug(s"$s: $x"))
         .dematerialize
     }
-  }
-
-  def loadProperties(file: File): Try[Properties] = {
-    resource.Using.fileInputStream(file)
-      .map(fis => {
-        val props = new Properties
-        props.load(fis)
-        props
-      })
-      .tried
   }
 }

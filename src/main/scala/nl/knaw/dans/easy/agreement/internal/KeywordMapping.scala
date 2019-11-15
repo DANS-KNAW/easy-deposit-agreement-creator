@@ -44,12 +44,6 @@ case object DepositorEmail               extends KeywordMapping { val keyword = 
 
 // access rights
 case object OpenAccess                   extends KeywordMapping { val keyword = "OpenAccess" }
-case object OpenAccessForRegisteredUsers extends KeywordMapping { val keyword = "OpenAccessForRegisteredUsers" }
-case object OtherAccess                  extends KeywordMapping { val keyword = "OtherAccess" }
-case object RestrictGroup                extends KeywordMapping { val keyword = "RestrictGroup" }
-case object RestrictRequest              extends KeywordMapping { val keyword = "RestrictRequest" }
-
-// embargo
 case object UnderEmbargo                 extends KeywordMapping { val keyword = "UnderEmbargo" }
 case object DateAvailable                extends KeywordMapping { val keyword = "DateAvailable" }
 
