@@ -66,7 +66,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
 
   "createTemplate" should "find all place holders" in {
     forEvery(for {
-      rights <- Seq(AccessCategory.OPEN_ACCESS, AccessCategory.NO_ACCESS)
+      rights <- Seq(AccessCategory.OPEN_ACCESS, AccessCategory.REQUEST_PERMISSION)
       isSample <- Seq(true, false)
       available <- Seq(new DateTime, (new DateTime).plusYears(1)).map(new IsoDate(_))
     } yield (isSample, rights, available)) {
@@ -132,10 +132,13 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
   }
 
   private def docName(isSample: Boolean, rights: AccessCategory, available: IsoDate): String = {
-    s"$testDir/$rights-${
-      if (isSample) "sample-"
-      else ""
-    }$available.html"
+    val part1 = rights match {
+      case AccessCategory.OPEN_ACCESS => "OA"
+      case _ => "RA" // restricted as in appendix1.html
+    }
+    val part2 = if (isSample) "sample-"
+                else ""
+    s"$testDir/$part1-$part2$available.html"
   }
 
   private def mockDataset(openaccess: AccessCategory, isSample: Boolean, dateAvailable: IsoDate,
