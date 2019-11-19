@@ -82,65 +82,57 @@ td {
     vertical-align: top;
 }
 
-/* first paragraph of a list item */
+/* first level numbered list, needs explicit counter for second level */
 
-li p:first-child {
+body>ol {
+  list-style-type: none;
+  counter-reset: level1;
+  padding-left: 1.5em;
+}
+body>ol>li {
+    counter-increment: level1;
+}
+body>ol>li>p:first-child {
     font-weight: bold;
+    display: inline-block;
+}
+body>ol>li>p:first-child:before {
+    content: counters(level1, ".") ". ";
+    margin-left: -1.5em;
+    width: 1.5em;
 }
 
-/* numbered lists, first level prefix for second level */
+/* second level prefixed with first level */
 
-ol {
-  list-style-type: lower-alpha;
-  counter-reset: item;
-  margin: 0;
-  padding: 0;
-}
-li {
-    display: table;
-    counter-increment: item;
-    margin-bottom: 0.6em;
-}
-li:before {
-    content: counters(item, ".") ". ";
-    display: table-cell;
-    padding-right: 0.6em;
-}
-li li {
-    margin: 0;
-}
-li li:before {
-    width: 1.7em;
-    content: counters(item, ".") " ";
+body>ol>li>ol {
+    list-style-type: none;
+    counter-reset: level2;
+    padding-left: 3.5em;
 }
 
-/* third level alphanumeric list (within numbered list) */
+body>ol>li>ol>li {
+    counter-increment: level2;
+}
 
-ol ol ol {
+body>ol>li>ol>li:before {
+    content: counters(level1, ".") "." counters(level2, ".") ".";
+    display: inline-block;
+    margin-left: -3.5em;
+    width: 3.5em;
+}
+
+/* third level */
+
+body>ol>li>ol>li>ol {
     list-style-type: lower-alpha;
-    counter-reset: item3;
-}
-li li li {
-    counter-increment: item3;
-}
-li li li:before {
-    content: counter(item3, lower-alpha) ". ";
-    width: auto;
+    padding-left: 1.5em;
 }
 
-/* bullet list (within numbered list) */
+/* unordered at any level */
 
 ul {
-    padding-left: 0.8em;
-}
-ul li:before {
-    font-size: 50%;
-    content: "●";
-    width: auto;
-}
-
-ul li {
-  counter-increment: none;
+    list-style-type: disc;
+    padding-left: 1.8em;
 }
 
 /* footnote */
