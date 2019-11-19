@@ -85,6 +85,10 @@ yum install redhat-rpm-config python-devel python-pip python-lxml cairo pango gd
 
 After this, `weasyprint --help` is supposed to show the appropriate help page.
 
+Python however may complain about `unknown locale`, add to your profile:
+
+    export LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8
 
 BUILDING FROM SOURCE
 --------------------
