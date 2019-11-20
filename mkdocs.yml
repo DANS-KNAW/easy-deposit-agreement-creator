@@ -32,6 +32,8 @@ plugins:
 
 extra:
   weasyprint_installation: http://weasyprint.readthedocs.io/en/latest/install.html
+  apache_velocity: http://velocity.apache.org/
+  weasyprint: http://weasyprint.org/
 
 markdown_extensions:
   - attr_list

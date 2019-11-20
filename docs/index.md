@@ -30,11 +30,11 @@ by EASY first before generating the deposit agreement.
 
 `easy-deposit-agreement-creator` uses a template with placeholders. After replacing the placeholders with actual data, the template is converted into a PDF file.
 
-Placeholder substitution is achieved using [Apache Velocity](http://velocity.apache.org/), which fills in and merges a number of template HTML 
+Placeholder substitution is achieved using [Apache Velocity]({{ apache_velocity }}), which fills in and merges a number of template HTML 
 files that are specified in `src/main/assembly/dist/res/template/`. Besides data from the dataset, several files in `src/main/assembly/dist/res/` 
 are required, namely `dans_logo.png`, `agreement_version.txt`, `Metadataterms.properties` and `velocity-engine.properties`.
 
-Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint](http://weasyprint.org/). Note that this tool 
+Pdf generation based on the assembled HTML is done using the command line tool [WeasyPrint]({{ weasyprint }}). Note that this tool 
 requires to be installed before being used by `easy-deposit-agreement-creator`. In order to not having this installed on our computers while developing 
 on this project or projects that depend on this project, we use an SSH connection to the development server where the command gets executed. 
 During development we therefore require a different script than the one that is used in production. Follow the steps below:
