@@ -1,18 +1,6 @@
 Manual
 ======
 
-TABLE OF CONTENTS
------------------
-
-- [Manual](#manual)
-  - [TABLE OF CONTENTS](#table-of-contents)
-  - [SYNOPSIS](#synopsis)
-  - [DESCRIPTION](#description)
-  - [ARGUMENTS](#arguments)
-  - [INSTALLATION AND CONFIGURATION](#installation-and-configuration)
-  - [BUILDING FROM SOURCE](#building-from-source)
-
-
 SYNOPSIS
 --------
 
