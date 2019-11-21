@@ -37,7 +37,7 @@
     <properties>
         <main-class>nl.knaw.dans.easy.agreement.Command</main-class>
         <easy.emd.version>3.8.0</easy.emd.version>
-        <easy-licenses.version>1.0.1</easy-licenses.version>
+        <easy-licenses.version>1.0.2</easy-licenses.version>
     </properties>
 
     <scm>
