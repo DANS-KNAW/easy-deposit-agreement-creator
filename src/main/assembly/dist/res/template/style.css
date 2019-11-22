@@ -68,7 +68,7 @@ footer p:first-child {
     text-decoration: underline;
 }
 
-/* parties and dataset on front page */
+/* dataset and parties on front page */
 
 table {
     border-collapse: collapse;
@@ -80,6 +80,17 @@ table {
 }
 td {
     vertical-align: top;
+}
+li>table>tr>td:first-child {
+    padding-right: 1em;
+    width: 8em;
+    vertical-align: top;
+}
+tr>td:first-child {
+    padding-right: 1em;
+}
+li tr>td:first-child {
+    width: 7em;
 }
 
 /* first level numbered list, needs explicit counter for second level */

@@ -14,10 +14,14 @@
 #end
 
 #parse("Body.html")
+#if (! $IsSample)
+    <p>This agreement has been accepted by both parties on $DateSubmitted upon completion of the deposit process via easy.dans.knaw.nl.</p>
+#end
+
 #parse("Appendix1.html")
 #parse("Appendix2.html")
 #if ($Appendix3)
-    <h1 style="page-break-before: always">Appendix 3 Legal text of chosen license</h1>
+    <h1 style="page-break-before: always">Appendix 3 Legal text of chosen public-domain statement or Open Access Licence</h1>
     <pre>
         #parse($Appendix3)
     </pre>
