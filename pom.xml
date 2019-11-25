@@ -176,6 +176,33 @@
         </repository>
     </repositories>
 
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>nl.knaw.dans.easy</groupId>
+                                    <artifactId>easy-licenses</artifactId>
+                                    <version>${easy-licenses.version}</version>
+                                    <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <profile>
             <id>rpm</id>
@@ -187,28 +214,6 @@
             </activation>
             <build>
                 <plugins>
-                    <plugin>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>resources</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>unpack</goal>
-                                </goals>
-                                <configuration>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>nl.knaw.dans.easy</groupId>
-                                            <artifactId>easy-licenses</artifactId>
-                                            <version>${easy-licenses.version}</version>
-                                            <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
-                                        </artifactItem>
-                                    </artifactItems>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>rpm-maven-plugin</artifactId>
