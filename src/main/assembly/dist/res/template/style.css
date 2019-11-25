@@ -68,33 +68,18 @@ footer p:first-child {
     text-decoration: underline;
 }
 
-/* dataset on front page */
-
-table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    display: table;
-    border: none;
-    margin-left: 0;
-    margin-right: auto;
-}
-td {
-    vertical-align: top;
-}
-td:first-child {
-    padding-right: 1em;
-}
-
-/* parties on front page */
+/* dataset, parties on front page. */
 
 dt {
     float: left;
-    width: 7em;
+    width: 10.5em; /* value for "li dt" plus padding-left of "body>ol" */
 }
 dd {
-    margin-left: 7em;
-    display: block;
+    margin-left: 10.5em;
+    display: block; /*  NB: optional <dd> content needs &nbsp; to avoid wrapping. */
 }
+li dt { width: 9em; }
+li dd { margin-left: 9em; }
 
 /* first level numbered list, needs explicit counter for second level */
 
