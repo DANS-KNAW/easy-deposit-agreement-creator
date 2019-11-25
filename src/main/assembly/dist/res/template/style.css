@@ -70,16 +70,23 @@ footer p:first-child {
 
 /* dataset, parties on front page. */
 
+dt, dd {
+    min-height: 1em; /* avoid the need for &nbsp; in an empty <dd> (part 1) */
+}
 dt {
-    float: left;
-    width: 10.5em; /* value for "li dt" plus padding-left of "body>ol" */
+    clear: left; /* avoid the need for &nbsp; in an empty <dd> (part 2) */
+    float: left; /* put it in the margin of <dd> */
+    width: 10.5em; /* same as margin for <dd> */
 }
 dd {
-    margin-left: 10.5em;
-    display: block; /*  NB: optional <dd> content needs &nbsp; to avoid wrapping. */
+    margin-left: 10.5em; /* place holder for the dt */
 }
-li dt { width: 9em; }
-li dd { margin-left: 9em; }
+li dt {
+    width: 9em; /* subtract padding-left of "body>ol" */
+}
+li dd {
+    margin-left: 9em;
+}
 
 /* first level numbered list, needs explicit counter for second level */
 
