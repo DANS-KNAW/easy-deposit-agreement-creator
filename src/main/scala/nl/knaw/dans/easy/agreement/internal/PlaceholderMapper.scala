@@ -124,7 +124,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .getOrElse(throw new IllegalArgumentException("Did not find a <emd:rights><dct:license>http..."))
     val file = parameters.licenseLegalResource(url)
     val extensionRegExp = ".[^.]+$"
-    val txtFile = file.toString//.replaceAll(extensionRegExp, ".txt")
+    val txtFile = file.toString.replaceAll(extensionRegExp, ".txt")
     val baseFileName = new File(file).getName.replaceAll(extensionRegExp, "")
     Map(
       TermsLicenseUrl -> url,

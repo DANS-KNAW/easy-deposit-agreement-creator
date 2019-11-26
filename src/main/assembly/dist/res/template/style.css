@@ -23,6 +23,9 @@ body {
     font: 12px "DejaVu Serif";
     text-align: justify;
 }
+pre {
+    font: 10px "DejaVu Sans Mono";
+}
 footer {
     position: fixed;
     width: 100%;
