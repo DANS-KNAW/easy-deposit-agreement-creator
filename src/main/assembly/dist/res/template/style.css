@@ -113,26 +113,27 @@ body>ol>li>p:first-child:before {
 
 /* second level prefixed with first level */
 
-body>ol>li>ol {
+.body>li>ol {
     list-style-type: none;
     counter-reset: level2;
     padding-left: 3.5em;
 }
 
-body>ol>li>ol>li {
+.body>li>ol>li {
     counter-increment: level2;
 }
 
-body>ol>li>ol>li:before {
+.body>li>ol>li:before {
     content: counters(level1, ".") "." counters(level2, ".") ".";
     display: inline-block;
     margin-left: -3.5em;
     width: 3.5em;
 }
 
-/* third level */
+/* lower-alpha numbering for different levels in different sections */
 
-body>ol>li>ol>li>ol {
+.body>li>ol>li>ol,
+.appendix2>li>ol {
     list-style-type: lower-alpha;
     padding-left: 1.5em;
 }
