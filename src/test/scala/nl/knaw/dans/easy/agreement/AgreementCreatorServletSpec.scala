@@ -47,14 +47,10 @@ class AgreementCreatorServletSpec extends FlatSpec
       addProperty("fcrepo.url", "http://localhost:8080/fedora")
       addProperty("fcrepo.user", "-")
       addProperty("fcrepo.password", "-")
-      addProperty("fsrdb.db-connection-url", "")
-      addProperty("fsrdb.db-connection-username", "-")
-      addProperty("fsrdb.db-connection-password", "-")
       addProperty("auth.ldap.url", "ldap://localhost")
       addProperty("auth.ldap.user", "")
       addProperty("auth.ldap.password", "")
       addProperty("agreement.resources", "")
-      addProperty("agreement.fileLimit", "3")
     })
   }
 }

@@ -15,31 +15,28 @@
  */
 package nl.knaw.dans.easy.agreement.internal
 
-import java.sql.SQLException
 import javax.naming.directory.Attributes
-
-import nl.knaw.dans.easy.agreement.{ DatasetID, DepositorID, FileAccessRight, FileItem }
+import nl.knaw.dans.easy.agreement.{ DatasetID, DepositorID }
 import nl.knaw.dans.pf.language.emd.binding.EmdUnmarshaller
-import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EasyMetadataImpl, EmdAudience }
+import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EasyMetadataImpl }
+import rx.lang.scala.Observable
 import rx.lang.scala.schedulers.IOScheduler
-import rx.lang.scala.{ Observable, ObservableExtensions }
 
-import scala.collection.JavaConverters._
 import scala.language.postfixOps
 import scala.util.control.NonFatal
 
 /**
-  * Data class for an Easy User. Notice that some fields are mandatory and cannot be null!
-  *
-  * @param name the user's name <b>(mandatory!)</b>
-  * @param organization the user's organisation
-  * @param address the user's address <b>(mandatory!)</b>
-  * @param postalCode the user's zipcode <b>(mandatory!)</b>
-  * @param city the user's city <b>(mandatory!)</b>
-  * @param country the user's country
-  * @param telephone the user's telephone
-  * @param email the user's email <b>(mandatory!)</b>
-  */
+ * Data class for an Easy User. Notice that some fields are mandatory and cannot be null!
+ *
+ * @param name         the user's name <b>(mandatory!)</b>
+ * @param organization the user's organisation
+ * @param address      the user's address <b>(mandatory!)</b>
+ * @param postalCode   the user's zipcode <b>(mandatory!)</b>
+ * @param city         the user's city <b>(mandatory!)</b>
+ * @param country      the user's country
+ * @param telephone    the user's telephone
+ * @param email        the user's email <b>(mandatory!)</b>
+ */
 case class EasyUser(name: String,
                     organization: String,
                     address: String,
@@ -56,12 +53,7 @@ case class EasyUser(name: String,
   require(email != null, "'email' must be defined")
 }
 
-case class Dataset(datasetID: DatasetID,
-                   emd: EasyMetadata,
-                   easyUser: EasyUser,
-                   audiences: Seq[AudienceTitle],
-                   fileItems: Seq[FileItem],
-                   filesLimited: Boolean) {
+case class Dataset(datasetID: DatasetID, emd: EasyMetadata, easyUser: EasyUser) {
 
   require(datasetID != null, "'datasetID' must be defined")
 
@@ -71,83 +63,36 @@ case class Dataset(datasetID: DatasetID,
 trait DatasetLoader {
 
   /**
-    * Queries the audience title from Fedora given an audience identifiers
-    *
-    * @param audienceID the identifier of the audience
-    * @return The audidence title corresponding to the `audienceID`
-    */
-  def getAudience(audienceID: AudienceID): Observable[AudienceTitle]
-
-  /**
-    * Queries the audience titles from Fedora for the audiences in `EmdAudience`.
-    * @param audience the audience object with the identifiers
-    * @return the titles of the audiences that correspond to the identifiers in `EmdAudience`
-    */
-  def getAudiences(audience: EmdAudience): Observable[AudienceTitle] = {
-    audience.getValues.asScala.toObservable.flatMap(getAudience)
-  }
-
-  /**
-    * Create a `Dataset` based on the given `datasetID`
-    *
-    * @param datasetID the identifier of the dataset
-    * @return the dataset corresponding to `datasetID`
-    */
+   * Create a `Dataset` based on the given `datasetID`
+   *
+   * @param datasetID the identifier of the dataset
+   * @return the dataset corresponding to `datasetID`
+   */
   def getDatasetById(datasetID: DatasetID): Observable[Dataset]
 
   /**
-    * Create a `Dataset` based on the given `datasetID`, `emd`, `depositorID` and `files`, while
-    * querying for the audience titles and the depositor data.
-    *
-    * @param datasetID the identifier of the dataset
-    * @param emd the `EasyMetadata` of the dataset
-    * @param depositorID the depositor's identifier
-    * @param files the files belonging to the dataset
-    * @return the dataset corresponding to `datasetID`
-    */
-  def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID, files: Seq[FileItem], fileLimit: Int): Observable[Dataset] = {
-    val audiences = getAudiences(emd.getEmdAudience).toSeq
-    val easyUser = getUserById(depositorID)
-    val filesWereLimited = countFiles(datasetID).map(fileLimit <)
-
-    easyUser.combineLatest(audiences)
-      .combineLatestWith(filesWereLimited) {
-        case ((user, auds), limited) => Dataset(datasetID, emd, user, auds, files, limited)
-      }
+   * Create a `Dataset` based on the given `datasetID`, `emd` and `depositorID`, while querying for the depositor data.
+   *
+   * @param datasetID   the identifier of the dataset
+   * @param emd         the `EasyMetadata` of the dataset
+   * @param depositorID the depositor's identifier
+   * @return the dataset corresponding to `datasetID`
+   */
+  def getDataset(datasetID: DatasetID, emd: EasyMetadata, depositorID: DepositorID): Observable[Dataset] = {
+    getUserById(depositorID)
+      .map(Dataset(datasetID, emd, _))
   }
 
   /**
-    * Returns all files corresponding to the dataset with identifier `datasetID`
-    *
-    * @param datasetID the identifier of the dataset
-    * @return the files corresponding to the dataset with identifier `datasetID`
-    */
-  def getFilesInDataset(datasetID: DatasetID): Observable[FileItem]
-
-  /**
-   * Return the number of files corresponding to the dataset with identifier `datasetID`
+   * Queries the user data given a `depositorID`
    *
-   * @param datasetID the identifier of the dataset
-   * @return the number of files corresponding to the dataset with identifier `datasetID`
+   * @param depositorID the identifier of the user
+   * @return the user data corresponding to the `depositorID`
    */
-  def countFiles(datasetID: DatasetID): Observable[Int]
-
-  /**
-    * Queries the user data given a `depositorID`
-    *
-    * @param depositorID the identifier of the user
-    * @return the user data corresponding to the `depositorID`
-    */
   def getUserById(depositorID: DepositorID): Observable[EasyUser]
 }
 
 case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends DatasetLoader {
-
-  def getAudience(audienceID: AudienceID): Observable[String] = {
-    parameters.fedora.getDC(audienceID)
-      .map(resource.managed(_).acquireAndGet(_.loadXML \\ "title" text))
-      .subscribeOn(IOScheduler())
-  }
 
   def getDatasetById(datasetID: DatasetID): Observable[Dataset] = {
     val emdObs = parameters.fedora.getEMD(datasetID)
@@ -158,75 +103,10 @@ case class DatasetLoaderImpl()(implicit parameters: DatabaseParameters) extends 
       .subscribeOn(IOScheduler())
       .flatMap(getUserById(_).subscribeOn(IOScheduler()))
 
-    // publish because emd is used in multiple places here
-    emdObs.publish(emd => {
-      emd.combineLatestWith(depositorObs) {
-        (emdValue, depositorValue) => (audiences: Seq[AudienceTitle]) => (files: Seq[FileItem]) => (limited: Boolean) =>
-          Dataset(datasetID, emdValue, depositorValue, audiences, files, limited)
-      }
-        .combineLatestWith(emd.map(_.getEmdAudience).flatMap(getAudiences).toSeq)(_(_))
-        .combineLatestWith(getFilesInDataset(datasetID).toSeq)(_(_))
-        .combineLatestWith(countFiles(datasetID).map(parameters.fileLimit <))(_(_))
-        .single
-        .onErrorResumeNext {
-          case e: IllegalArgumentException => Observable.error(MultipleDatasetsFoundException(datasetID, e))
-          case e: NoSuchElementException => Observable.error(NoDatasetFoundException(datasetID, e))
-          case NonFatal(e) => Observable.error(e)
-        }
-    })
-  }
-
-  def getFilesInDataset(datasetID: DatasetID): Observable[FileItem] = {
-    Class.forName("org.postgresql.Driver")
-    val query = "SELECT pid, path, sha1checksum, accessible_to FROM easy_files WHERE dataset_sid = ? ORDER BY pid LIMIT ?;"
-    Observable.using(parameters.fsrdb.prepareStatement(query))(
-      prepStatement => {
-        prepStatement.setString(1, datasetID)
-        prepStatement.setInt(2, parameters.fileLimit)
-
-        Observable.using(prepStatement.executeQuery())(
-          resultSet => Observable.defer(Observable.just(resultSet.next()))
-            .repeat
-            .takeWhile(b => b)
-            .map(_ => {
-              val pid = resultSet.getString("pid")
-              val path = resultSet.getString("path")
-              val sha1checksum = resultSet.getString("sha1checksum")
-              val accessibleTo = FileAccessRight.valueOf(resultSet.getString("accessible_to"))
-                .getOrElse(throw new IllegalArgumentException(s"illegal value for accessibleTo in file: $pid"))
-
-              FileItem(path, accessibleTo, if (sha1checksum == "null") None else Some(sha1checksum))
-            }),
-          _.close(),
-          disposeEagerly = true
-        )
-      },
-      _.close(),
-      disposeEagerly = true
-    )
-  }
-
-  def countFiles(datasetID: DatasetID): Observable[Int] = {
-    Class.forName("org.postgresql.Driver")
-    val query = "SELECT COUNT(pid) FROM easy_files WHERE dataset_sid = ?;"
-    Observable.using(parameters.fsrdb.prepareStatement(query))(
-      prepStatement => {
-        prepStatement.setString(1, datasetID)
-
-        Observable.using(prepStatement.executeQuery())(
-          resultSet => {
-            if (resultSet.next())
-              Observable.just(resultSet.getInt("count"))
-            else
-              Observable.error(new SQLException(s"unable to count the number of files in dataset $datasetID"))
-          },
-          _.close(),
-          disposeEagerly = true
-        )
-      },
-      _.close(),
-      disposeEagerly = true
-    )
+    emdObs.combineLatestWith(depositorObs) {
+      (emdValue, depositorValue) =>
+        Dataset(datasetID, emdValue, depositorValue)
+    }
   }
 
   private def get(attrID: String)(implicit attrs: Attributes): Option[String] = {

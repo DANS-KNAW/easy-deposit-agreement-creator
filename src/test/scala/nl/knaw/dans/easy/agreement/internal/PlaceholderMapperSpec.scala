@@ -16,14 +16,12 @@
 package nl.knaw.dans.easy.agreement.internal
 
 import java.io.File
-import java.net.URI
 import java.{ util => ju }
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
-import nl.knaw.dans.easy.agreement.{ FileAccessRight, FileItem, UnitSpec }
+import nl.knaw.dans.easy.agreement.{ FileAccessRight, UnitSpec }
 import nl.knaw.dans.pf.language.emd.Term.{ Name, Namespace }
 import nl.knaw.dans.pf.language.emd._
-import nl.knaw.dans.pf.language.emd.types.Spatial.{ Box, Point }
 import nl.knaw.dans.pf.language.emd.types._
 import org.joda.time.DateTime
 import org.scalamock.scalatest.MockFactory
@@ -55,8 +53,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     isSample = false,
     fedora = null,
     ldap = null,
-    fsrdb = null,
-    fileLimit = 3)
+  )
 
   before {
     new File(getClass.getResource("/placeholdermapper/").toURI).copyDir(parameters.templateResourceDir)
@@ -129,8 +126,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       isSample = true,
       fedora = null,
       ldap = null,
-      fsrdb = null,
-      fileLimit = 3)
+    )
     val dates = ju.Arrays.asList(new IsoDate("1992-07-30"), new IsoDate("2016-07-30"))
 
     emd.getEmdIdentifier _ expects() never()
@@ -156,8 +152,7 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
       isSample = true,
       fedora = null,
       ldap = null,
-      fsrdb = null,
-      fileLimit = 3)
+    )
 
     emd.getEmdIdentifier _ expects() never()
     ident.getDansManagedDoi _ expects() never()
@@ -220,119 +215,47 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
   "accessRights" should "map an Open Access category to an OpenAccess keyword" in {
     expectEmdRights(AccessCategory.OPEN_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   it should "map an Anonymous Access category to an OpenAccess keyword" in {
     expectEmdRights(AccessCategory.ANONYMOUS_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   it should "map a Freely Available category to an OpenAccess keyword" in {
     expectEmdRights(AccessCategory.FREELY_AVAILABLE)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   it should "map an Open Access For Registered Users category to an OpenAccessForRegisteredUsers keyword" in {
     expectEmdRights(AccessCategory.OPEN_ACCESS_FOR_REGISTERED_USERS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, true),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a Group Access category to an RestrictGroup keyword" in {
     expectEmdRights(AccessCategory.GROUP_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, true),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a Request Permission category to an RestrictRequest keyword" in {
     expectEmdRights(AccessCategory.REQUEST_PERMISSION)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, true))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map an Access Elsewhere category to an OtherAccess keyword" in {
     expectEmdRights(AccessCategory.ACCESS_ELSEWHERE)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, true),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a No Access category to an OtherAccess keyword" in {
     expectEmdRights(AccessCategory.NO_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, false),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, true),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    testInstance.isOpenAccess(emd) shouldBe false
   }
 
   it should "map a null value to an OpenAccess keyword" in {
-    expectEmdRights(AccessCategory.OPEN_ACCESS)
-
-    inside(testInstance.datasetAccessCategory(emd)) {
-      case Success(map) => map should contain theSameElementsAs List(
-        (OpenAccess, true),
-        (OpenAccessForRegisteredUsers, false),
-        (OtherAccess, false),
-        (RestrictGroup, false),
-        (RestrictRequest, false))
-    }
+    expectEmdRights(accessCategory = null)
+    testInstance.isOpenAccess(emd) shouldBe true
   }
 
   "embargo" should "give the embargo keyword mappings with UnderEmbargo=true when there is an embargo" in {
@@ -369,171 +292,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
     )
   }
 
-  "metadataTable" should "give a mapping for the metadata elements in the dataset" in {
-    val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
-
-    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DCTERMS)
-    val mediumTerm = new Term(Name.MEDIUM, Namespace.DC)
-    val abstractTerm = new Term(Name.ABSTRACT, Namespace.EAS)
-    val terms = Set(audienceTerm, accessRightsTerm, licenseTerm, mediumTerm, abstractTerm).asJava
-
-    val anonymous = metadataItemMock("ANONYMOUS_ACCESS")
-    val open = metadataItemMock("OPEN_ACCESS")
-    val item1 = metadataItemMock("item1")
-    val item4 = metadataItemMock("item4")
-    val item5 = metadataItemMock("item5")
-    val item6 = metadataItemMock("item6")
-
-    val audienceItems = List(item1, anonymous).asJava
-    val accessRightItems = List(anonymous, open).asJava
-    val mediumItems = List(item4, item5, item6).asJava
-    val abstractItems = ju.Collections.emptyList[MetadataItem]()
-
-    emd.getTerms _ expects() returning terms
-    emd.getTerm _ expects audienceTerm returning audienceItems
-    emd.getTerm _ expects accessRightsTerm returning accessRightItems
-    emd.getTerm _ expects mediumTerm returning mediumItems
-    emd.getTerm _ expects abstractTerm returning abstractItems
-
-    expectLicenses(Seq("accept", ccBy))
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toList shouldBe List(
-      Map(MetadataKey.keyword -> "ghi", MetadataValue.keyword -> "item4<br/>item5<br/>item6").asJava,
-      Map(MetadataKey.keyword -> "Access rights", MetadataValue.keyword -> "Anonymous").asJava,
-      Map(MetadataKey.keyword -> "License", MetadataValue.keyword -> ccBy).asJava,
-      Map(MetadataKey.keyword -> "Audience", MetadataValue.keyword -> "abc; def").asJava,
-    )
-  }
-
-  it should "use the qualified names on invalid input" in {
-    // valid input would have DCTERMS for both
-    val audienceTerm = new Term(Name.AUDIENCE, Namespace.DC)
-    val accessRightsTerm = new Term(Name.ACCESSRIGHTS, Namespace.DC)
-    val items = List(metadataItemMock("ANONYMOUS_ACCESS")).asJava
-    emd.getTerms _ expects() returning Set(audienceTerm, accessRightsTerm).asJava
-    emd.getTerm _ expects audienceTerm returning items
-    emd.getTerm _ expects accessRightsTerm returning items
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toList shouldBe List(
-      Map(MetadataKey.keyword -> "DC.ACCESSRIGHTS", MetadataValue.keyword -> "Anonymous").asJava,
-      Map(MetadataKey.keyword -> "DC.AUDIENCE", MetadataValue.keyword -> "abc; def").asJava,
-    )
-  }
-
-  it should "give a mapping with a cc0 license" in {
-    emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
-    expectLicenses(Seq("accept"))
-    expectEmdRights(AccessCategory.OPEN_ACCESS)
-    expectRightsTerms(AccessCategory.OPEN_ACCESS)
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
-    Map(
-      MetadataKey.keyword -> "license",
-      MetadataValue.keyword -> "http://creativecommons.org/publicdomain/zero/1.0/legalcode",
-    ).asJava
-  }
-
-  it should "give a mapping with a DANS license" in {
-    emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
-    expectLicenses(Seq("accept"))
-    expectEmdRights(AccessCategory.GROUP_ACCESS)
-    expectRightsTerms(AccessCategory.GROUP_ACCESS)
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
-    Map(
-      MetadataKey.keyword -> "license",
-      MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
-    ).asJava
-  }
-
-  it should "map an empty license list to a default license" in {
-    emd.getTerms _ expects() returning Set(licenseTerm, accessRightsTerm).asJava
-    val items: Seq[MetadataItem] = Seq[MetadataItem]()
-    emd.getTerm _ expects licenseTerm returning items.asJava
-
-    expectRightsTerms(AccessCategory.REQUEST_PERMISSION)
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
-    Map(
-      MetadataKey.keyword -> "license",
-      MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
-    ).asJava
-  }
-
-  it should "map just access rights to a default license" in {
-    emd.getTerms _ expects() returning Set(accessRightsTerm).asJava
-    expectRightsTerms(AccessCategory.OPEN_ACCESS)
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala should contain
-    Map(
-      MetadataKey.keyword -> "License",
-      MetadataValue.keyword -> "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf",
-    ).asJava
-  }
-
-  it should "map the specified license" in {
-    val ccBy = "https://creativecommons.org/licenses/by/4.0/legalcode"
-    emd.getTerms _ expects() returning Set(licenseTerm).asJava
-    expectLicenses(Seq(ccBy))
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
-      Map(
-        MetadataKey.keyword -> "License",
-        MetadataValue.keyword -> ccBy,
-      ).asJava,
-    )
-  }
-
-  it should "map relations" in {
-    val term = new Term(Name.RELATION, Namespace.DC)
-    emd.getTerms _ expects() returning Set(term).asJava
-    emd.getTerm _ expects term returning Seq(
-      new BasicString("foo"),
-      new Relation("bar"),
-      new Relation("rabarbera", new URI("http://xx.dans.knaw.nl/yy")),
-    ).asJava
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
-      Map(
-        MetadataKey.keyword -> "Relation",
-        MetadataValue.keyword -> Seq(
-          "foo",
-          "title = bar",
-          "title = rabarbera, url = http://xx.dans.knaw.nl/yy"
-        ).mkString("<br/>"),
-      ).asJava,
-    )
-  }
-
-  it should "map spatials" in {
-    val exterior = new PolygonPart("main triangle", ju.Arrays.asList(
-      new PolygonPoint("52.08110", "4.34521"),
-      new PolygonPoint("52.08071", "4.34422"),
-      new PolygonPoint("52.07913", "4.34332"),
-      new PolygonPoint("52.08110", "4.34521")
-    ))
-    val term = new Term(Name.SPATIAL, Namespace.DCTERMS)
-    emd.getTerms _ expects() returning Set(term).asJava
-    emd.getTerm _ expects term returning Seq(
-      new BasicString("foo"),
-      new Spatial("Amsterdam", new Point("RD", "1", "2")),
-      new Spatial("Amsterdam", new Box("RD", "463001", "155001", "462999", "154999")),
-      new Spatial("foo", new Polygon("bar", exterior, List().asJava)),
-    ).asJava
-
-    testInstance.metadataTable(emd, Seq("abc", "def"), "datasetID:1234").asScala.toSeq shouldBe Seq(
-      Map(
-        MetadataKey.keyword -> "Spatial",
-        MetadataValue.keyword -> Seq(
-          "foo",
-          "Amsterdam<br/><b>Point</b>: scheme = RD, x = 1, y = 2",
-          "Amsterdam<br/><b>Box:</b> scheme = RD, north = 463001, east = 155001, south = 462999, west = 154999",
-          """foo<br/><b>Polygon:</b><br/><i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>""",
-        ).mkString("<br/><br/>"),
-      ).asJava,
-    )
-  }
-
   private val licenseTerm = new Term(Name.LICENSE, Namespace.DCTERMS)
 
   private def expectLicenses(values: Seq[String]) = {
@@ -551,18 +309,6 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
   private def expectRightsTerms(accessCategory: AccessCategory) = {
     val items: Seq[MetadataItem] = Seq(new BasicString(accessCategory.toString))
     emd.getTerm _ expects accessRightsTerm returning items.asJava
-  }
-
-  "formatAudience" should "combine the audiences separated by <semicolon>" in {
-    testInstance.formatAudience(Seq("abc", "def"), "datasetID:1234") shouldBe "abc; def"
-  }
-
-  it should "do the same with one element in the audience" in {
-    testInstance.formatAudience(Seq("abc"), "datasetID:1234") shouldBe "abc"
-  }
-
-  it should "yield an Observable with one empty String when there is no audience" in {
-    testInstance.formatAudience(Seq.empty, "datasetID:1234") shouldBe ""
   }
 
   "formatAccessRights" should "return a String representation of the access category ANONYMOUS_ACCESS" in {
@@ -619,19 +365,5 @@ class PlaceholderMapperSpec extends UnitSpec with MockFactory with BeforeAndAfte
 
   it should "return a String representation of the file access category NONE" in {
     testInstance.formatFileAccessRights(FileAccessRight.NONE) shouldBe "None"
-  }
-
-  "filesTable" should "give a mapping of files and checksums in the dataset" in {
-    val input = Seq(
-      FileItem("ABC", FileAccessRight.ANONYMOUS, Some("123")),
-      FileItem("DEF", FileAccessRight.KNOWN, Some("none")),
-      FileItem("GHI", FileAccessRight.RESTRICTED_GROUP, Some(""))
-    )
-
-    testInstance.filesTable(input).asScala should contain theSameElementsAs List(
-      Map(FilePath.keyword -> "ABC", FileChecksum.keyword -> "123", FileAccessibleTo.keyword -> "Anonymous").asJava,
-      Map(FilePath.keyword -> "DEF", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Known").asJava,
-      Map(FilePath.keyword -> "GHI", FileChecksum.keyword -> checkSumNotCalculated, FileAccessibleTo.keyword -> "Restricted group").asJava
-    )
   }
 }

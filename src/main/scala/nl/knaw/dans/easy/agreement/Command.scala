@@ -55,7 +55,7 @@ object Command extends App with DebugEnhancedLogging {
           _ = logger.debug(s"Output will be written to ${ outputFile.getAbsolutePath }")
           _ <- validateDatasetIdExists(params)
           _ = createAgreement(outputFile, params)
-          _ = params.close()
+          _ = params.close() // TODO not reached when validation fails
         } yield ()
       }
       .recoverWith { case t: Throwable => Failure(new Exception(s"Could not create agreement for ${ commandLine.datasetID() }: ${ t.getMessage }")) }
@@ -72,14 +72,16 @@ object Command extends App with DebugEnhancedLogging {
   private def createAgreement(outputFile: File, params: internal.Parameters): Unit = {
     new FileOutputStream(outputFile)
       .usedIn(AgreementCreator(params).createAgreement)
-      .doOnCompleted {
-        logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }")
-      }
+      .doOnCompleted(logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }"))
       .toBlocking
       .subscribe(
         _ => {},
-        e => logger.error("An error was caught in main:", e),
-        () => logger.debug("completed"))
+        e => {
+          logger.error("An error was caught in main:", e)
+          throw e
+        },
+        () => logger.debug("completed")
+      )
   }
 
   private def createParameters(app: AgreementCreatorApp): Try[internal.Parameters] = Try {
@@ -89,8 +91,7 @@ object Command extends App with DebugEnhancedLogging {
       isSample = commandLine.isSample(),
       fedoraClient = app.fedoraClient,
       ldapEnv = app.ldapEnv,
-      fsrdb = app.fsrdb,
-      fileLimit = app.fileLimit)
+    )
   }
 
   private def runAsService(app: AgreementCreatorApp): Try[FeedBackMessage] = Try {

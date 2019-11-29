@@ -21,30 +21,24 @@ import java.{ util => ju }
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory._
+import nl.knaw.dans.easy.agreement.FileAccessRight
 import nl.knaw.dans.easy.agreement.FileAccessRight._
-import nl.knaw.dans.easy.agreement.{ DatasetID, FileAccessRight, FileItem }
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import nl.knaw.dans.lib.string.StringExtensions
-import nl.knaw.dans.pf.language.emd.types.Spatial.{ Box, Point }
 import nl.knaw.dans.pf.language.emd.types._
-import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EmdDate, Term }
+import nl.knaw.dans.pf.language.emd.{ EasyMetadata, EmdDate }
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 
 import scala.collection.JavaConverters._
-import scala.collection.{ SortedMap, mutable }
+import scala.collection.SortedMap
 import scala.language.{ implicitConversions, postfixOps }
 import scala.util.Try
 
 class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParameters) extends DebugEnhancedLogging {
 
   type Table = ju.Collection[ju.Map[String, String]]
-
-  val metadataNames: ju.Properties = loadProperties(metadataTermsFile)
-    .doIfFailure { case e => logger.error(s"could not read the metadata terms in $metadataTermsFile", e) }
-    .getOrElse(new ju.Properties())
 
   def datasetToPlaceholderMap(dataset: Dataset): Try[PlaceholderMap] = {
     logger.debug("create placeholder map")
@@ -55,17 +49,12 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       headerMap <- if (parameters.isSample) sampleHeader(emd)
                    else header(emd)
       dansLogo = DansLogo -> encodeImage(dansLogoFile)
-      footer = FooterText -> footerText(footerTextFile)
+      drivenByData = DrivenByData -> encodeImage(drivenByDataFile)
       depositorMap = depositor(dataset.easyUser)
-      accessRightMap <- datasetAccessCategory(emd)
+      openAccess = OpenAccess -> boolean2Boolean(isOpenAccess(emd))
+      termsLicenseMap <- termsLicenseMap(emd)
       embargoMap = embargo(emd)
-      dateTime = CurrentDateAndTime -> currentDateAndTime
-      metadata = MetadataTable -> metadataTable(emd, dataset.audiences, dataset.datasetID)
-      files @ (_, table) = FileTable -> filesTable(dataset.fileItems)
-      hasFiles = HasFiles -> boolean2Boolean(!table.isEmpty)
-      limitFiles = LimitFiles -> parameters.fileLimit.toString
-      shouldLimitFiles = ShouldLimitFiles -> boolean2Boolean(dataset.filesLimited)
-    } yield headerMap + dansLogo + footer ++ depositorMap ++ accessRightMap ++ embargoMap + dateTime + metadata + files + hasFiles + limitFiles + shouldLimitFiles
+    } yield headerMap + dansLogo + drivenByData ++ depositorMap + openAccess ++ termsLicenseMap ++ embargoMap
   }
 
   def header(emd: EasyMetadata): Try[PlaceholderMap] = Try {
@@ -112,23 +101,11 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     )
   }
 
-  def datasetAccessCategory(emd: EasyMetadata): Try[PlaceholderMap] = Try {
+  def isOpenAccess(emd: EasyMetadata): Boolean = {
     // access category in EMD may be null, in which case OPEN_ACCESS is the default value
-    val ac = Option(emd.getEmdRights.getAccessCategory).getOrElse(OPEN_ACCESS)
-
-    val result = Map[KeywordMapping, List[AccessCategory]](
-      OpenAccess -> List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE),
-      OpenAccessForRegisteredUsers -> List(OPEN_ACCESS_FOR_REGISTERED_USERS),
-      OtherAccess -> List(ACCESS_ELSEWHERE, NO_ACCESS),
-      RestrictGroup -> List(GROUP_ACCESS),
-      RestrictRequest -> List(REQUEST_PERMISSION)
-      // because Velocity requires Java objects, we transform Scala's Boolean into a Java Boolean
-    ).mapValues(lst => boolean2Boolean(lst.contains(ac)))
-
-    if (result.exists { case (_, bool) => bool == true })
-      result
-    else
-      throw new IllegalArgumentException(s"The specified access category ($ac) does not map to any of these keywords.")
+    val accessCategory = Option(emd.getEmdRights.getAccessCategory).getOrElse(OPEN_ACCESS)
+    List(OPEN_ACCESS, ANONYMOUS_ACCESS, FREELY_AVAILABLE)
+      .contains(accessCategory)
   }
 
   def embargo(emd: EasyMetadata): PlaceholderMap = {
@@ -140,82 +117,23 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     )
   }
 
+  def termsLicenseMap(emd: EasyMetadata): Try[PlaceholderMap] = Try {
+    val url = emd.getEmdRights.getTermsLicense.asScala
+      .map(_.getValue)
+      .find(_.startsWith("http"))
+      .getOrElse(throw new IllegalArgumentException("Did not find a <emd:rights><dct:license>http..."))
+    val file = parameters.licenseLegalResource(url)
+    val extensionRegExp = ".[^.]+$"
+    val txtFile = file.toString.replaceAll(extensionRegExp, ".txt")
+    val baseFileName = new File(file).getName.replaceAll(extensionRegExp, "")
+    Map(
+      TermsLicenseUrl -> url,
+      TermsLicense -> baseFileName,
+      Appendix3 -> txtFile
+    )
+  }
+
   def currentDateAndTime: String = new DateTime().toString("YYYY-MM-dd HH:mm:ss")
-
-  private val newLine = "<br/>"
-
-  def metadataTable(emd: EasyMetadata, audiences: Seq[AudienceTitle], datasetID: => DatasetID): Table = {
-    def format(term: Term, items: mutable.Buffer[MetadataItem]): String = {
-      term.getName match {
-        case Term.Name.AUDIENCE => formatAudience(audiences, datasetID)
-        case Term.Name.ACCESSRIGHTS => formatDatasetAccessRights(items.head)
-        case Term.Name.SPATIAL => formatSpatials(items)
-        case Term.Name.LICENSE => getSpecifiedLicense(items)
-          .getOrElse(toLicense(emd.getEmdRights.getAccessCategory))
-        case Term.Name.RELATION => formatRelations(items)
-        case _ => items.mkString(newLine)
-      }
-    }
-
-    def getDisplayName(term: Term): String = {
-      val qualifiedName = term.getQualifiedName
-      Option(metadataNames.getProperty(qualifiedName))
-        .getOrElse {
-          logger.warn(s"Could not find display name for a term with qualified name '$qualifiedName'")
-          qualifiedName
-        }
-    }
-
-    emd.getTerms
-      .asScala
-      .map(term => (term, emd.getTerm(term).asScala))
-      .filter { case (_, items) => items.nonEmpty }
-      .groupBy { case (term, _) => getDisplayName(term) }
-      .map { case (displayName, termsAndItems) =>
-        // by definition of `groupBy`, `termsAndItems` cannot be empty
-        val termName = termsAndItems.head._1.getName
-        val value = termsAndItems
-          .map((format _).tupled)
-          .reduce(_ + newLine * 2 + _)
-
-        // keep the Term.Name around for sorting according to the Enum order
-        termName -> Map(
-          MetadataKey -> displayName,
-          MetadataValue -> value
-        ).keywordMapAsJava
-      }
-      .sortedJavaCollection
-  }
-
-  private def getSpecifiedLicense(licenseItems: mutable.Buffer[MetadataItem]): Option[String] = {
-    licenseItems.filterNot {
-      case s: BasicString if s.getValue == "accept" => true
-      case _ => false
-    }.map(_.toString).headOption
-  }
-
-  private def toLicense(category: AccessCategory): String = {
-    category match {
-      case AccessCategory.OPEN_ACCESS => "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
-      case _ => "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf"
-    }
-  }
-
-  private def formatRelations(items: mutable.Buffer[MetadataItem]): String = {
-    items.map {
-      case r: Relation => formatRelation(r)
-      case s => s.toString
-    }.mkString(newLine)
-  }
-
-  def formatAudience(audiences: Seq[AudienceTitle], datasetID: => DatasetID): String = {
-    // may throw an UnsupportedOperationException
-    Try(audiences.reduce(_ + "; " + _))
-      .doIfFailure {
-        case _: UnsupportedOperationException => logger.warn(s"Found a dataset with no audience: $datasetID. Returning an empty String instead.")
-      }
-      .getOrElse("")
-  }
 
   def formatDatasetAccessRights(item: MetadataItem): String = {
     Try(AccessCategory.valueOf(item.toString)) // may throw an IllegalArgumentException
@@ -235,60 +153,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       .getOrElse(item.toString)
   }
 
-  private def formatSpatials(items: mutable.Buffer[MetadataItem]): String = {
-    val basic = items.collect {
-      case s: BasicString => s.getValue
-    }
-    val spatial = items.collect {
-      case s: Spatial => formatEasSpatial(s).replace("\n", newLine)
-    }
-    (basic ++ spatial).mkString(newLine * 2)
-  }
-
-  def formatEasSpatial(spatial: Spatial): String = {
-    val place = Option(spatial.getPlace).flatMap(_.getValue.toOption)
-    val point = Option(spatial.getPoint).map(formatPoint)
-    val box = Option(spatial.getBox).map(formatBox)
-    val polygonText = Option(spatial.getPolygons).flatMap(_.asScala.headOption).map(formatPolygon)
-
-    (place.toList ::: point.toList ::: box.toList ::: polygonText.toList).mkString("\n")
-  }
-
-  private def formatPoint(point: Point): String = {
-    val scheme = Option(point.getScheme).map("scheme = " + _ + ", ").getOrElse("")
-    val x = s"x = ${ point.getX }"
-    val y = s"y = ${ point.getY }"
-
-    // note: no space between $scheme and $x:
-    // if $scheme is defined, it will do the space after it by itself;
-    // if $scheme is not defined, it doesn't require the extra space.
-    s"<b>Point</b>: $scheme$x, $y"
-  }
-
-  private def formatBox(box: Box): String = {
-    val scheme = Option(box.getScheme).map("scheme = " + _ + ", ").getOrElse("")
-    val north = s"north = ${ box.getNorth }"
-    val east = s"east = ${ box.getEast }"
-    val south = s"south = ${ box.getSouth }"
-    val west = s"west = ${ box.getWest }"
-
-    s"<b>Box:</b> $scheme$north, $east, $south, $west"
-  }
-
-  private def formatPolygon(polygon: Polygon): String = {
-    s"""<b>Polygon:</b>
-       |<i>To keep this agreement at a reasonable size the polygon coordinates are omitted. For a full listing of the polygons please contact DANS at <a href="mailto:info@dans.knaw.nl">info@dans.knaw.nl</a>.</i>""".stripMargin
-  }
-
-  private def formatRelation(relation: Relation): String = {
-    val title = Option(relation.getSubjectTitle).flatMap(_.getValue.toOption.map("title = " +))
-    val url = Option(relation.getSubjectLink).map("url = " +)
-
-    title.map(t => url.fold(t)(u => s"$t, $u"))
-      .orElse(url)
-      .getOrElse("")
-  }
-
   def formatFileAccessRights(accessRight: FileAccessRight.Value): String = {
     accessRight match {
       // @formatter:off
@@ -299,20 +163,6 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       case NONE               => "None"
       // @formatter:on
     }
-  }
-
-  def filesTable(fileItems: Seq[FileItem]): Table = {
-    fileItems
-      .map { case FileItem(path, accessibleTo, checkSum) =>
-        val map = Map(
-          FilePath -> path,
-          FileChecksum -> checkSum.filterNot(_.isBlank).filterNot("none" ==).getOrElse(checkSumNotCalculated),
-          FileAccessibleTo -> formatFileAccessRights(accessibleTo)
-        )
-
-        (path, map.keywordMapAsJava)
-      }
-      .sortedJavaCollection
   }
 
   implicit class KeywordMapToJavaMap[Keyword <: KeywordMapping](map: Map[Keyword, String]) {

@@ -2,8 +2,4 @@
     <emd:description>
         <dc:description>descr foo bar</dc:description>
     </emd:description>
-    <emd:audience>
-        <dct:audience eas:schemeId="custom.disciplines">aud1</dct:audience>
-        <dct:audience eas:schemeId="custom.disciplines">aud2</dct:audience>
-    </emd:audience>
 </emd:easymetadata>

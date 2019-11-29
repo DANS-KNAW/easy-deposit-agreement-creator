@@ -1,0 +1,158 @@
+
+@page {
+    /* the bottom gets 2.5cm extra for the footer */
+    margin: 2.5cm 1.5cm 4cm 1.5cm;
+
+    size: A4;
+    @top-left {
+        content: "";
+        width: 100%;
+        height: 100%;
+        background: url(data:image/jpg;base64,$DansLogo) no-repeat 0 0;
+        background-position: left bottom;
+        background-size: 235px 90px;
+    }
+    @bottom-right {
+        vertical-align: top;
+        margin-right: 8px;
+        font: 11px "DejaVu Serif";
+        content: counter(page) "/" counter(pages);
+    }
+}
+body {
+    font: 12px "DejaVu Serif";
+    text-align: justify;
+}
+pre {
+    font: 10px "DejaVu Sans Mono";
+}
+footer {
+    position: fixed;
+    width: 100%;
+    bottom: -9em;
+    font: 10px "DejaVu Serif";
+    background: #FFF url(data:image/jpg;base64,$DrivenByData) no-repeat 0 0;
+    background-size: 212px 33px;
+
+    /* 4% in a PDF matches the 16px in "footer p:first-child { margin-right" */
+    background-position: 96% 100%;
+}
+@media screen {
+    body {
+        margin-bottom: 9em;
+    }
+    footer {
+        bottom: 0;
+    }
+}
+footer p:first-child {
+    float: right;
+
+    /* box model of appears to have a margin of 8px,
+     * the footer is 8px larger than the body with its margin
+     * which matches 4% for "footer { background-position"
+     */
+    margin-right: 16px;
+
+    margin-top: 2.5em;
+    text-align: right;
+    background-color: #FFF;
+}
+.choice, .choice-header {
+    padding-left: 5em;
+}
+.error {
+    color: red;
+    font-size: 150%;
+    font-weight: bold;
+}
+.choice-header {
+    /* NB: underline dances with <sup> by WeasyPrintPdfGenerator */
+    text-decoration: underline;
+}
+
+/* dataset, parties on front page. */
+
+dt, dd {
+    min-height: 1em; /* avoid the need for &nbsp; in an empty <dd> (part 1) */
+}
+dt {
+    clear: left; /* avoid the need for &nbsp; in an empty <dd> (part 2) */
+    float: left; /* put it in the margin of <dd> */
+    width: 10.5em; /* same as margin for <dd> */
+}
+dd {
+    margin-left: 10.5em; /* place holder for the dt */
+}
+li dt {
+    width: 9em; /* subtract padding-left of "body>ol" */
+}
+li dd {
+    margin-left: 9em;
+}
+
+/* first level numbered list, needs explicit counter for second level */
+
+body>ol {
+  list-style-type: none;
+  counter-reset: level1;
+  padding-left: 1.5em;
+}
+body>ol>li {
+    counter-increment: level1;
+}
+body>ol>li>p:first-child {
+    font-weight: bold;
+    display: inline-block;
+}
+body>ol>li>p:first-child:before {
+    content: counters(level1, ".") ". ";
+    margin-left: -1.5em;
+    width: 1.5em;
+}
+
+/* second level prefixed with first level */
+
+.body>li>ol {
+    list-style-type: none;
+    counter-reset: level2;
+    padding-left: 3.5em;
+}
+
+.body>li>ol>li {
+    counter-increment: level2;
+}
+
+.body>li>ol>li:before {
+    content: counters(level1, ".") "." counters(level2, ".") ".";
+    display: inline-block;
+    margin-left: -3.5em;
+    width: 3.5em;
+}
+
+/* lower-alpha numbering for different levels in different sections */
+
+.body>li>ol>li>ol,
+.appendix2>li>ol {
+    list-style-type: lower-alpha;
+    padding-left: 1.5em;
+}
+
+/* unordered at any level */
+
+ul {
+    list-style-type: disc;
+    padding-left: 1.8em;
+}
+
+/* footnote */
+
+.footnote {
+  padding-top: 2em;
+}
+hr {
+    color: #000;
+    height: 0;
+    width: 50%;
+    margin-left: 0;
+}

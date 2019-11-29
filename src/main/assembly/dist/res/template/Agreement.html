@@ -2,57 +2,7 @@
 <html lang="en">
 <head>
     <style>
-        @page {
-            margin: 2.5cm 1.5cm 2cm 1.5cm;
-            size: A4;
-            @top-left {
-                content: "";
-                width: 100%;
-                height: 100%;
-                background: url(data:image/jpg;base64,$DansLogo) no-repeat 0 0;
-                background-position: left center;
-                background-size: 100px 30px;
-            }
-            @bottom-center {
-                content: "$FooterText - page " counter(page) "/" counter(pages);
-                font: 14px "Bitstream Charter";
-            }
-        }
-        body {
-            font: 14px "Bitstream Charter";
-            text-align: justify;
-        }
-        ol li ul {
-            list-style-type: disc;
-        }
-        ol {
-            list-style-type: lower-alpha;
-        }
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-            display: table;
-            border: 1px solid black;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        tr {
-            border-bottom: 1px solid black;
-        }
-        table td, table th {
-            padding: 6px 8px;
-            display: table-cell;
-            vertical-align: middle;
-            border-right: 1px solid black;
-        }
-        .error {
-            color: red;
-            font-size: 150%;
-            font-weight: bold;
-        }
-        .inline-header {
-            font-weight: bold;
-        }
+        #parse("style.css")
     </style>
 </head>
 <body>
@@ -64,48 +14,39 @@
 #end
 
 #parse("Body.html")
+#if (! $IsSample)
+    <p>This agreement has been accepted by both parties on $DateSubmitted upon completion of the deposit process via easy.dans.knaw.nl.</p>
+#end
 
+#parse("Appendix1.html")
+#parse("Appendix2.html")
 #if ($OpenAccess)
-    <p class="inline-header">[Open Access: unlimited access without registration of user registration]</p>
-    <p>The Depositor agrees to the dataset being made available in accordance with the conditions of the Creative Commons Zero Waiver, the CC0 1.0 Universal Public Domain Dedication (Appendix 1). In doing so, the Depositor renounces all possible rights relating to the dataset.</p>
-#elseif ($OpenAccessForRegisteredUsers)
-    <p class="inline-header">[Open Access for Registered Users: unlimited access for registered users]</p>
-    <p>The Repository is permitted to make the dataset available to all persons, legal entities and organisations registered with the Repository.</p>
-#elseif ($OtherAccess)
-    <p class="inline-header">[Other Access: the data are not available via EASY]</p>
-    <p>The dataset will be made available by means of another method to be agreed with the Repository.</p>
-#elseif ($RestrictGroup)
-    <p class="inline-header">[Restricted Access: access restricted to registered persons or group members, N.B. only for archeology]</p>
-    <p>The Depositor may grant access permission in advance for persons, legal entities and organisations that belong to one of the user groups specified by DANS and/or the Depositor.</p>
-#elseif ($RestrictRequest)
-    <p class="inline-header">[Restricted Access: access with the permission of the Repository]</p>
-    <p>The Repository is permitted to make the dataset available to persons, legal entities and organisations registered with the Depositor only after receiving express permission from the Depositor.<p>
-#else
-    <!-- default access right
-         never expect to be in this case, but I can't find an error function in Velocity
-         so I use a error message in the pdf itself -->
-    <p class="error">NO VALID VALUE FOR THE ACCESS CATEGORY FOUND!!!</p>
+    <h1 style="page-break-before: always">Appendix 3 Legal text of chosen public-domain statement or Open Access Licence</h1>
+    <pre>
+        #parse($Appendix3)
+    </pre>
 #end
 
-#if ($UnderEmbargo)
-    <p class="inline-header">You have additionally chosen:</p>
-    <p class="inline-header">[Temporary restriction: Embargo]; only possible if Open Access, Open Access for Registered Users or Restricted Access has been chosen</p>
-    <p>The dataset will be temporarily unavailable until $DateAvailable, commencing on the date of publication. The embargo period cannot be longer than two years and cannot be extended. When this period elapses, one of the special provisions set out above shall automatically apply. An extension of this period is only possible in consultation with the Depositor.</p>
-#end
-
-<p class="inline-header">The Depositor hereby agrees to the above provisions and the general code(s) of conduct referred to in this document.</p>
-
-#parse("Table.html")
-
-#if ($HasFiles)
-    <br/>
-    #parse("FileTable.html")
-#else
-    <p>No uploaded files.</p>
-#end
-
-<br/>
-#parse("Appendix.html")
+<footer>
+    <p>
+        Deposit agreement
+        <br>
+        Version 26-09-2019
+    </p>
+    <p>
+        DANS promotes sustainable access to digital research data.
+        See <a href="www.dans.knaw.nl">www.dans.knaw.nl</a> for more information.
+    </p>
+    <p>
+        <strong>Data Archiving and Networked Services (DANS)</strong>
+        <br>
+        Anna van Saksenlaan 51 | 2593 HW Den Haag
+        <br>
+        070 349 44 50 | info@dans.knaw.nl | www.dans.knaw.nl
+        <br>
+        CoC 54667089 | DANS is an institute of KNAW and NWO
+    </p>
+</footer>
 
 </body>
 </html>

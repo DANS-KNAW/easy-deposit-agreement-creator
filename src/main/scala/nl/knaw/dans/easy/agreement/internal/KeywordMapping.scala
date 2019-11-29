@@ -18,8 +18,9 @@ package nl.knaw.dans.easy.agreement.internal
 // @formatter:off
 trait KeywordMapping { val keyword: String }
 
-// logo in header (for 64bit encoding)
+// logos in header and footer (for 64bit encoding)
 case object DansLogo                     extends KeywordMapping { val keyword = "DansLogo" }
+case object DrivenByData                 extends KeywordMapping { val keyword = "DrivenByData" }
 
 // footer text
 case object FooterText                   extends KeywordMapping { val keyword = "FooterText" }
@@ -43,30 +44,10 @@ case object DepositorEmail               extends KeywordMapping { val keyword = 
 
 // access rights
 case object OpenAccess                   extends KeywordMapping { val keyword = "OpenAccess" }
-case object OpenAccessForRegisteredUsers extends KeywordMapping { val keyword = "OpenAccessForRegisteredUsers" }
-case object OtherAccess                  extends KeywordMapping { val keyword = "OtherAccess" }
-case object RestrictGroup                extends KeywordMapping { val keyword = "RestrictGroup" }
-case object RestrictRequest              extends KeywordMapping { val keyword = "RestrictRequest" }
-
-// embargo
 case object UnderEmbargo                 extends KeywordMapping { val keyword = "UnderEmbargo" }
 case object DateAvailable                extends KeywordMapping { val keyword = "DateAvailable" }
 
 case object CurrentDateAndTime           extends KeywordMapping { val keyword = "CurrentDateAndTime" }
-
-// metadata table
-case object MetadataTable                extends KeywordMapping { val keyword = "MetadataTable" }
-case object MetadataKey                  extends KeywordMapping { val keyword = "MetadataKey" }
-case object MetadataValue                extends KeywordMapping { val keyword = "MetadataValue" }
-
-// file table
-case object HasFiles                     extends KeywordMapping { val keyword = "HasFiles" }
-case object FileTable                    extends KeywordMapping { val keyword = "FileTable" }
-case object FilePath                     extends KeywordMapping { val keyword = "FilePath" }
-case object FileChecksum                 extends KeywordMapping { val keyword = "FileChecksum" }
-case object FileAccessibleTo             extends KeywordMapping { val keyword = "FileAccessibleTo" }
-
-// file limit
-case object LimitFiles                   extends KeywordMapping { val keyword = "limitFiles" }
-case object ShouldLimitFiles             extends KeywordMapping { val keyword = "shouldLimitFiles" }
-// @formatter:on
+case object TermsLicense                 extends KeywordMapping { val keyword = "TermsLicense" }
+case object TermsLicenseUrl              extends KeywordMapping { val keyword = "TermsLicenseUrl" }
+case object Appendix3                    extends KeywordMapping { val keyword = "Appendix3" }// @formatter:on
