@@ -65,17 +65,25 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
       DansManagedDoi -> doi.getOrElse(""),
       // the following can throw an UnsupportedEncodingException, although this is not expected to ever happen!
       DansManagedEncodedDoi -> doi.map(URLEncoder.encode(_, encoding.displayName())).getOrElse(""),
-      DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
-      Title -> emd.getPreferredTitle
+      DateSubmitted -> dateSubmittedFrom(emd),
+      Title -> escapedTitleFrom(emd)
     )
   }
 
   def sampleHeader(emd: EasyMetadata): Try[PlaceholderMap] = Try {
     Map(
       IsSample -> boolean2Boolean(true),
-      DateSubmitted -> getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString,
-      Title -> emd.getPreferredTitle
+      DateSubmitted -> dateSubmittedFrom(emd),
+      Title -> escapedTitleFrom(emd)
     )
+  }
+
+  private def dateSubmittedFrom(emd: EasyMetadata) = {
+    getDate(emd)(_.getEasDateSubmitted).getOrElse(new IsoDate()).toString
+  }
+
+  private def escapedTitleFrom(emd: EasyMetadata) = {
+    emd.getPreferredTitle.replace("<", "&lt;").replace(">", "&gt;")
   }
 
   def encodeImage(file: File): String = {
