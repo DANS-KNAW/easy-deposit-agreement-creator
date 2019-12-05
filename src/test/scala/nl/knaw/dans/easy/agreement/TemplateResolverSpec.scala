@@ -97,7 +97,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     }
   }
 
-  it should "properly format all types of licenses" in {
+  it should "not care about http/https and www" in {
     forEvery(Seq(
       new BasicString("http://creativecommons.org/licenses/by-nc-sa/3.0")
         -> """BY-NC-SA-3.0 : <a href="http://creativecommons.org/licenses/by-nc-sa/3.0">http://creativecommons.org/licenses/by-nc-sa/3.0</a>""",
