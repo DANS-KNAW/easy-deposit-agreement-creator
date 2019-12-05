@@ -74,7 +74,7 @@ class PlaceholderMapper(metadataTermsFile: File)(implicit parameters: BaseParame
     Map(
       IsSample -> boolean2Boolean(true),
       DateSubmitted -> dateSubmittedFrom(emd),
-      Title -> escapedTitleFrom(emd)//.replace("&","&amp;")
+      Title -> escapedTitleFrom(emd)
     )
   }
 
