@@ -84,7 +84,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     val outputStream = new ByteArrayOutputStream()
 
     create(isSample = false, dataset, outputStream) should matchPattern {
-      case Failure(e: IllegalArgumentException) if (e.getMessage == "Did not find a <emd:rights><dct:license>http...") =>
+      case Failure(e: IllegalArgumentException) if e.getMessage == "Did not find a <emd:rights><dct:license>http..." =>
     }
   }
 
@@ -93,7 +93,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     val outputStream = new ByteArrayOutputStream()
 
     create(isSample = false, dataset, outputStream) should matchPattern {
-      case Failure(e: java.lang.IllegalArgumentException) if (e.getMessage == "No legal text found for http://dans.knaw.nl") =>
+      case Failure(e: java.lang.IllegalArgumentException) if e.getMessage == "No legal text found for http://dans.knaw.nl" =>
     }
   }
 
@@ -106,7 +106,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
       new BasicString("https://www.creativecommons.org/licenses/by-nc-sa/3.0")
         -> """BY-NC-SA-3.0 : <a href="https://www.creativecommons.org/licenses/by-nc-sa/3.0">https://www.creativecommons.org/licenses/by-nc-sa/3.0</a>""",
       new BasicString("http://www.creativecommons.org/licenses/by-nc-sa/3.0")
-        -> """BY-NC-SA-3.0 : <a href="http://www.creativecommons.org/licenses/by-nc-sa/3.0">http://www.creativecommons.org/licenses/by-nc-sa/3.0</a>""",
+        -> """BY-NC-SA-3.0 : <a href="http://www.creativecommons.org/licenses/by-nc-sa/3.0">http://www.creativecommons.org/licenses/by-nc-sa/3.0</a>"""
     )) {
       case (emdRightsTermsLicense, expected) =>
         val dataset = mockDataset(AccessCategory.OPEN_ACCESS, isSample = false, new IsoDate(), emdRightsTermsLicense)
@@ -147,7 +147,7 @@ class TemplateResolverSpec extends UnitSpec with MockFactory with TableDrivenPro
     val emd = mock[MockEasyMetadata]
     val date = mock[EmdDate]
     val rights = mock[EmdRights]
-    emd.getPreferredTitle _ expects() returning "about testing"
+    emd.getPreferredTitle _ expects() returning "about <a href='javascript:alert('XSS')'>XSS</a> escape <b>bold</b> <a href='http.dans.knaw.nl'>linked</a> content"
     emd.getEmdRights _ expects() returning rights twice()
     emd.getEmdDate _ expects() returning date anyNumberOfTimes()
     rights.getAccessCategory _ expects() returning openaccess
