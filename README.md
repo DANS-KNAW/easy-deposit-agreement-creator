@@ -4,4 +4,4 @@ easy-deposit-agreement-creator
 
 Create a deposit agreement (pdf file) for a given dataset.
 
-Browse to the [documentation site](http://dans-knaw.github.io/easy-deposit-agreement-creator/01_manual.html) for more information.
+Browse to the [documentation site](http://dans-knaw.github.io/easy-deposit-agreement-creator) for more information.

@@ -1,14 +1,13 @@
 openapi: 3.0.1
 
 servers:
-  - description: Debug environment
-    url: http://localhost:<TODO:portnumber>/
-  - description: Local Vagrant machine
-    url: http://test.dans.knaw.nl
+  - description: Local machine
+    url: http://localhost:20130/
+
 info:
   description: Private interface for generating Deposit Agreements for depositing datasets to EASY
-  version: 1.0.0
-  title: Deposit Agreement API
+  version: 2.0.4
+  title: Deposit Agreement Creator API
   contact:
     email: info@dans.knaw.nl
   license:
@@ -39,6 +38,8 @@ paths:
           description: Service is unavailable because of an error.
   /create:
     post:
+      tags:
+        - agreement
       summary: Returns a Deposit Agreement based on the EASY datasetId in Fedora
       parameters:
         - name: datasetId
