@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.agreement
+package nl.knaw.dans.easy.agreement.fixture
 
-import nl.knaw.dans.easy.agreement.FileAccessRight.FileAccessRight
+import org.scalatest.{ FlatSpec, Inside, Matchers }
 
-case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: Option[String])
-
-// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
-object FileAccessRight extends Enumeration {
-  type FileAccessRight = Value
-
-  val
-  ANONYMOUS,
-  KNOWN,
-  RESTRICTED_REQUEST,
-  RESTRICTED_GROUP,
-  NONE
-  = Value
-
-  def valueOf(s: String): Option[FileAccessRight.Value] = FileAccessRight.values.find(_.toString == s)
-}
+trait TestSupportFixture extends FlatSpec
+  with Matchers
+  with Inside

@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.agreement.internal
+package nl.knaw.dans.easy.agreement.fixture
 
-import nl.knaw.dans.lib.string.StringExtensions
+import better.files.File
+import better.files.File.currentWorkingDirectory
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.enablers.Existence
 
-object DatasetValidator {
+trait FileSystemSupport extends BeforeAndAfterEach {
+  this: TestSupportFixture =>
 
-  def validate(dataset: Dataset): Dataset = {
-    dataset.copy(easyUser = validate(dataset.easyUser))
+  implicit def existenceOfFile[FILE <: better.files.File]: Existence[FILE] = _.exists
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    if (testDir.exists) testDir.delete()
+    testDir.createDirectories()
   }
 
-  def validate(easyUser: EasyUser): EasyUser = {
-    easyUser.copy(
-      organization = easyUser.organization.emptyIfBlank,
-      country = easyUser.country.emptyIfBlank,
-      telephone = easyUser.telephone.emptyIfBlank
-    )
-  }
+  lazy val testDir: File = currentWorkingDirectory / "target" / "test" / getClass.getSimpleName
 }

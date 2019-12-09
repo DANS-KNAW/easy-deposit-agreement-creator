@@ -59,6 +59,12 @@
             <groupId>org.scalatra</groupId>
             <artifactId>scalatra-scalatest_2.12</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>4.2.2</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Scala utils -->
         <dependency>
@@ -74,9 +80,17 @@
             <artifactId>scallop_2.12</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.pathikrit</groupId>
+            <artifactId>better-files_2.12</artifactId>
+        </dependency>
+        <dependency>
             <groupId>nl.knaw.dans.lib</groupId>
             <artifactId>dans-scala-lib_2.12</artifactId>
-            <version>1.6.0</version>
+            <version>1.6.1</version>
         </dependency>
 
         <!-- EASY -->
@@ -94,11 +108,6 @@
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
-            <version>1.7</version>
         </dependency>
 
         <!-- service -->
@@ -128,28 +137,30 @@
         </dependency>
 
         <!-- joda -->
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+        </dependency>
         <!-- this dependency is here only to avoid warnings in build log -->
         <dependency>
             <groupId>org.joda</groupId>
             <artifactId>joda-convert</artifactId>
         </dependency>
 
-        <!-- reactive programming -->
+        <!-- JSON -->
         <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxscala_2.12</artifactId>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-native_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-ext_2.12</artifactId>
         </dependency>
 
         <!-- fedora -->
         <dependency>
             <groupId>com.yourmediashelf.fedora.client</groupId>
             <artifactId>fedora-client-core</artifactId>
-        </dependency>
-
-        <!-- databases -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
         </dependency>
     </dependencies>
 
@@ -176,33 +187,6 @@
         </repository>
     </repositories>
 
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>resources</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>nl.knaw.dans.easy</groupId>
-                                    <artifactId>easy-licenses</artifactId>
-                                    <version>${easy.licenses.version}</version>
-                                    <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-
     <profiles>
         <profile>
             <id>rpm</id>
@@ -217,56 +201,6 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>rpm-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-rpm</id>
-                                <goals>
-                                    <goal>attached-rpm</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <group>Applications/Archiving</group>
-                            <requires combine.children="append">
-                                <require>redhat-rpm-config</require>
-                                <require>python-devel</require>
-                                <require>python-pip</require>
-                                <require>python-lxml</require>
-                                <require>cairo</require>
-                                <require>pango</require>
-                                <require>gdk-pixbuf2</require>
-                                <require>libffi-devel</require>
-                                <require>weasyprint</require>
-                            </requires>
-                            <mappings combine.children="append">
-                                <mapping>
-                                    <directory>/var/opt/${dans-provider-name}/resource/${project.artifactId}</directory>
-                                    <sources>
-                                        <source>
-                                            <location>src/main/assembly/dist/res</location>
-                                        </source>
-                                    </sources>
-                                </mapping>
-                                <mapping>
-                                    <directory>/var/opt/${dans-provider-name}/resource/${project.artifactId}/template/licenses</directory>
-                                    <configuration>${rpm-replace-configuration}</configuration>
-                                    <sources>
-                                        <source>
-                                            <location>target/easy-licenses/licenses</location>
-                                        </source>
-                                    </sources>
-                                </mapping>
-                                <mapping>
-                                    <directory>/opt/${dans-provider-name}/${project.artifactId}/res/template/licenses</directory>
-                                    <configuration>${rpm-replace-configuration}</configuration>
-                                    <sources>
-                                        <source>
-                                            <location>target/easy-licenses/licenses</location>
-                                        </source>
-                                    </sources>
-                                </mapping>
-                            </mappings>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

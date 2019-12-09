@@ -15,30 +15,49 @@
  */
 package nl.knaw.dans.easy.agreement
 
-import java.nio.file.{ Files, Path, Paths }
+import java.net.URL
 
+import better.files.File
+import better.files.File.root
+import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
+import javax.naming.Context
 import org.apache.commons.configuration.PropertiesConfiguration
-import resource.managed
 
-import scala.io.Source
-
-case class Configuration(version: String, properties: PropertiesConfiguration)
+case class Configuration(version: String,
+                         serverPort: Int,
+                         fedoraClient: FedoraClient,
+                         ldapEnv: LdapEnv,
+                         pdfGenerator: URL,
+                        )
 
 object Configuration {
 
-  def apply(home: Path): Configuration = {
+  def apply(home: File): Configuration = {
     val cfgPath = Seq(
-      Paths.get(s"/etc/opt/dans.knaw.nl/easy-deposit-agreement-creator/"),
-      home.resolve("cfg"))
-      .find(Files.exists(_))
+      root / "etc" / "opt" / "dans.knaw.nl" / "easy-deposit-agreement-creator",
+      home / "cfg")
+      .find(_.exists)
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
+    val properties = new PropertiesConfiguration() {
+      setDelimiterParsingDisabled(true)
+      load((cfgPath / "application.properties").toJava)
+    }
 
     new Configuration(
-      version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
-      properties = new PropertiesConfiguration() {
-        setDelimiterParsingDisabled(true)
-        load(cfgPath.resolve("application.properties").toFile)
-      }
+      version = (home / "bin" / "version").contentAsString.stripLineEnd,
+      serverPort = properties.getInt("daemon.http.port"),
+      fedoraClient = new FedoraClient(new FedoraCredentials(
+        properties.getString("fcrepo.url"),
+        properties.getString("fcrepo.user"),
+        properties.getString("fcrepo.password"))),
+      ldapEnv = new LdapEnv {
+        put(Context.PROVIDER_URL, properties.getString("auth.ldap.url"))
+        put(Context.SECURITY_AUTHENTICATION, "simple")
+        put(Context.SECURITY_PRINCIPAL, properties.getString("auth.ldap.user"))
+        put(Context.SECURITY_CREDENTIALS, properties.getString("auth.ldap.password"))
+        put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
+      },
+      pdfGenerator = new URL(properties.getString("pdf-gen.url")),
     )
   }
 }

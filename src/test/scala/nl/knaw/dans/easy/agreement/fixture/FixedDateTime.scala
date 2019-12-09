@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.agreement.internal
+package nl.knaw.dans.easy.agreement.fixture
 
-import java.io.{InputStream, OutputStream}
+import java.util.TimeZone
 
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.joda.time.{ DateTime, DateTimeUtils, DateTimeZone }
 
-import scala.sys.process._
-
-trait PdfGenerator {
-
-  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder
-}
-
-class WeasyPrintPdfGenerator(implicit parameters: BaseParameters) extends PdfGenerator with DebugEnhancedLogging {
-
-  def createPdf(input: InputStream, output: OutputStream): ProcessBuilder = {
-    logger.debug("create pdf")
-
-    pdfRunScript.getAbsolutePath #< input #> output
-  }
+trait FixedDateTime {
+  val nowYMD = "2018-03-22"
+  val now = s"${ nowYMD }T21:43:01.576"
+  val nowUTC = s"${ nowYMD }T20:43:01Z"
+  /** Causes DateTime.now() to return a predefined value. */
+  DateTimeUtils.setCurrentMillisFixed(new DateTime(nowUTC).getMillis)
+  DateTimeZone.setDefault(DateTimeZone.forTimeZone(TimeZone.getTimeZone("Europe/Amsterdam")))
 }

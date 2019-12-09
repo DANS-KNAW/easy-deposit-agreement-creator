@@ -15,95 +15,63 @@
  */
 package nl.knaw.dans.easy.agreement
 
-import java.io.{ File, FileOutputStream }
-import java.nio.file.Paths
-
+import better.files.File
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import resource._
+import resource.managed
 
-import scala.language.reflectiveCalls
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
+import scala.language.reflectiveCalls
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
 
-  val configuration = Configuration(Paths.get(System.getProperty("app.home")))
+  val configuration = Configuration(File(System.getProperty("app.home")))
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val app = new AgreementCreatorApp(configuration)
+  val app = new EasyDepositAgreementCreatorApp(configuration)
 
-  managed(app)
-    .acquireAndGet(runSubcommand)
-    .doIfSuccess(msg => println(s"OK: $msg"))
+  runSubcommand(app)
+    .doIfSuccess(msg => Console.err.println(s"OK: $msg"))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
-    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
+    .doIfFailure { case NonFatal(e) => Console.err.println(s"FAILED: ${ e.getMessage }") }
 
-  private def runSubcommand(app: AgreementCreatorApp): Try[FeedBackMessage] = {
+  private def runSubcommand(app: EasyDepositAgreementCreatorApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
         case commandLine.runService => runAsService(app)
+        case generate @ commandLine.generate =>
+          val datasetId = generate.datasetId()
+          val isSample = generate.isSample()
+          generate.outputFile.toOption
+            .map(file => managed(file.createFileIfNotExists().newOutputStream))
+            .getOrElse(managed(Console.out))
+            .map(os => for {
+              _ <- app.validateDatasetIdExistsInFedora(datasetId)
+              _ <- app.createAgreement(datasetId, isSample)(() => os)
+            } yield s"agreement for dataset $datasetId was created successfully")
+            .tried
+            .flatten
+            .recoverWith { case e => Failure(new Exception(s"Could not create agreement for ${ generate.datasetId() }: ${ e.getMessage }")) }
         case _ => Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
       }
-      .getOrElse {
-        val outputFile = commandLine.outputFile()
-        for {
-          params <- createParameters(app)
-          _ = logger.debug(s"Using the following settings: $params")
-          _ = logger.debug(s"Output will be written to ${ outputFile.getAbsolutePath }")
-          _ <- validateDatasetIdExists(params)
-          _ = createAgreement(outputFile, params)
-          _ = params.close() // TODO not reached when validation fails
-        } yield ()
-      }
-      .recoverWith { case t: Throwable => Failure(new Exception(s"Could not create agreement for ${ commandLine.datasetID() }: ${ t.getMessage }")) }
-      .map(_ => s"Created agreement for ${ commandLine.datasetID() }")
+      .getOrElse(Success(s"Missing subcommand. Please refer to '${ commandLine.printedName } --help'."))
   }
 
-  private def validateDatasetIdExists(parameters: internal.Parameters): Try[Unit] = {
-    parameters.fedora.datasetIdExists(parameters.datasetID).flatMap {
-      case true => Success(())
-      case false => Failure(new IllegalArgumentException(s"DatasetId ${ parameters.datasetID } does not exist"))
-    }
-  }
-
-  private def createAgreement(outputFile: File, params: internal.Parameters): Unit = {
-    new FileOutputStream(outputFile)
-      .usedIn(AgreementCreator(params).createAgreement)
-      .doOnCompleted(logger.info(s"agreement saved at ${ outputFile.getAbsolutePath }"))
-      .toBlocking
-      .subscribe(
-        _ => {},
-        e => {
-          logger.error("An error was caught in main:", e)
-          throw e
-        },
-        () => logger.debug("completed")
-      )
-  }
-
-  private def createParameters(app: AgreementCreatorApp): Try[internal.Parameters] = Try {
-    new internal.Parameters(
-      templateResourceDir = app.templateResourceDir,
-      datasetID = commandLine.datasetID(),
-      isSample = commandLine.isSample(),
-      fedoraClient = app.fedoraClient,
-      ldapEnv = app.ldapEnv,
-    )
-  }
-
-  private def runAsService(app: AgreementCreatorApp): Try[FeedBackMessage] = Try {
-    val service = new AgreementCreatorService(configuration.properties.getInt("daemon.http.port"), app)
+  private def runAsService(app: EasyDepositAgreementCreatorApp): Try[FeedBackMessage] = Try {
+    val service = new EasyDepositAgreementCreatorService(configuration.serverPort, Map(
+      "/" -> new EasyDepositAgreementCreatorServlet(app, configuration.version),
+    ))
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {
-        service.stop()
-        service.destroy()
+        service.stop().unsafeGetOrThrow
+        service.destroy().unsafeGetOrThrow
       }
     })
 
-    service.start()
+    service.start().unsafeGetOrThrow
     Thread.currentThread.join()
     "Service terminated normally."
   }
