@@ -26,8 +26,8 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   printedName = "easy-deposit-agreement-creator"
   version(configuration.version)
   private val SUBCOMMAND_SEPARATOR = "---\n"
-  val description: String = "Create a agreement for the given datasetID. The agreement will be saved at the indicated location."
-  val synopsis: String = s""" $printedName [{--sample|-s}] <datasetID> <agreement-file>"""
+  val description: String = "Create a agreement for the given datasetId. The agreement will be saved at the indicated location."
+  val synopsis: String = s""" $printedName generate [{--sample|-s}] <datasetId> [<agreement-file>]"""
   version(s"$printedName v${ configuration.version }")
   banner(
     s"""
@@ -43,9 +43,9 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val generate = new Subcommand("generate") {
     descr("Generate a deposit agreement for the given datasetId")
     val datasetId: ScallopOption[DatasetId] = trailArg(name = "datasetId",
-      descr = "The ID of the dataset of which a agreement has to be created")
+      descr = "The datasetId of which a agreement has to be created")
     private val outputPath: ScallopOption[Path] = trailArg(name = "agreement-file",
-      descr = "The file location where the agreement needs to be stored", required = false)
+      descr = "The file location where the agreement needs to be stored. If not provided, the PDF is written to stdout.", required = false)
     val outputFile: ScallopOption[File] = outputPath.map(File(_))
     val isSample: ScallopOption[Boolean] = opt(name = "sample", short = 's', default = Option(false),
       descr = "Indicates whether or not a sample agreement needs to be created")
