@@ -16,7 +16,13 @@
 package nl.knaw.dans.easy.agreement.fixture
 
 import org.scalatest.{ FlatSpec, Inside, Matchers }
+import org.slf4j.bridge.SLF4JBridgeHandler
 
 trait TestSupportFixture extends FlatSpec
   with Matchers
-  with Inside
+  with Inside {
+
+  // disable logs from okhttp3.mockwebserver
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
+}
