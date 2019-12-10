@@ -102,7 +102,7 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
 
     val request = server.takeRequest()
     request.getRequestLine shouldBe s"POST $test_server HTTP/1.1"
-    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-29T22:00:00Z","dateAvailable":"2016-07-29T22:00:00Z","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://creativecommons.org/licenses/by-nc-sa/4.0/","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
+    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-30","dateAvailable":"2016-07-30","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://creativecommons.org/licenses/by-nc-sa/4.0/","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
   }
 
   it should "generate the correct JSON and interact with easy-deposit-agreement-generator with defaults from EMD" in {
@@ -145,7 +145,7 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
 
     val request = server.takeRequest()
     request.getRequestLine shouldBe s"POST $test_server HTTP/1.1"
-    request.getBody.readString(StandardCharsets.UTF_8) shouldBe s"""{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"","title":"my preferred title","dateSubmitted":"$nowUTC","dateAvailable":"$nowUTC","accessCategory":"OPEN_ACCESS","license":"http://creativecommons.org/publicdomain/zero/1.0","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
+    request.getBody.readString(StandardCharsets.UTF_8) shouldBe s"""{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"","title":"my preferred title","dateSubmitted":"$nowYMD","dateAvailable":"$nowYMD","accessCategory":"OPEN_ACCESS","license":"http://creativecommons.org/publicdomain/zero/1.0","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
   }
 
   it should "generate the correct JSON with dans-license as old license" in {
@@ -188,7 +188,7 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
 
     val request = server.takeRequest()
     request.getRequestLine shouldBe s"POST $test_server HTTP/1.1"
-    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-29T22:00:00Z","dateAvailable":"2016-07-29T22:00:00Z","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
+    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-30","dateAvailable":"2016-07-30","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
   }
 
   it should "generate the correct JSON with sample=true" in {
@@ -231,7 +231,7 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
 
     val request = server.takeRequest()
     request.getRequestLine shouldBe s"POST $test_server HTTP/1.1"
-    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-29T22:00:00Z","dateAvailable":"2016-07-29T22:00:00Z","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://creativecommons.org/licenses/by-nc-sa/4.0/","sample":true,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
+    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-30","dateAvailable":"2016-07-30","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://creativecommons.org/licenses/by-nc-sa/4.0/","sample":true,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
   }
 
   it should "interact with easy-deposit-agreement-generator and process errors correctly" in {
@@ -278,6 +278,6 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
 
     val request = server.takeRequest()
     request.getRequestLine shouldBe s"POST $test_server HTTP/1.1"
-    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-29T22:00:00Z","dateAvailable":"2016-07-29T22:00:00Z","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://creativecommons.org/licenses/by-nc-sa/4.0/","sample":true,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
+    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-30","dateAvailable":"2016-07-30","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://creativecommons.org/licenses/by-nc-sa/4.0/","sample":true,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
   }
 }

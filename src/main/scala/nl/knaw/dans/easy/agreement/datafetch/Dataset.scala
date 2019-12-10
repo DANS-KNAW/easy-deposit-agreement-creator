@@ -20,7 +20,7 @@ import nl.knaw.dans.common.lang.dataset.AccessCategory.{ OPEN_ACCESS, _ }
 import nl.knaw.dans.easy.agreement.DatasetId
 import nl.knaw.dans.pf.language.emd.EasyMetadata
 import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{ DateTime, DateTimeZone }
+import org.joda.time.{ DateTime, DateTimeZone, LocalDate }
 
 import scala.collection.JavaConverters._
 
@@ -67,10 +67,9 @@ case class Dataset(datasetId: DatasetId, emd: EasyMetadata, easyUser: EasyUser) 
       .getEasDateSubmitted
       .asScala
       .headOption
-      .map(_.getValue)
-      .getOrElse(DateTime.now())
-      .toDateTime(DateTimeZone.UTC)
-      .toString(ISODateTimeFormat.dateTimeNoMillis())
+      .map(_.getValue.toLocalDate)
+      .getOrElse(LocalDate.now())
+      .toString
   }
 
   def dateAvailable: String = {
@@ -78,10 +77,9 @@ case class Dataset(datasetId: DatasetId, emd: EasyMetadata, easyUser: EasyUser) 
       .getEasAvailable
       .asScala
       .headOption
-      .map(_.getValue)
-      .getOrElse(DateTime.now())
-      .toDateTime(DateTimeZone.UTC)
-      .toString(ISODateTimeFormat.dateTimeNoMillis())
+      .map(_.getValue.toLocalDate)
+      .getOrElse(LocalDate.now())
+      .toString
   }
 
   def accessCategory: String = accessCategoryEnum.toString

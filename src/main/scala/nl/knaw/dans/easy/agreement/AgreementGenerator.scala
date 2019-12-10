@@ -22,7 +22,6 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.io.IOUtils
 import org.eclipse.jetty.http.HttpStatus.OK_200
 import org.json4s.JsonDSL._
-import org.json4s.ext.JodaTimeSerializers
 import org.json4s.native.Serialization
 import org.json4s.{ DefaultFormats, Formats, JValue }
 import scalaj.http.{ BaseHttp, HttpResponse }
@@ -32,7 +31,7 @@ import scala.util.{ Failure, Success, Try }
 
 class AgreementGenerator(http: BaseHttp, url: URL) extends DebugEnhancedLogging {
 
-  private implicit val jsonFormats: Formats = new DefaultFormats {} ++ JodaTimeSerializers.all
+  private implicit val jsonFormats: Formats = DefaultFormats
 
   def generate(dataset: Dataset, isSample: Boolean)(outputStreamProvider: OutputStreamProvider): Try[Unit] = {
     val json = datasetToJSON(dataset, isSample)
