@@ -27,7 +27,10 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   version(configuration.version)
   private val SUBCOMMAND_SEPARATOR = "---\n"
   val description: String = "Create a agreement for the given datasetId. The agreement will be saved at the indicated location."
-  val synopsis: String = s""" $printedName generate [{--sample|-s}] <datasetId> [<agreement-file>]"""
+  val synopsis: String =
+    s"""
+       |  $printedName generate [{--sample|-s}] <datasetId> [<agreement-file>]
+       |  $printedName run-service""".stripMargin
   version(s"$printedName v${ configuration.version }")
   banner(
     s"""

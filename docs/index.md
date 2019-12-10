@@ -1,10 +1,26 @@
+---
+title: Manual
+layout: home
+---
+
 Manual
 ======
+
+TABLE OF CONTENTS
+-----------------
+
+- [SYNOPSIS](#synopsis)
+- [DESCRIPTION](#description)
+- [ARGUMENTS](#arguments)
+- [INSTALLATION AND CONFIGURATION](#installation-and-configuration)
+- [BUILDING FROM SOURCE](#building-from-source)
+
 
 SYNOPSIS
 --------
 
     easy-deposit-agreement-creator generate [{--sample|-s}] <datasetId> [<agreement-file>]
+    easy-deposit-agreement-creator run-service
 
 
 DESCRIPTION
@@ -55,7 +71,7 @@ INSTALLATION AND CONFIGURATION
 3. Add the command script to your `PATH` environment variable by creating a symbolic link to it from a directory that is
    on the path, e.g. 
    
-        ln -s /opt/easy-deposit-agreement-creator-<version>/bin/easy-deposit-agreement-creator /usr/bin
+    ln -s /opt/easy-deposit-agreement-creator-<version>/bin/easy-deposit-agreement-creator /usr/bin
 
 General configuration settings can be set in `src/main/assembly/dist/cfg/appliation.properties` and logging can be configured
 in `src/main/assembly/dist/cfg/logback.xml`. The available settings are explained in comments in aforementioned files.
@@ -71,6 +87,6 @@ Prerequisites:
 
 Steps:
 
-        git clone https://github.com/DANS-KNAW/easy-deposit-agreement-creator.git
-        cd easy-deposit-agreement-creator
-        mvn install
+    git clone https://github.com/DANS-KNAW/easy-deposit-agreement-creator.git
+    cd easy-deposit-agreement-creator
+    mvn install

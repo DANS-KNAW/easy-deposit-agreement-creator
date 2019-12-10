@@ -19,8 +19,7 @@ import nl.knaw.dans.common.lang.dataset.AccessCategory
 import nl.knaw.dans.common.lang.dataset.AccessCategory.{ OPEN_ACCESS, _ }
 import nl.knaw.dans.easy.agreement.DatasetId
 import nl.knaw.dans.pf.language.emd.EasyMetadata
-import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{ DateTime, DateTimeZone, LocalDate }
+import org.joda.time.LocalDate
 
 import scala.collection.JavaConverters._
 

@@ -41,23 +41,28 @@ object Command extends App with DebugEnhancedLogging {
   private def runSubcommand(app: EasyDepositAgreementCreatorApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
-        case commandLine.runService => runAsService(app)
+        case commandLine.runService =>
+          runAsService(app)
         case generate @ commandLine.generate =>
-          val datasetId = generate.datasetId()
-          val isSample = generate.isSample()
-          generate.outputFile.toOption
-            .map(file => managed(file.createFileIfNotExists().newOutputStream))
-            .getOrElse(managed(Console.out))
-            .map(os => for {
-              _ <- app.validateDatasetIdExistsInFedora(datasetId)
-              _ <- app.createAgreement(datasetId, isSample)(() => os)
-            } yield s"agreement for dataset $datasetId was created successfully")
-            .tried
-            .flatten
-            .recoverWith { case e => Failure(new Exception(s"Could not create agreement for ${ generate.datasetId() }: ${ e.getMessage }")) }
-        case _ => Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
+          runGenerateCommand(generate.datasetId(), generate.isSample(), generate.outputFile.toOption)(app)
+        case _ =>
+          Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
       }
       .getOrElse(Success(s"Missing subcommand. Please refer to '${ commandLine.printedName } --help'."))
+  }
+
+  private def runGenerateCommand(datasetId: DatasetId, isSample: Boolean, outputFile: Option[File])
+                                (app: EasyDepositAgreementCreatorApp): Try[FeedBackMessage] = {
+    outputFile
+      .map(file => managed(file.createFileIfNotExists().newOutputStream))
+      .getOrElse(managed(Console.out))
+      .map(os => for {
+        _ <- app.validateDatasetIdExistsInFedora(datasetId)
+        _ <- app.createAgreement(datasetId, isSample)(() => os)
+      } yield s"agreement for dataset $datasetId was created successfully")
+      .tried
+      .flatten
+      .recoverWith { case e => Failure(new Exception(s"Could not create agreement for $datasetId: ${ e.getMessage }")) }
   }
 
   private def runAsService(app: EasyDepositAgreementCreatorApp): Try[FeedBackMessage] = Try {
