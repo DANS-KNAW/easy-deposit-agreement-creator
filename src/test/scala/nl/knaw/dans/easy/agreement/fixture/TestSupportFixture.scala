@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.agreement
+package nl.knaw.dans.easy.agreement.fixture
 
-import nl.knaw.dans.easy.agreement.FileAccessRight.FileAccessRight
+import org.scalatest.{ FlatSpec, Inside, Matchers }
+import org.slf4j.bridge.SLF4JBridgeHandler
 
-case class FileItem(path: String, accessibleTo: FileAccessRight, checkSum: Option[String])
+trait TestSupportFixture extends FlatSpec
+  with Matchers
+  with Inside {
 
-// TODO replace this object with a 'commons-library-call' (see also EASY-Stage-FileItem)
-object FileAccessRight extends Enumeration {
-  type FileAccessRight = Value
-
-  val
-  ANONYMOUS,
-  KNOWN,
-  RESTRICTED_REQUEST,
-  RESTRICTED_GROUP,
-  NONE
-  = Value
-
-  def valueOf(s: String): Option[FileAccessRight.Value] = FileAccessRight.values.find(_.toString == s)
+  // disable logs from okhttp3.mockwebserver
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
 }

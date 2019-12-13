@@ -16,47 +16,49 @@
 package nl.knaw.dans.easy.agreement
 
 import javax.servlet.ServletContext
-
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
-import org.scalatra._
 import org.scalatra.servlet.ScalatraListener
+import org.scalatra.{ LifeCycle, ScalatraServlet }
 
 import scala.util.Try
 
-class AgreementCreatorService(serverPort: Int, app: AgreementCreatorApp) extends DebugEnhancedLogging {
+class EasyDepositAgreementCreatorService(serverPort: Int,
+                                         servlets: Map[String, ScalatraServlet]) extends DebugEnhancedLogging {
 
-  import logger._
-
-  private val server =
-    new Server(serverPort) {
-      setHandler(new ServletContextHandler(ServletContextHandler.NO_SESSIONS) {
-        addEventListener(new ScalatraListener() {
-          override def probeForCycleClass(classLoader: ClassLoader): (String, LifeCycle) = {
-            ("anonymous", new LifeCycle {
-              override def init(context: ServletContext): Unit = {
-                context.mount(new AgreementCreatorServlet(app), "/")
-              }
-            })
+  private val server = new Server(serverPort) {
+    setHandler(
+      new ServletContextHandler(ServletContextHandler.NO_SESSIONS) {
+        addEventListener(
+          new ScalatraListener() {
+            override def probeForCycleClass(classLoader: ClassLoader): (String, LifeCycle) = {
+              ("anonymous", new LifeCycle {
+                override def init(context: ServletContext): Unit = {
+                  for ((path, servlet) <- servlets)
+                    context.mount(servlet, path)
+                }
+              })
+            }
           }
-        })
-      })
-    }
-
-  info(s"HTTP port is $serverPort")
+        )
+      }
+    )
+  }
+  logger.info(s"HTTP port is $serverPort")
 
   def start(): Try[Unit] = Try {
-    info("Starting service...")
+    logger.info("Starting service...")
     server.start()
   }
 
   def stop(): Try[Unit] = Try {
-    info("Stopping service...")
+    logger.info("Stopping service...")
     server.stop()
   }
 
   def destroy(): Try[Unit] = Try {
     server.destroy()
+    logger.info("Destroyed service.")
   }
 }
