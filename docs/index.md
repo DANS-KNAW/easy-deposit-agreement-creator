@@ -7,16 +7,6 @@ Manual
 ======
 [![Build Status](https://travis-ci.org/DANS-KNAW/easy-deposit-agreement-creator.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-deposit-agreement-creator)
 
-TABLE OF CONTENTS
------------------
-
-- [SYNOPSIS](#synopsis)
-- [DESCRIPTION](#description)
-- [ARGUMENTS](#arguments)
-- [INSTALLATION AND CONFIGURATION](#installation-and-configuration)
-- [BUILDING FROM SOURCE](#building-from-source)
-
-
 SYNOPSIS
 --------
 
