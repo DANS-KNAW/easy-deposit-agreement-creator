@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.agreement
 
 import java.net.URL
 
+import nl.knaw.dans.easy.agreement.AgreementGenerator.PdfGenConfiguration
 import nl.knaw.dans.easy.agreement.datafetch.{ Dataset, EasyUser }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.io.IOUtils
@@ -29,7 +30,7 @@ import scalaj.http.{ BaseHttp, HttpResponse }
 import scala.io.Source
 import scala.util.{ Failure, Success, Try }
 
-class AgreementGenerator(http: BaseHttp, url: URL) extends DebugEnhancedLogging {
+class AgreementGenerator(http: BaseHttp, config: PdfGenConfiguration) extends DebugEnhancedLogging {
 
   private implicit val jsonFormats: Formats = DefaultFormats
 
@@ -37,10 +38,14 @@ class AgreementGenerator(http: BaseHttp, url: URL) extends DebugEnhancedLogging 
     val json = datasetToJSON(dataset, isSample)
     val jsonString = Serialization.write(json)
     debug(s"calling easy-deposit-agreement-generator with body: $jsonString")
-    val response = http(url.toString).postData(jsonString).header("content-type", "application/json").exec {
-      case (OK_200, _, is) => IOUtils.copyLarge(is, outputStreamProvider())
-      case (_, _, is) => Source.fromInputStream(is).mkString
-    }
+    val response = http(config.url.toString)
+      .postData(jsonString)
+      .header("content-type", "application/json")
+      .timeout(config.connTimeout, config.readTimeout)
+      .exec {
+        case (OK_200, _, is) => IOUtils.copyLarge(is, outputStreamProvider())
+        case (_, _, is) => Source.fromInputStream(is).mkString
+      }
     if (response.code == OK_200) Success(())
     else Failure(GeneratorError(s"Could not generate agreement for dataset ${ dataset.datasetId }", HttpResponse(response.body.asInstanceOf[String], response.code, response.headers)))
   }
@@ -68,4 +73,10 @@ class AgreementGenerator(http: BaseHttp, url: URL) extends DebugEnhancedLogging 
       ("phone" -> user.telephone) ~
       ("email" -> user.email)
   }
+}
+object AgreementGenerator {
+  case class PdfGenConfiguration(url: URL,
+                                 connTimeout: Int,
+                                 readTimeout: Int,
+                                )
 }
