@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
 import nl.knaw.dans.common.lang.dataset.AccessCategory
+import nl.knaw.dans.easy.agreement.AgreementGenerator.PdfGenConfiguration
 import nl.knaw.dans.easy.agreement.datafetch.{ Dataset, EasyUser }
 import nl.knaw.dans.easy.agreement.fixture.{ FixedDateTime, TestSupportFixture }
 import nl.knaw.dans.pf.language.emd.Term.Name
@@ -55,7 +56,7 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
   private val date = mock[EmdDate]
   private val rights = mock[EmdRights]
 
-  private val generator = new AgreementGenerator(Http, baseURL.url())
+  private val generator = new AgreementGenerator(Http, PdfGenConfiguration(baseURL.url(), 5000, 5000))
 
   override protected def afterAll(): Unit = {
     server.shutdown()

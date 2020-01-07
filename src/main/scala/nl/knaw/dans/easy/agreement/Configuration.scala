@@ -21,13 +21,14 @@ import better.files.File
 import better.files.File.root
 import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
 import javax.naming.Context
+import nl.knaw.dans.easy.agreement.AgreementGenerator.PdfGenConfiguration
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          serverPort: Int,
                          fedoraClient: FedoraClient,
                          ldapEnv: LdapEnv,
-                         pdfGenerator: URL,
+                         pdfGenerator: PdfGenConfiguration,
                         )
 
 object Configuration {
@@ -57,7 +58,11 @@ object Configuration {
         put(Context.SECURITY_CREDENTIALS, properties.getString("auth.ldap.password"))
         put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
       },
-      pdfGenerator = new URL(properties.getString("pdf-gen.url")),
+      pdfGenerator = PdfGenConfiguration(
+        url = new URL(properties.getString("pdf-gen.url")),
+        connTimeout = properties.getInt("pdf-gen.conn-timeout-ms"),
+        readTimeout = properties.getInt("pdf-gen.read-timeout-ms"),
+      )
     )
   }
 }
