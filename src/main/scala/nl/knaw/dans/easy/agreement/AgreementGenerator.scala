@@ -41,6 +41,7 @@ class AgreementGenerator(http: BaseHttp, config: PdfGenConfiguration) extends De
     val response = http(config.url.toString)
       .postData(jsonString)
       .header("content-type", "application/json")
+      .header("accept", "application/pdf")
       .timeout(config.connTimeout, config.readTimeout)
       .exec {
         case (OK_200, _, is) => IOUtils.copyLarge(is, outputStreamProvider())
