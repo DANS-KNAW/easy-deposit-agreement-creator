@@ -101,7 +101,7 @@ case class Dataset(datasetId: DatasetId, emd: EasyMetadata, easyUser: EasyUser) 
   def oldLicense: String = {
     accessCategoryEnum match {
       case ANONYMOUS_ACCESS | FREELY_AVAILABLE | OPEN_ACCESS => "http://creativecommons.org/publicdomain/zero/1.0"
-      case _ => "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf"
+      case _ => "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf"
     }
   }
 }

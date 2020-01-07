@@ -189,7 +189,7 @@ class AgreementGeneratorSpec extends TestSupportFixture with FixedDateTime with 
 
     val request = server.takeRequest()
     request.getRequestLine shouldBe s"POST $test_server HTTP/1.1"
-    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-30","dateAvailable":"2016-07-30","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
+    request.getBody.readString(StandardCharsets.UTF_8) shouldBe """{"depositor":{"name":"name","address":"address","zipcode":"postalCode","city":"city","country":"country","organisation":"organization","phone":"telephone","email":"email"},"doi":"12.3456/dans-ab7-cdef","title":"my preferred title","dateSubmitted":"1992-07-30","dateAvailable":"2016-07-30","accessCategory":"OPEN_ACCESS_FOR_REGISTERED_USERS","license":"http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf","sample":false,"agreementVersion":"4.0","agreementLanguage":"EN"}"""
   }
 
   it should "generate the correct JSON with sample=true" in {
