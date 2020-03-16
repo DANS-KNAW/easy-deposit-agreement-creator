@@ -22,7 +22,7 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-app-project</artifactId>
-        <version>5.1.0</version>
+        <version>6.0.1</version>
     </parent>
 
     <groupId>nl.knaw.dans.easy</groupId>
@@ -62,7 +62,6 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
-            <version>4.2.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -90,7 +89,6 @@
         <dependency>
             <groupId>nl.knaw.dans.lib</groupId>
             <artifactId>dans-scala-lib_2.12</artifactId>
-            <version>1.6.1</version>
         </dependency>
 
         <!-- EASY -->
@@ -126,7 +124,6 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
         </dependency>
 
         <!-- logging -->
@@ -137,7 +134,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
-            <version>1.7.29</version>
         </dependency>
 
         <!-- joda -->
