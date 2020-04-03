@@ -15,10 +15,12 @@
  */
 package nl.knaw.dans.easy.agreement.fixture
 
-import org.scalatest.{ FlatSpec, Inside, Matchers }
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.bridge.SLF4JBridgeHandler
 
-trait TestSupportFixture extends FlatSpec
+trait TestSupportFixture extends AnyFlatSpec
   with Matchers
   with Inside {
 
