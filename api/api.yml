@@ -1,0 +1,81 @@
+openapi: 3.0.1
+
+servers:
+  - description: Local machine
+    url: http://localhost:20130/
+
+info:
+  description: Private interface for generating Deposit Agreements for depositing datasets to EASY
+  version: 2.0.4
+  title: Deposit Agreement Creator API
+  contact:
+    email: info@dans.knaw.nl
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: service
+    description: Information about service status
+  - name: agreement
+    description: Generate a Deposit Agreement
+paths:
+  /:
+    get:
+      tags:
+        - service
+      summary: Returns a description of the service.
+      responses:
+        200:
+          description: description of the service
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: a plain text, human readable description of the service
+                example: |
+                  EASY Deposit Agreement Creator Service running (v1.0.0)
+        500:
+          description: Service is unavailable because of an error.
+  /create:
+    post:
+      tags:
+        - agreement
+      summary: Returns a Deposit Agreement based on the EASY datasetId in Fedora
+      parameters:
+        - name: datasetId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sample
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/IncludeSampleHeader'
+      responses:
+        200:
+          description: OK
+          content:
+            'application/pdf': {}
+        400:
+          $ref: "#/components/responses/MalformedMetadata"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  responses:
+    Unauthorized:
+      description: Unauthorized.
+    InternalServerError:
+      description: Internal Server Error.
+    MalformedMetadata:
+      description: Bad request. The metadata document is not valid JSON or contains fields not defined in the metadata model.
+    NotFound:
+      description: Not found. Dataset with this identifier is not found
+
+  schemas:
+    IncludeSampleHeader:
+      type: boolean
+      description: Whether the resulting Agreement is a sample, or a final Agreement
